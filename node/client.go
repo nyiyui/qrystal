@@ -130,29 +130,29 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 	return &res, nil
 }
 
-func (c *Node) syncPeer(ctx context.Context, cnn string, serverName string) (res SyncPeerRes) {
+func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPeerRes) {
 	cn := c.cc.Networks[cnn]
-	err := c.ensureClient(ctx, cnn, serverName)
+	err := c.ensureClient(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ensure client: %w", err)}
 	}
 	log.Printf("preping")
-	err = c.ping(ctx, cnn, serverName)
+	err = c.ping(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ping: %w", err)}
 	}
 	log.Printf("preauth")
-	err = c.auth(ctx, cnn, serverName)
+	err = c.auth(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("auth: %w", err)}
 	}
 	log.Printf("prexch")
-	err = c.xch(ctx, cnn, serverName)
+	err = c.xch(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("xch: %w", err)}
 	}
 	log.Printf("postxch")
-	peer := cn.Peers[serverName]
+	peer := cn.Peers[pn]
 	peer.lock.RLock()
 	defer peer.lock.RUnlock()
 	hostOnly, _, err := net.SplitHostPort(peer.Host)
@@ -177,11 +177,11 @@ func (c *Node) syncPeer(ctx context.Context, cnn string, serverName string) (res
 	return SyncPeerRes{config: config}
 }
 
-func (c *Node) auth(ctx context.Context, cnn string, serverName string) (err error) {
+func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
 	c.serversLock.Lock()
 	defer c.serversLock.Unlock()
 	log.Print("servers", c.servers)
-	cs, ok := c.servers[networkPeerPair{cnn, serverName}]
+	cs, ok := c.servers[networkPeerPair{cnn, pn}]
 	if !ok {
 		return errors.New("corresponding clientServer not found")
 	}
@@ -197,10 +197,10 @@ func (c *Node) auth(ctx context.Context, cnn string, serverName string) (err err
 		conn:         conn,
 		cc:           c.cc,
 		cn:           cn,
-		you:          cn.Peers[serverName],
+		you:          cn.Peers[pn],
 	}
 	log.Print("preauthboth")
-	err = state.authMine(cnn, serverName)
+	err = state.authMine(cnn, pn)
 	if err != nil {
 		return fmt.Errorf("authenticating me: %w", err)
 	}
@@ -218,9 +218,9 @@ func (c *Node) auth(ctx context.Context, cnn string, serverName string) (err err
 	return nil
 }
 
-func (c *Node) xch(ctx context.Context, cnn string, serverName string) (err error) {
+func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	cn := c.cc.Networks[cnn]
-	peer := cn.Peers[serverName]
+	peer := cn.Peers[pn]
 	// TODO: dont xch if locked?
 	peer.lsaLock.Lock()
 	defer peer.lsaLock.Unlock()
@@ -229,7 +229,7 @@ func (c *Node) xch(ctx context.Context, cnn string, serverName string) (err erro
 	}
 	peer.lock.Lock()
 	defer peer.lock.Unlock()
-	cs := c.servers[networkPeerPair{cnn, serverName}]
+	cs := c.servers[networkPeerPair{cnn, pn}]
 	pubKey := c.cc.Networks[cnn].myPrivKey.PublicKey()
 	psk, err := wgtypes.GenerateKey()
 	if err != nil {
@@ -258,8 +258,8 @@ func (c *Node) xch(ctx context.Context, cnn string, serverName string) (err erro
 	return nil
 }
 
-func (c *Node) ping(ctx context.Context, cnn string, serverName string) (err error) {
-	cs := c.servers[networkPeerPair{cnn, serverName}]
+func (c *Node) ping(ctx context.Context, cnn string, pn string) (err error) {
+	cs := c.servers[networkPeerPair{cnn, pn}]
 	_, err = cs.cl.Ping(ctx, &api.PingQS{})
 	return
 }

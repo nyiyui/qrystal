@@ -13,23 +13,23 @@ type clientServer struct {
 	token string
 }
 
-func (c *Node) ensureClient(ctx context.Context, cnn string, serverName string) (err error) {
+func (c *Node) ensureClient(ctx context.Context, cnn string, pn string) (err error) {
 	csNil := func() bool {
 		c.serversLock.RLock()
 		defer c.serversLock.RUnlock()
-		cs := c.servers[networkPeerPair{cnn, serverName}]
+		cs := c.servers[networkPeerPair{cnn, pn}]
 		return cs == nil
 	}()
 	if !csNil {
 		return nil
 	}
-	return c.newClient(ctx, cnn, serverName)
+	return c.newClient(ctx, cnn, pn)
 }
 
-func (c *Node) newClient(ctx context.Context, cnn string, serverName string) (err error) {
+func (c *Node) newClient(ctx context.Context, cnn string, pn string) (err error) {
 	c.serversLock.Lock()
 	defer c.serversLock.Unlock()
-	peer := c.cc.Networks[cnn].Peers[serverName]
+	peer := c.cc.Networks[cnn].Peers[pn]
 	peer.lock.Lock()
 	defer peer.lock.Unlock()
 	var cs clientServer
@@ -41,6 +41,6 @@ func (c *Node) newClient(ctx context.Context, cnn string, serverName string) (er
 		return err
 	}
 	cs.cl = api.NewNodeClient(conn)
-	c.servers[networkPeerPair{cnn, serverName}] = &cs
+	c.servers[networkPeerPair{cnn, pn}] = &cs
 	return nil
 }
