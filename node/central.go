@@ -37,6 +37,9 @@ type CentralPeer struct {
 	PublicKeyInput string `yaml:"public-key"`
 	PublicKey      ed25519.PublicKey
 
+	lsa     time.Time
+	lsaLock sync.RWMutex
+
 	lock       sync.RWMutex
 	latestSync time.Time
 	accessible bool

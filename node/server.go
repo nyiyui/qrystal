@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/nyiyui/qanms/mio"
 	"github.com/nyiyui/qanms/node/api"
@@ -295,6 +296,11 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 
 	var you *CentralPeer
 	you = cn.Peers[sc.name]
+	you.lsaLock.Lock()
+	defer you.lsaLock.Unlock()
+	if time.Since(you.lsa) < 1*time.Second {
+		return nil, errors.New("attempted to sync too recently")
+	}
 	you.lock.Lock()
 	defer you.lock.Unlock()
 	yourPubKey, err := wgtypes.NewKey(q.PubKey)

@@ -110,10 +110,12 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 		if pn == cn.Me {
 			continue
 		}
-		// TODO: fix deadlock when syncing to each other
-		if pn == "ko" {
-			continue
-		}
+		/*
+			// TODO: fix deadlock when syncing to each other
+			if pn == "ko" {
+				continue
+			}
+		*/
 		log.Printf("syncing net %s peer %s", cn.name, pn)
 		ps := c.syncPeer(ctx, cnn, pn)
 		res.peerStatus[pn] = ps
@@ -219,6 +221,12 @@ func (c *Node) auth(ctx context.Context, cnn string, serverName string) (err err
 func (c *Node) xch(ctx context.Context, cnn string, serverName string) (err error) {
 	cn := c.cc.Networks[cnn]
 	peer := cn.Peers[serverName]
+	// TODO: dont xch if locked?
+	peer.lsaLock.Lock()
+	defer peer.lsaLock.Unlock()
+	if time.Since(peer.lsa) < 1*time.Second {
+		return errors.New("attempted to sync too recently")
+	}
 	peer.lock.Lock()
 	defer peer.lock.Unlock()
 	cs := c.servers[networkPeerPair{cnn, serverName}]
