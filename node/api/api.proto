@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+option go_package = "github.com/nyiyui/qanms/node/api";
+
+service Node {
+  rpc auth(stream AuthSQ) returns (stream AuthSQ);
+  // #  client - server
+  // 1. AuthQ  →
+  // 2.        ← AuthS
+  // 3.        ← AuthQ
+  // 4. AuthS  →
+
+  rpc xch(XchQ) returns (XchS);
+
+  rpc ping(PingQS) returns (PingQS);
+}
+
+service CentralSource {
+  rpc auth(stream AuthSQ) returns (stream AuthSQ);
+
+  rpc pull(PullQ) returns (PullS);
+}
+
+message AuthSQ {
+  oneof sq {
+    AuthS s = 1;
+    AuthQ q = 2;
+    AuthToken token = 3;
+  }
+}
+
+message AuthQ {
+  string network = 1;
+  string me = 2;
+  string you = 4;
+  bytes chall = 5;
+}
+
+message AuthS {
+  bytes challResp = 1;
+  bytes challAdded = 2;
+}
+
+message AuthToken {
+  bytes token = 1;
+}
+
+message XchQ {
+  bytes token = 1;
+  bytes pubKey = 2;
+  bytes psk = 3;
+}
+
+message XchS {
+  bytes pubKey = 1;
+  bytes psk = 2;
+}
+
+message PingQS {}
+
+message PullQ {
+  bytes token = 1;
+}
+
+message PullS {
+  CentralConfig cc = 1;
+}
+
+message CentralConfig {
+  map<string, CentralNetwork> networks = 1;
+}
+
+message CentralNetwork {
+  repeated IPNet ips = 1;
+  string me = 2;
+  google.protobuf.Duration keepalive = 3;
+  map<string, CentralPeer> peers = 5;
+}
+
+message CentralPeer {
+  string host = 1;
+  repeated IPNet allowedIPs = 2;
+  PublicKey publicKey = 3;
+}
+
+message PublicKey {
+  bytes raw = 1;
+}
+
+message IPNet {
+  string cidr = 1;
+}
