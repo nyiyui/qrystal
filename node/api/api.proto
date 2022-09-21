@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/duration.proto";
+
 option go_package = "github.com/nyiyui/qanms/node/api";
 
 service Node {
