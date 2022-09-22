@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/nyiyui/qanms/node/api";
 
@@ -68,6 +69,7 @@ message PullQ {
 
 message PullS {
   CentralConfig cc = 1;
+  google.protobuf.Timestamp expiry = 2;
 }
 
 message PushQ {
