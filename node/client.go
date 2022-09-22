@@ -86,7 +86,7 @@ func (c *Node) syncNetworkWG(cn *CentralNetwork, peers []wgtypes.PeerConfig) err
 	err := c.mio.ConfigureDevice(mio.ConfigureDeviceQ{
 		Name:    cn.name,
 		Config:  &cfg,
-		Address: toIPNets(me.AllowedIPs),
+		Address: ToIPNets(me.AllowedIPs),
 		// TODO: fix to use my IPs
 	})
 	if err != nil {
@@ -172,7 +172,7 @@ func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPee
 		Endpoint:                    resolvedHost,
 		PersistentKeepaliveInterval: &keepalive,
 		ReplaceAllowedIPs:           true,
-		AllowedIPs:                  toIPNets(peer.AllowedIPs),
+		AllowedIPs:                  ToIPNets(peer.AllowedIPs),
 	}
 	return SyncPeerRes{config: config}
 }

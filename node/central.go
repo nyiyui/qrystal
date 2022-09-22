@@ -63,10 +63,18 @@ func (i *IPNet2) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func toIPNets(is2 []IPNet2) []net.IPNet {
+func ToIPNets(is2 []IPNet2) []net.IPNet {
 	dest := make([]net.IPNet, len(is2))
 	for i, i2 := range is2 {
 		dest[i] = net.IPNet(i2.ipNet)
+	}
+	return dest
+}
+
+func FromIPNets(ipNets []net.IPNet) []IPNet2 {
+	dest := make([]IPNet2, len(ipNets))
+	for i, i2 := range ipNets {
+		dest[i] = IPNet2{i2}
 	}
 	return dest
 }

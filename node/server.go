@@ -58,7 +58,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 }
 
 type Node struct {
-	api.NodeServer
+	api.UnimplementedNodeServer
 	ccLock       sync.RWMutex
 	cc           CentralConfig
 	coordPrivKey ed25519.PrivateKey
@@ -224,7 +224,7 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 	q := mio.ConfigureDeviceQ{
 		Name:    cn.name,
 		Config:  config,
-		Address: toIPNets(me.AllowedIPs),
+		Address: ToIPNets(me.AllowedIPs),
 		// TODO: fix to use my IPs
 	}
 	err = s.mio.ConfigureDevice(q)
@@ -275,7 +275,7 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 		Endpoint:                    host,
 		PersistentKeepaliveInterval: &cn.Keepalive,
 		ReplaceAllowedIPs:           true,
-		AllowedIPs:                  toIPNets(peer.AllowedIPs),
+		AllowedIPs:                  ToIPNets(peer.AllowedIPs),
 	}, nil
 
 }

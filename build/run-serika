@@ -6,4 +6,4 @@ make clean
 GOOS=linux GOARCH=arm make runner
 rsync -rP ./runner qanms-test@serika.umi:/home/qanms-test/
 rsync -rP ./testnet-serika.yml qanms-test@serika.umi:/home/qanms-test/runner/testnet.yml
-ssh qanms-test@serika.umi -- 'cd runner && sudo ./runner-bin -config ./runner-config.yml'
+ssh -t qanms-test@serika.umi -- 'cd runner && sudo ./runner-bin -config ./runner-config.yml'

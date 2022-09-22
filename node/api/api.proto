@@ -4,6 +4,9 @@ import "google/protobuf/duration.proto";
 
 option go_package = "github.com/nyiyui/qanms/node/api";
 
+message Ok {
+}
+
 service Node {
   rpc auth(stream AuthSQ) returns (stream AuthSQ);
   // #  client - server
@@ -18,9 +21,8 @@ service Node {
 }
 
 service CentralSource {
-  rpc auth(stream AuthSQ) returns (stream AuthSQ);
-
-  rpc pull(PullQ) returns (PullS);
+  rpc pull(PullQ) returns (stream PullS);
+  rpc push(PushQ) returns (PushS);
 }
 
 message AuthSQ {
@@ -61,11 +63,25 @@ message XchS {
 message PingQS {}
 
 message PullQ {
-  bytes token = 1;
+  bytes centralToken = 1;
 }
 
 message PullS {
   CentralConfig cc = 1;
+}
+
+message PushQ {
+  bytes centralToken = 1;
+  string cnn = 2;
+  string peerName = 3;
+  CentralPeer peer = 4;
+}
+
+message PushS {
+  oneof s {
+    Ok ok = 1;
+    string invalidData = 2;
+  }
 }
 
 message CentralConfig {
