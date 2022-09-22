@@ -20,6 +20,8 @@ type NodeConfig struct {
 	CC       CentralConfig
 	MioPort  uint16
 	MioToken []byte
+	CSHost   string
+	CSToken  []byte
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -53,6 +55,8 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		},
 		servers: map[networkPeerPair]*clientServer{},
 		mio:     mh,
+		csHost:  cfg.CSHost,
+		csToken: cfg.CSToken,
 	}
 	return node, nil
 }
@@ -62,6 +66,8 @@ type Node struct {
 	ccLock       sync.RWMutex
 	cc           CentralConfig
 	coordPrivKey ed25519.PrivateKey
+	csHost       string
+	csToken      []byte
 
 	state       serverState
 	serversLock sync.RWMutex

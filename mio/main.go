@@ -146,7 +146,7 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 
 	_, err := sm.client.Device(q.Name)
 	if errors.Is(err, os.ErrNotExist) {
-		log.Println("※新たなデバイス：%s\n%s", q.Name, toString(q.Config))
+		log.Printf("※新たなデバイス：%s\n%s", q.Name, toString(q.Config))
 		err = devAdd(q.Name, devConfig{
 			Address:    q.Address,
 			PrivateKey: q.Config.PrivateKey,

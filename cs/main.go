@@ -20,6 +20,11 @@ type CentralSource struct {
 	ccLock           sync.RWMutex
 	tokens           tokenStore
 }
+
+func New() *CentralSource {
+	return new(CentralSource)
+}
+
 type change struct{}
 
 var _ api.CentralSourceServer = new(CentralSource)
@@ -61,7 +66,7 @@ func (s *CentralSource) addChangeNotify(chLen int) chan change {
 	return ch
 }
 
-func fromIPNets(nets []net.IPNet) (dest []*api.IPNet) {
+func FromIPNets(nets []net.IPNet) (dest []*api.IPNet) {
 	dest = make([]*api.IPNet, len(nets))
 	for i, n := range nets {
 		dest[i] = &api.IPNet{Cidr: n.String()}
@@ -69,7 +74,7 @@ func fromIPNets(nets []net.IPNet) (dest []*api.IPNet) {
 	return
 }
 
-func toIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
+func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	dest = make([]net.IPNet, len(nets))
 	var n2 *net.IPNet
 	for i, n := range nets {

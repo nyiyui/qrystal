@@ -16,6 +16,7 @@ import (
 
 	"github.com/nyiyui/qanms/node"
 	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qanms/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,6 +25,12 @@ type config struct {
 	PrivKey     string             `yaml:"private-key"`
 	Addr        string             `yaml:"addr"`
 	Central     node.CentralConfig `yaml:"central"`
+	CS          csConfig           `yaml:"cs"`
+}
+
+type csConfig struct {
+	Host  string           `yaml:"host"`
+	Token util.Base64Bytes `yaml:"token"`
 }
 
 func main() {

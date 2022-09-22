@@ -19,14 +19,14 @@ func (s *CentralSource) convertCC(me string) (*api.CentralConfig, error) {
 		for pn, peer := range cn.Peers {
 			peers[pn] = &api.CentralPeer{
 				Host:       peer.Host,
-				AllowedIPs: fromIPNets(node.ToIPNets(peer.AllowedIPs)),
+				AllowedIPs: FromIPNets(node.ToIPNets(peer.AllowedIPs)),
 				PublicKey: &api.PublicKey{
 					Raw: []byte(peer.PublicKey),
 				},
 			}
 		}
 		networks[cnn] = &api.CentralNetwork{
-			Ips:       fromIPNets(node.ToIPNets(cn.IPs)),
+			Ips:       FromIPNets(node.ToIPNets(cn.IPs)),
 			Me:        me,
 			Keepalive: durationpb.New(cn.Keepalive),
 			Peers:     peers,
@@ -38,7 +38,7 @@ func (s *CentralSource) convertCC(me string) (*api.CentralConfig, error) {
 }
 
 func convertPeer(peer *api.CentralPeer) (*node.CentralPeer, error) {
-	allowedIPs, err := toIPNets(peer.AllowedIPs)
+	allowedIPs, err := ToIPNets(peer.AllowedIPs)
 	if err != nil {
 		return nil, fmt.Errorf("AllowedIPs: %w", err)
 	}
