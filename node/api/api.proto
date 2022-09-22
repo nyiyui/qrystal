@@ -61,14 +61,10 @@ message XchS {
 }
 
 message SpreadCCQ {
-  SpreadCCQSigned signed = 1;
-  bytes signature = 2;
-  // signature is the ed25519 signature of the protobuf representation of signed.
-}
-
-message SpreadCCQSigned {
-  CentralConfig cc = 1;
+  bytes signature = 1;
+  // signature is the ed25519 signature of the JSON representation of signed converted to node.CentralConfig.
   uint64 version = 2;
+  CentralConfig cc = 3;
 }
 
 message SpreadCCS {}
