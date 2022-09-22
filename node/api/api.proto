@@ -17,7 +17,7 @@ service Node {
 
   rpc xch(XchQ) returns (XchS);
 
-  rpc ping(PingQS) returns (PingQS);
+  rpc spreadCC(SpreadCCQ) returns (SpreadCCS);
 }
 
 service CentralSource {
@@ -60,7 +60,18 @@ message XchS {
   bytes psk = 2;
 }
 
-message PingQS {}
+message SpreadCCQ {
+  SpreadCCQSigned signed = 1;
+  bytes signature = 2;
+  // signature is the ed25519 signature of the protobuf representation of signed.
+}
+
+message SpreadCCQSigned {
+  CentralConfig cc = 1;
+  uint64 version = 2;
+}
+
+message SpreadCCS {}
 
 message PullQ {
   bytes centralToken = 1;

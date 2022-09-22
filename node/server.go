@@ -16,10 +16,11 @@ import (
 )
 
 type NodeConfig struct {
-	PrivKey  ed25519.PrivateKey
-	CC       CentralConfig
-	MioPort  uint16
-	MioToken []byte
+	PrivKey     ed25519.PrivateKey
+	CC          CentralConfig
+	MioPort     uint16
+	MioToken    []byte
+	CentralHost string
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -51,8 +52,9 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		state: serverState{
 			tokenSecrets: map[string]serverClient{},
 		},
-		servers: map[networkPeerPair]*clientServer{},
-		mio:     mh,
+		servers:     map[networkPeerPair]*clientServer{},
+		mio:         mh,
+		centralHost: cfg.CentralHost,
 	}
 	return node, nil
 }
@@ -62,6 +64,7 @@ type Node struct {
 	ccLock       sync.RWMutex
 	cc           CentralConfig
 	coordPrivKey ed25519.PrivateKey
+	centralHost  string
 
 	state       serverState
 	serversLock sync.RWMutex

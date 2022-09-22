@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type NodeClient interface {
 	Auth(ctx context.Context, opts ...grpc.CallOption) (Node_AuthClient, error)
 	Xch(ctx context.Context, in *XchQ, opts ...grpc.CallOption) (*XchS, error)
-	Ping(ctx context.Context, in *PingQS, opts ...grpc.CallOption) (*PingQS, error)
+	SpreadCC(ctx context.Context, in *SpreadCCQ, opts ...grpc.CallOption) (*SpreadCCS, error)
 }
 
 type nodeClient struct {
@@ -75,9 +75,9 @@ func (c *nodeClient) Xch(ctx context.Context, in *XchQ, opts ...grpc.CallOption)
 	return out, nil
 }
 
-func (c *nodeClient) Ping(ctx context.Context, in *PingQS, opts ...grpc.CallOption) (*PingQS, error) {
-	out := new(PingQS)
-	err := c.cc.Invoke(ctx, "/Node/ping", in, out, opts...)
+func (c *nodeClient) SpreadCC(ctx context.Context, in *SpreadCCQ, opts ...grpc.CallOption) (*SpreadCCS, error) {
+	out := new(SpreadCCS)
+	err := c.cc.Invoke(ctx, "/Node/spreadCC", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (c *nodeClient) Ping(ctx context.Context, in *PingQS, opts ...grpc.CallOpti
 type NodeServer interface {
 	Auth(Node_AuthServer) error
 	Xch(context.Context, *XchQ) (*XchS, error)
-	Ping(context.Context, *PingQS) (*PingQS, error)
+	SpreadCC(context.Context, *SpreadCCQ) (*SpreadCCS, error)
 	mustEmbedUnimplementedNodeServer()
 }
 
@@ -104,8 +104,8 @@ func (UnimplementedNodeServer) Auth(Node_AuthServer) error {
 func (UnimplementedNodeServer) Xch(context.Context, *XchQ) (*XchS, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Xch not implemented")
 }
-func (UnimplementedNodeServer) Ping(context.Context, *PingQS) (*PingQS, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+func (UnimplementedNodeServer) SpreadCC(context.Context, *SpreadCCQ) (*SpreadCCS, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SpreadCC not implemented")
 }
 func (UnimplementedNodeServer) mustEmbedUnimplementedNodeServer() {}
 
@@ -164,20 +164,20 @@ func _Node_Xch_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Node_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingQS)
+func _Node_SpreadCC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SpreadCCQ)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServer).Ping(ctx, in)
+		return srv.(NodeServer).SpreadCC(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Node/ping",
+		FullMethod: "/Node/spreadCC",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServer).Ping(ctx, req.(*PingQS))
+		return srv.(NodeServer).SpreadCC(ctx, req.(*SpreadCCQ))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -194,8 +194,8 @@ var Node_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Node_Xch_Handler,
 		},
 		{
-			MethodName: "ping",
-			Handler:    _Node_Ping_Handler,
+			MethodName: "spreadCC",
+			Handler:    _Node_SpreadCC_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
