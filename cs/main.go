@@ -37,19 +37,20 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 	// TODO: incremental changes (e.g. added peer) (instead of sending whole config every time)
 	cnCh := s.addChangeNotify(1)
 	cnCh <- change{}
-	select {
-	case <-cnCh:
-		s, err := s.convertCC(ti.Name)
-		if err != nil {
-			log.Printf("convertCC: %s", err)
-			return errors.New("conversion failed")
-		}
-		err = ss.Send(&api.PullS{Cc: s})
-		if err != nil {
-			return err
+	for {
+		select {
+		case <-cnCh:
+			s, err := s.convertCC(ti.Name)
+			if err != nil {
+				log.Printf("convertCC: %s", err)
+				return errors.New("conversion failed")
+			}
+			err = ss.Send(&api.PullS{Cc: s})
+			if err != nil {
+				return err
+			}
 		}
 	}
-	return nil
 }
 
 func (s *CentralSource) addChangeNotify(chLen int) chan change {
