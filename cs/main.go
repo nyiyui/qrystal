@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/nyiyui/qanms/node"
 	"github.com/nyiyui/qanms/node/api"
@@ -15,20 +16,25 @@ import (
 type CentralSource struct {
 	api.UnimplementedCentralSourceServer
 	changeNotify     []chan change
-	changeNotifyLock sync.Mutex
+	changeNotifyLock sync.RWMutex
 	cc               node.CentralConfig
 	ccLock           sync.RWMutex
 	tokens           tokenStore
 }
 
-func New() *CentralSource {
-	return new(CentralSource)
+func New(cc node.CentralConfig) *CentralSource {
+	return &CentralSource{
+		cc: cc,
+	}
 }
 
 type change struct{}
 
 var _ api.CentralSourceServer = new(CentralSource)
 
+func (s *CentralSource) Ping(ctx context.Context, ss *api.PingQS) (*api.PingQS, error) {
+	return &api.PingQS{}, nil
+}
 func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) error {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
@@ -37,20 +43,33 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 	if !ti.CanPull {
 		return errors.New("cannot pull")
 	}
-	s.ccLock.RLock()
-	defer s.ccLock.RUnlock()
+	log.Printf("%sから新たな認証済プル", ti.Name)
 	// TODO: incremental changes (e.g. added peer) (instead of sending whole config every time)
-	cnCh := s.addChangeNotify(1)
+	cnCh := s.addChangeNotify(2)
+	defer close(cnCh)
 	cnCh <- change{}
 	for {
 		select {
 		case <-cnCh:
-			s, err := s.convertCC(ti.Name)
+			// token status could change while this is called
+			ti, ok := s.tokens.getToken(q.CentralToken)
+			if !ok {
+				return errors.New("token auth failed")
+			}
+			if !ti.CanPull {
+				return errors.New("cannot pull")
+			}
+
+			log.Printf("%sに送ります。", ti.Name)
+
+			s.ccLock.RLock()
+			defer s.ccLock.RUnlock()
+			newCC, err := s.convertCC(ti.Name)
 			if err != nil {
 				log.Printf("convertCC: %s", err)
 				return errors.New("conversion failed")
 			}
-			err = ss.Send(&api.PullS{Cc: s})
+			err = ss.Send(&api.PullS{Cc: newCC})
 			if err != nil {
 				return err
 			}
@@ -87,6 +106,20 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	return
 }
 
+func (s *CentralSource) notifyChange() {
+	s.changeNotifyLock.RLock()
+	defer s.changeNotifyLock.RUnlock()
+	for _, cnCh := range s.changeNotify {
+		go func(cnCh chan change) {
+			timer := time.NewTimer(1 * time.Second)
+			select {
+			case cnCh <- change{}:
+			case <-timer.C:
+			}
+		}(cnCh)
+	}
+}
+
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
@@ -108,6 +141,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	cn := s.cc.Networks[q.Cnn]
 	// TODO: impl checks for PublicKey, host, net overlap
 	cn.Peers[q.PeerName] = peer
+	s.notifyChange()
 	return &api.PushS{
 		S: &api.PushS_Ok{},
 	}, nil

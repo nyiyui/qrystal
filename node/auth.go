@@ -91,7 +91,7 @@ func (s *authState) authMine(cnn, yourName string) error {
 	signed := make([]byte, 64)
 	copy(signed, chall)
 	signed = append(signed, sq4.ChallAdded...)
-	ok := ed25519.Verify(s.you.PublicKey, signed, sq4.ChallResp)
+	ok := ed25519.Verify(ed25519.PublicKey(s.you.PublicKey), signed, sq4.ChallResp)
 	if !ok {
 		return errors.New("signature verification failed")
 	}

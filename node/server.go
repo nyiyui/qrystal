@@ -21,7 +21,7 @@ type NodeConfig struct {
 	MioPort  uint16
 	MioToken []byte
 	CSHost   string
-	CSToken  []byte
+	CSToken  string
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -33,7 +33,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 				// check pub/priv key pair
 				privKey := cfg.PrivKey
 				derived := privKey.Public().(ed25519.PublicKey)
-				pubKey := peer.PublicKey
+				pubKey := ed25519.PublicKey(peer.PublicKey)
 				if !pubKey.Equal(derived) {
 					return nil, fmt.Errorf("my public and private keys don't match:\npublic: %s\nprivate: %s\npublic from private: %s ", pubKey, privKey, derived)
 				}
@@ -67,7 +67,7 @@ type Node struct {
 	cc           CentralConfig
 	coordPrivKey ed25519.PrivateKey
 	csHost       string
-	csToken      []byte
+	csToken      string
 
 	state       serverState
 	serversLock sync.RWMutex
@@ -129,8 +129,10 @@ func (s *Node) Auth(conn api.Node_AuthServer) error {
 		state.cn.lock.Lock()
 		defer state.cn.lock.Unlock()
 		token, err := s.addRandomToken(state.cn, state.you.name)
+		log.Printf("you: %#v", state.you)
+		log.Printf("cn: %#v", state.cn)
 		if err != nil {
-			return errors.New("generating token failed")
+			return fmt.Errorf("generating token failed: %w", err)
 		}
 		sq5 := api.AuthToken{
 			Token: token,

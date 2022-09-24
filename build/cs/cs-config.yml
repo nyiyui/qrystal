@@ -1,0 +1,27 @@
+tokens:
+  - name: ko
+    hash: 30bb530c7957f8028916da7bb08342a07249de751c64691a1bbe2512afc48cdb
+    # ZU0ThYdHcs46PYEN8Wi9k7i2py-z-ZhX_C06Ptp9Y5k
+    can-pull: true
+  - name: serika
+    hash: 7578e2174f38dde784f457c7dcfa20b7cc80dff46e14010932cb712a3624bd8d
+    # 1vnfo4J1_gyCS9S5KjZo65u39WgGwqL8KPSMxq7knqk
+    can-pull: true
+central:
+  networks:
+    niconet:
+      keepalive: 10s
+      listen-port: 51820
+      ips:
+        - 10.25.0.1/16
+      peers:
+        ko:
+          host: ko.umi:8082
+          public-key: U_//PRs9WgDAVcIv3W2HKoJaKD70rOq8RpDxoi7wXzevE=
+          allowed-ips:
+            - 10.25.0.1/32
+        serika:
+          host: serika.umi:8082
+          public-key: U_ewicL9pNLPEqGy1azfI9bZqv4OKlNGBo0FajjISpErs=
+          allowed-ips:
+            - 10.25.0.2/32

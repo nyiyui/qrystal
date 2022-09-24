@@ -17,8 +17,8 @@ import (
 )
 
 type Config struct {
-	Server       string           `yaml:"server"`
-	CentralToken util.Base64Bytes `yaml:"token"`
+	Server       string            `yaml:"server"`
+	CentralToken *util.Base64Bytes `yaml:"token"`
 }
 
 var configPath string

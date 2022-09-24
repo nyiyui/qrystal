@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"log"
 	"net/rpc"
 
 	"github.com/nyiyui/qanms/mio"
@@ -28,6 +29,7 @@ func newMio(port uint16, token []byte) (*mioHandle, error) {
 // Note: q.Name will have "qanms-" prepended for the WireGuard name.
 func (h *mioHandle) ConfigureDevice(q mio.ConfigureDeviceQ) (err error) {
 	var errString string
+	log.Printf("%#v", q)
 	q.Token = h.token
 	err = h.client.Call("Mio.ConfigureDevice", q, &errString)
 	if err != nil {

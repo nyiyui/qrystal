@@ -32,3 +32,9 @@ type networkPeerPair struct {
 	network string
 	peer    string
 }
+
+func (n *Node) ReplaceCC(cc2 *CentralConfig) {
+	n.ccLock.Lock()
+	defer n.ccLock.Unlock()
+	n.cc = *cc2
+}

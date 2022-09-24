@@ -1,0 +1,7 @@
+#!/bin/env python3
+
+import hashlib, secrets
+
+
+print("hash", hashlib.sha256(token := secrets.token_urlsafe(32).encode()).hexdigest())
+print("token", token.decode())

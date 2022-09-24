@@ -111,7 +111,14 @@ func toString(config *wgtypes.Config) string {
 		fmt.Fprintf(b, "Endpoint = %s\n", peer.Endpoint)
 		fmt.Fprintf(b, "PersistentKeepalive = %s\n", peer.PersistentKeepaliveInterval)
 		fmt.Fprintf(b, "ReplaceAllowedIPs = %t\n", peer.ReplaceAllowedIPs)
-		fmt.Fprintf(b, "AllowedIPs = %s\n", peer.AllowedIPs)
+		allowedIPs := new(bytes.Buffer)
+		for i, allowedIP := range peer.AllowedIPs {
+			fmt.Fprintf(allowedIPs, "%s", allowedIP)
+			if i != len(peer.AllowedIPs)-1 {
+				fmt.Fprint(allowedIPs, ", ")
+			}
+		}
+		fmt.Fprintf(b, "AllowedIPs = %s\n", allowedIPs)
 	}
 	return b.String()
 }

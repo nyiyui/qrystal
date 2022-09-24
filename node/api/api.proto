@@ -23,6 +23,8 @@ service Node {
 service CentralSource {
   rpc pull(PullQ) returns (stream PullS);
   rpc push(PushQ) returns (PushS);
+
+  rpc ping(PingQS) returns (PingQS);
 }
 
 message AuthSQ {
@@ -63,7 +65,7 @@ message XchS {
 message PingQS {}
 
 message PullQ {
-  bytes centralToken = 1;
+  string centralToken = 1;
 }
 
 message PullS {
@@ -71,7 +73,7 @@ message PullS {
 }
 
 message PushQ {
-  bytes centralToken = 1;
+  string centralToken = 1;
   string cnn = 2;
   string peerName = 3;
   CentralPeer peer = 4;
@@ -92,6 +94,7 @@ message CentralNetwork {
   repeated IPNet ips = 1;
   string me = 2;
   google.protobuf.Duration keepalive = 3;
+  int32 listenPort = 4;
   map<string, CentralPeer> peers = 5;
 }
 

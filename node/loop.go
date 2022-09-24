@@ -3,21 +3,27 @@ package node
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/nyiyui/qanms/node/api"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func (n *Node) setupCS() (api.CentralSourceClient, error) {
-	conn, err := grpc.Dial(n.csHost, grpc.WithTimeout(5*time.Second))
+	conn, err := grpc.Dial(n.csHost, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("connecting: %w", err)
 	}
 	cl := api.NewCentralSourceClient(conn)
+	_, err = cl.Ping(context.Background(), &api.PingQS{})
+	if err != nil {
+		return nil, fmt.Errorf("ping: %w", err)
+	}
 	return cl, nil
 }
-func (n *Node) listenCS() error {
+func (n *Node) ListenCS() error {
 	cl, err := n.setupCS()
 	if err != nil {
 		return err
@@ -33,23 +39,27 @@ func (n *Node) listenCS() error {
 		if err != nil {
 			return fmt.Errorf("pull recv: %w", err)
 		}
+		log.Printf("preconv: %s", s.Cc)
 		cc, err := newCCFromAPI(s.Cc)
 		if err != nil {
 			return fmt.Errorf("conv: %w", err)
 		}
-		err = func() error {
-			n.ccLock.Lock()
-			defer n.ccLock.Unlock()
-			n.cc = *cc
-			res, err := n.Sync(context.Background())
-			if err != nil {
-				return fmt.Errorf("sync: %w", err)
-			}
-			// TODO: check res
-			// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-			_ = res
-			return nil
-		}()
+		cc.DialOpts = []grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
+		log.Printf("新たなCCを受信: %#v", cc)
+		for cnn, cn := range cc.Networks {
+			log.Printf("net %s: %#v", cnn, cn)
+		}
+		n.ReplaceCC(cc)
+		log.Printf("新たなCCで同期します。")
+		res, err := n.Sync(context.Background())
+		if err != nil {
+			return fmt.Errorf("sync: %w", err)
+		}
+		// TODO: check res
+		// TODO: fallback to previous if all fails? perhaps as an option in PullS?
+		log.Printf("新たなCCで同期：\n%s", res)
 		if err != nil {
 			return err
 		}

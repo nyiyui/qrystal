@@ -6,6 +6,7 @@ import (
 
 	"github.com/nyiyui/qanms/node"
 	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qanms/util"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -26,10 +27,11 @@ func (s *CentralSource) convertCC(me string) (*api.CentralConfig, error) {
 			}
 		}
 		networks[cnn] = &api.CentralNetwork{
-			Ips:       FromIPNets(node.ToIPNets(cn.IPs)),
-			Me:        me,
-			Keepalive: durationpb.New(cn.Keepalive),
-			Peers:     peers,
+			Ips:        FromIPNets(node.ToIPNets(cn.IPs)),
+			Me:         me,
+			Keepalive:  durationpb.New(cn.Keepalive),
+			ListenPort: int32(cn.ListenPort),
+			Peers:      peers,
 		}
 	}
 	return &api.CentralConfig{
@@ -48,6 +50,6 @@ func convertPeer(peer *api.CentralPeer) (*node.CentralPeer, error) {
 	return &node.CentralPeer{
 		Host:       peer.Host,
 		AllowedIPs: node.FromIPNets(allowedIPs),
-		PublicKey:  ed25519.PublicKey(peer.PublicKey.Raw),
+		PublicKey:  util.Ed25519PublicKey(peer.PublicKey.Raw),
 	}, nil
 }

@@ -1,11 +1,11 @@
 package node
 
 import (
-	"crypto/ed25519"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/nyiyui/qanms/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
@@ -34,8 +34,7 @@ type CentralPeer struct {
 	Host       string   `yaml:"host"`
 	AllowedIPs []IPNet2 `yaml:"allowed-ips"`
 	// TODO: use UnmarshalYAML
-	PublicKeyInput string `yaml:"public-key"`
-	PublicKey      ed25519.PublicKey
+	PublicKey util.Ed25519PublicKey `yaml:"public-key"`
 
 	lsa     time.Time
 	lsaLock sync.RWMutex

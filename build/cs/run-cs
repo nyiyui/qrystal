@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -eux
+
+go build -o cs ../../cmd/cs/main.go
+./cs -addr :8083 -config ./cs-config.yml

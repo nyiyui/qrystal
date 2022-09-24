@@ -90,7 +90,7 @@ func (c *Node) syncNetworkWG(cn *CentralNetwork, peers []wgtypes.PeerConfig) err
 		// TODO: fix to use my IPs
 	})
 	if err != nil {
-		return fmt.Errorf("mio: %w", err)
+		return fmt.Errorf("mio ConfigureDevice: %w", err)
 	}
 	return nil
 }
