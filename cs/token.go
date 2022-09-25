@@ -5,9 +5,22 @@ import (
 	"sync"
 )
 
+type sha256Sum = [sha256.Size]byte
+
 type tokenStore struct {
 	tokens     map[[sha256.Size]byte]TokenInfo
 	tokensLock sync.RWMutex
+}
+
+func (s *tokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool) {
+	s.tokensLock.Lock()
+	defer s.tokensLock.Unlock()
+	_, ok := s.tokens[sum]
+	if ok && !overwrite {
+		return true
+	}
+	s.tokens[sum] = info
+	return false
 }
 
 func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool) {
@@ -19,9 +32,17 @@ func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool) {
 }
 
 type TokenInfo struct {
-	Name    string
-	CanPull bool
-	CanPush bool
+	Name         string
+	Networks     map[string]string `yaml:"networks"`
+	CanPull      bool
+	CanPush      bool
+	CanAddTokens *CanAddTokens
+}
+
+type CanAddTokens struct {
+	CanPull bool `yaml:"can-pull"`
+	CanPush bool `yaml:"can-push"`
+	// don't allow CanAddTokens to make logic simpler
 }
 
 type Token struct {

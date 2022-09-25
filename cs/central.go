@@ -10,12 +10,16 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func (s *CentralSource) convertCC(me string) (*api.CentralConfig, error) {
+func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.CentralConfig, error) {
 	s.ccLock.RLock()
 	defer s.ccLock.RUnlock()
 	cc := s.cc
 	networks := map[string]*api.CentralNetwork{}
 	for cnn, cn := range cc.Networks {
+		me, ok := tokenNetworks[cnn]
+		if !ok {
+			continue
+		}
 		peers := map[string]*api.CentralPeer{}
 		for pn, peer := range cn.Peers {
 			peers[pn] = &api.CentralPeer{

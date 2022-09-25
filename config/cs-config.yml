@@ -1,0 +1,31 @@
+tokens:
+  - name: master
+    hash: …
+    can-add-tokens:
+      can-pull: true # required to add tokens with can-pull: true
+  - name: phone0
+    hash: …
+    can-pull: true
+    networks:
+      examplenet: phone
+  - name: desktop0
+    hash: …
+    can-pull: true
+    networks:
+      examplenet: desktop
+central:
+  networks:
+    examplenet:
+      keepalive: 10s
+      listen-port: 58120
+      ips:
+        - 10.123.0.1/16
+      peers:
+        phone:
+          public-key: U_…
+          allowed-ips:
+            - 10.123.0.1/32
+        desktop:
+          public-key: U_…
+          allowed-ips:
+            - 10.123.0.2/32

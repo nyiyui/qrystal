@@ -23,6 +23,7 @@ service Node {
 service CentralSource {
   rpc pull(PullQ) returns (stream PullS);
   rpc push(PushQ) returns (PushS);
+  rpc addToken(AddTokenQ) returns (AddTokenS);
 
   rpc ping(PingQS) returns (PingQS);
 }
@@ -111,3 +112,15 @@ message PublicKey {
 message IPNet {
   string cidr = 1;
 }
+
+message AddTokenQ {
+  string centralToken = 1;
+  bool overwrite = 2;
+  bytes hash = 3;
+  string name = 4;
+  map<string, string> networks = 5;
+  bool canPull = 6;
+  bool canPush = 7;
+}
+
+message AddTokenS {}

@@ -8,10 +8,9 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/nyiyui/qanms/node"
 	"github.com/nyiyui/qanms/node/api"
@@ -19,7 +18,8 @@ import (
 )
 
 type config struct {
-	ResyncEvery time.Duration      `yaml:"resync-every"`
+	TLSCertPath string             `yaml:"tls-cert-path"`
+	TLSKeyPath  string             `yaml:"tls-key-path"`
 	PrivKey     string             `yaml:"private-key"`
 	Addr        string             `yaml:"addr"`
 	Central     node.CentralConfig `yaml:"central"`
@@ -54,8 +54,18 @@ func main() {
 	}
 	privKey2 := ed25519.NewKeyFromSeed([]byte(privKey))
 
+	clientCreds, err := credentials.NewClientTLSFromFile(c.TLSCertPath, "")
+	if err != nil {
+		log.Fatalf("client tls: %s", err)
+	}
+
+	serverCreds, err := credentials.NewServerTLSFromFile(c.TLSCertPath, c.TLSKeyPath)
+	if err != nil {
+		log.Fatalf("client tls: %s", err)
+	}
+
 	c.Central.DialOpts = []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(clientCreds),
 	}
 	mioPort, err := strconv.ParseUint(os.Getenv("MIO_PORT"), 10, 16)
 	if err != nil {
@@ -72,13 +82,14 @@ func main() {
 		MioToken: mioToken,
 		CSHost:   c.CS.Host,
 		CSToken:  c.CS.Token,
+		CSCreds:  clientCreds,
 	})
 	if err != nil {
 		panic(err)
 	}
 
 	go func() {
-		server := grpc.NewServer()
+		server := grpc.NewServer(grpc.Creds(serverCreds))
 		api.RegisterNodeServer(server, n)
 		lis, err := net.Listen("tcp", c.Addr)
 		if err != nil {
@@ -89,67 +100,11 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	/*
-		go func() {
-			ticker := time.Tick(c.ResyncEvery)
-			var syncIndex int
-			log.Printf("sync %d on %s", syncIndex, time.Now())
-			syncRes, err := n.Sync(context.Background())
-			if err != nil {
-				log.Printf("sync %d error: %s", syncIndex, err)
-			}
-			log.Printf("sync %d res: %s", syncIndex, syncRes)
-			syncIndex++
-			select {
-			case now := <-ticker:
-				log.Printf("sync %d on %s", syncIndex, now)
-				syncRes, err := n.Sync(context.Background())
-				if err != nil {
-					log.Printf("sync %d error: %s", syncIndex, err)
-				}
-				log.Printf("sync %d res: %s", syncIndex, syncRes)
-				syncIndex++
-			}
-		}()
-	*/
 	go func() {
 		err := n.ListenCS()
 		if err != nil {
 			log.Printf("listen: %s", err)
 		}
 	}()
-	/*
-			log.Printf("CSに接続します。 %s", c.CS.Host)
-			conn, err := grpc.Dial(c.CS.Host, grpc.WithTimeout(5*time.Second),
-				grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				log.Fatalf("dial: %s", err)
-			}
-			cl := api.NewCentralSourceClient(conn)
-			_, err = cl.Ping(context.Background(), &api.PingQS{})
-			if err != nil {
-				log.Fatalf("ping: %s", err)
-			}
-			log.Printf("CSに接続しました。 %s", c.CS.Host)
-			call, err := cl.Pull(context.Background(), &api.PullQ{
-				CentralToken: c.CS.Token,
-			})
-			if err != nil {
-				log.Fatalf("pull init: %s", err)
-			}
-			for {
-				s, err := call.Recv()
-				if err != nil {
-					log.Fatalf("dial: %s", err)
-				}
-				log.Print("pull received")
-				cc, err := node.NewCCFromAPI(s.Cc)
-				if err != nil {
-					log.Fatalf("convert: %s", err)
-				}
-				n.ReplaceCC(cc)
-			}
-		}()
-	*/
 	select {}
 }

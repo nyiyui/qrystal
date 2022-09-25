@@ -7,47 +7,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/nyiyui/qanms/cs"
-	"github.com/nyiyui/qanms/node"
 	"github.com/nyiyui/qanms/node/api"
-	"github.com/nyiyui/qanms/util"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
 )
-
-type Config struct {
-	CC     *node.CentralConfig `yaml:"central"`
-	Tokens *Tokens             `yaml:"tokens"`
-}
-
-type Tokens struct {
-	raw []cs.Token
-}
-
-func (t *Tokens) UnmarshalYAML(value *yaml.Node) error {
-	var raw []Token
-	err := value.Decode(&raw)
-	if err != nil {
-		return err
-	}
-	t2, err := convertTokens(raw)
-	if err != nil {
-		return err
-	}
-	t.raw = t2
-	return nil
-}
-
-type Token struct {
-	Name    string         `yaml:"name"`
-	Hash    *util.HexBytes `yaml:"hash"`
-	CanPull bool           `yaml:"can-pull"`
-	CanPush bool           `yaml:"can-push"`
-}
 
 func convertTokens(tokens []Token) ([]cs.Token, error) {
 	res := make([]cs.Token, len(tokens))
@@ -61,9 +27,11 @@ func convertTokens(tokens []Token) ([]cs.Token, error) {
 		res[i] = cs.Token{
 			Hash: hash,
 			Info: cs.TokenInfo{
-				Name:    token.Name,
-				CanPull: token.CanPull,
-				CanPush: token.CanPush,
+				Name:         token.Name,
+				Networks:     token.Networks,
+				CanPull:      token.CanPull,
+				CanPush:      token.CanPush,
+				CanAddTokens: token.CanAddTokens,
 			},
 		}
 	}
@@ -83,9 +51,9 @@ func loadConfig() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config unmarshal: %s", err)
 	}
-	for _, cn := range config.CC.Networks {
+	for cnn, cn := range config.CC.Networks {
 		if cn.Me != "" {
-			return nil, fmt.Errorf("net %s: me is not blank")
+			return nil, fmt.Errorf("net %s: me is not blank", cnn)
 		}
 	}
 	return &config, nil
@@ -100,15 +68,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("load config: %s", err)
 	}
-	log.Print("config loaded")
-
-	reloadCh := make(chan os.Signal, 1)
-	signal.Notify(reloadCh, syscall.SIGHUP)
+	log.Print("config file loaded")
+	creds, err := credentials.NewServerTLSFromFile(config.TLSCertPath, config.TLSKeyPath)
+	if err != nil {
+		log.Fatalf("server tls: %s", err)
+	}
 
 	server := cs.New(*config.CC)
 	server.ReplaceTokens(config.Tokens.raw)
-	go reloadOnCh(reloadCh, server)
-	gs := grpc.NewServer()
+	gs := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterCentralSourceServer(gs, server)
 	lis, err := net.Listen("tcp", addr)
 	log.Print("聞きます…")
@@ -118,18 +86,5 @@ func main() {
 	err = gs.Serve(lis)
 	if err != nil {
 		log.Fatalf("serve: %s", err)
-	}
-}
-
-func reloadOnCh(reloadCh <-chan os.Signal, server *cs.CentralSource) {
-	select {
-	case <-reloadCh:
-		cfg, err := loadConfig()
-		if err != nil {
-			log.Printf("sighup: load config: %s", err)
-		}
-		server.ReplaceTokens(cfg.Tokens.raw)
-		server.ReplaceCC(cfg.CC)
-		log.Printf("sighup: reloaded config")
 	}
 }

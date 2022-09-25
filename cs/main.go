@@ -15,11 +15,11 @@ import (
 
 type CentralSource struct {
 	api.UnimplementedCentralSourceServer
-	changeNotify     []chan change
-	changeNotifyLock sync.RWMutex
-	cc               node.CentralConfig
-	ccLock           sync.RWMutex
-	tokens           tokenStore
+	notifyChs     map[string]chan change
+	notifyChsLock sync.RWMutex
+	cc            node.CentralConfig
+	ccLock        sync.RWMutex
+	tokens        tokenStore
 }
 
 func New(cc node.CentralConfig) *CentralSource {
@@ -35,6 +35,7 @@ var _ api.CentralSourceServer = new(CentralSource)
 func (s *CentralSource) Ping(ctx context.Context, ss *api.PingQS) (*api.PingQS, error) {
 	return &api.PingQS{}, nil
 }
+
 func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) error {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
@@ -45,11 +46,14 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 	}
 	log.Printf("%sから新たな認証済プル", ti.Name)
 	// TODO: incremental changes (e.g. added peer) (instead of sending whole config every time)
-	cnCh := s.addChangeNotify(2)
+	ctx := ss.Context()
+	cnCh := s.addChangeNotify(q.CentralToken, 2)
 	defer close(cnCh)
 	cnCh <- change{}
 	for {
 		select {
+		case <-ctx.Done():
+			s.rmChangeNotify(q.CentralToken)
 		case <-cnCh:
 			// token status could change while this is called
 			ti, ok := s.tokens.getToken(q.CentralToken)
@@ -64,7 +68,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 
 			s.ccLock.RLock()
 			defer s.ccLock.RUnlock()
-			newCC, err := s.convertCC(ti.Name)
+			newCC, err := s.convertCC(ti.Networks)
 			if err != nil {
 				log.Printf("convertCC: %s", err)
 				return errors.New("conversion failed")
@@ -77,12 +81,18 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 	}
 }
 
-func (s *CentralSource) addChangeNotify(chLen int) chan change {
+func (s *CentralSource) addChangeNotify(name string, chLen int) chan change {
 	ch := make(chan change, chLen)
-	s.changeNotifyLock.Lock()
-	defer s.changeNotifyLock.Unlock()
-	s.changeNotify = append(s.changeNotify, ch)
+	s.notifyChsLock.Lock()
+	defer s.notifyChsLock.Unlock()
+	s.notifyChs[name] = ch
 	return ch
+}
+
+func (s *CentralSource) rmChangeNotify(name string) {
+	s.notifyChsLock.Lock()
+	defer s.notifyChsLock.Unlock()
+	delete(s.notifyChs, name)
 }
 
 func FromIPNets(nets []net.IPNet) (dest []*api.IPNet) {
@@ -107,9 +117,9 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 }
 
 func (s *CentralSource) notifyChange() {
-	s.changeNotifyLock.RLock()
-	defer s.changeNotifyLock.RUnlock()
-	for _, cnCh := range s.changeNotify {
+	s.notifyChsLock.RLock()
+	defer s.notifyChsLock.RUnlock()
+	for _, cnCh := range s.notifyChs {
 		go func(cnCh chan change) {
 			timer := time.NewTimer(1 * time.Second)
 			select {
@@ -145,4 +155,29 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	return &api.PushS{
 		S: &api.PushS_Ok{},
 	}, nil
+}
+
+func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.AddTokenS, error) {
+	ti, ok := s.tokens.getToken(q.CentralToken)
+	if !ok {
+		return nil, errors.New("token auth failed")
+	}
+	if ti.CanAddTokens == nil {
+		return nil, errors.New("cannot add tokens")
+	}
+	var hash sha256Sum
+	n := copy(hash[:], q.Hash)
+	if n != len(hash) {
+		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
+	}
+	alreadyExists := s.tokens.AddToken(hash, TokenInfo{
+		Name:     q.Name,
+		Networks: q.Networks,
+		CanPull:  q.CanPull,
+		CanPush:  q.CanPush,
+	}, q.Overwrite)
+	if alreadyExists {
+		return nil, errors.New("same hash already exists")
+	}
+	return &api.AddTokenS{}, nil
 }

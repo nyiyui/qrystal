@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -13,70 +12,105 @@ import (
 	"github.com/nyiyui/qanms/node/api"
 	"github.com/nyiyui/qanms/util"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Server       string            `yaml:"server"`
-	CentralToken *util.Base64Bytes `yaml:"token"`
+	Server       string `yaml:"server"`
+	CentralToken string `yaml:"token"`
+	TLSCertPath  string `yaml:"tls-cert-path"`
 }
 
-var configPath string
-var cnn string
-var pn string
-var ph string
-var pubKeyRaw string
-var config Config
+type TmpConfig struct {
+	ConfigPath string                   `yaml:"config-path"`
+	Overwrite  bool                     `yaml:"overwrite"`
+	Name       string                   `yaml:"name"`
+	Networks   map[string]NetworkConfig `yaml:"networks"`
+
+	PublicKey util.Ed25519PublicKey `yaml:"public-key"`
+	TokenHash util.HexBytes         `yaml:"token-hash"`
+}
+
+type NetworkConfig struct {
+	Name string   `yaml:"name"`
+	IPs  []string `yaml:"ips"`
+	Host string   `yaml:"host"`
+}
+
+var tcPath string
+var cfg Config
+var tc TmpConfig
 
 func main() {
-	flag.StringVar(&configPath, "config", "", "path to config file")
-	flag.StringVar(&cnn, "cnn", "", "network name")
-	flag.StringVar(&pn, "pn", "", "peer name")
-	flag.StringVar(&ph, "ph", "", "peer host")
-	flag.StringVar(&pubKeyRaw, "pubKey", "", "peer public key")
+	flag.StringVar(&tcPath, "tmp-config", "", "path to tmp config file")
 	flag.Parse()
 
-	pubKey, err := base64.StdEncoding.DecodeString(pubKeyRaw)
-	if err != nil {
-		log.Fatalf("decode public key: %s", err)
-	}
-
-	allowedIPs := make([]net.IPNet, len(flag.Args()))
-	for i, raw := range flag.Args() {
-		_, allowedIP, err := net.ParseCIDR(raw)
-		if err != nil {
-			log.Fatalf("parse ip %d: %s", i, err)
-		}
-		allowedIPs[i] = *allowedIP
-	}
-
-	raw, err := ioutil.ReadFile(configPath)
+	raw, err := ioutil.ReadFile(tcPath)
 	if err != nil {
 		log.Fatalf("config read: %s", err)
 	}
-	err = yaml.Unmarshal(raw, &config)
+	err = yaml.Unmarshal(raw, &tc)
 	if err != nil {
 		log.Fatalf("config unmarshal: %s", err)
 	}
 
-	conn, err := grpc.Dial(config.Server, grpc.WithTimeout(5*time.Second))
+	raw, err = ioutil.ReadFile(tc.ConfigPath)
+	if err != nil {
+		log.Fatalf("config read: %s", err)
+	}
+	err = yaml.Unmarshal(raw, &cfg)
+	if err != nil {
+		log.Fatalf("config unmarshal: %s", err)
+	}
+
+	creds, err := credentials.NewClientTLSFromFile(cfg.TLSCertPath, "")
+	if err != nil {
+		log.Fatalf("client tls: %s", err)
+	}
+
+	conn, err := grpc.Dial(cfg.Server, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("dial: %s", err)
 	}
+	networks := map[string]string{}
+	for cnn, nc := range tc.Networks {
+		networks[cnn] = nc.Name
+	}
 	cl := api.NewCentralSourceClient(conn)
-	q := &api.PushQ{
-		CentralToken: config.CentralToken,
-		Cnn:          cnn,
-		PeerName:     pn,
-		Peer: &api.CentralPeer{
-			Host:       ph,
-			AllowedIPs: cs.FromIPNets(allowedIPs),
-			PublicKey:  &api.PublicKey{Raw: pubKey},
-		},
-	}
-	s, err := cl.Push(context.Background(), q)
+	_, err = cl.AddToken(context.Background(), &api.AddTokenQ{
+		CentralToken: cfg.CentralToken,
+		Overwrite:    tc.Overwrite,
+		Hash:         tc.TokenHash,
+		Name:         tc.Name,
+		Networks:     networks,
+		CanPull:      true,
+	})
 	if err != nil {
-		log.Fatalf("push: %s", err)
+		log.Fatalf("add token: %s", err)
 	}
-	log.Printf("ok: %#v", s)
+	for cnn, nc := range tc.Networks {
+		allowedIPs := make([]net.IPNet, len(nc.IPs))
+		for i, raw := range nc.IPs {
+			_, allowedIP, err := net.ParseCIDR(raw)
+			if err != nil {
+				log.Fatalf("parse ip %d: %s", i, err)
+			}
+			allowedIPs[i] = *allowedIP
+		}
+
+		_, err := cl.Push(context.Background(), &api.PushQ{
+			CentralToken: cfg.CentralToken,
+			Cnn:          cnn,
+			PeerName:     nc.Name,
+			Peer: &api.CentralPeer{
+				Host:       nc.Host,
+				AllowedIPs: cs.FromIPNets(allowedIPs),
+				PublicKey:  &api.PublicKey{Raw: tc.PublicKey},
+			},
+		})
+		if err != nil {
+			log.Fatalf("push net %s: %s", cnn, err)
+		}
+	}
 }

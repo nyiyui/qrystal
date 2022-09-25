@@ -215,6 +215,7 @@ var Node_ServiceDesc = grpc.ServiceDesc{
 type CentralSourceClient interface {
 	Pull(ctx context.Context, in *PullQ, opts ...grpc.CallOption) (CentralSource_PullClient, error)
 	Push(ctx context.Context, in *PushQ, opts ...grpc.CallOption) (*PushS, error)
+	AddToken(ctx context.Context, in *AddTokenQ, opts ...grpc.CallOption) (*AddTokenS, error)
 	Ping(ctx context.Context, in *PingQS, opts ...grpc.CallOption) (*PingQS, error)
 }
 
@@ -267,6 +268,15 @@ func (c *centralSourceClient) Push(ctx context.Context, in *PushQ, opts ...grpc.
 	return out, nil
 }
 
+func (c *centralSourceClient) AddToken(ctx context.Context, in *AddTokenQ, opts ...grpc.CallOption) (*AddTokenS, error) {
+	out := new(AddTokenS)
+	err := c.cc.Invoke(ctx, "/CentralSource/addToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *centralSourceClient) Ping(ctx context.Context, in *PingQS, opts ...grpc.CallOption) (*PingQS, error) {
 	out := new(PingQS)
 	err := c.cc.Invoke(ctx, "/CentralSource/ping", in, out, opts...)
@@ -282,6 +292,7 @@ func (c *centralSourceClient) Ping(ctx context.Context, in *PingQS, opts ...grpc
 type CentralSourceServer interface {
 	Pull(*PullQ, CentralSource_PullServer) error
 	Push(context.Context, *PushQ) (*PushS, error)
+	AddToken(context.Context, *AddTokenQ) (*AddTokenS, error)
 	Ping(context.Context, *PingQS) (*PingQS, error)
 	mustEmbedUnimplementedCentralSourceServer()
 }
@@ -295,6 +306,9 @@ func (UnimplementedCentralSourceServer) Pull(*PullQ, CentralSource_PullServer) e
 }
 func (UnimplementedCentralSourceServer) Push(context.Context, *PushQ) (*PushS, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Push not implemented")
+}
+func (UnimplementedCentralSourceServer) AddToken(context.Context, *AddTokenQ) (*AddTokenS, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddToken not implemented")
 }
 func (UnimplementedCentralSourceServer) Ping(context.Context, *PingQS) (*PingQS, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -351,6 +365,24 @@ func _CentralSource_Push_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CentralSource_AddToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddTokenQ)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CentralSourceServer).AddToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CentralSource/addToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CentralSourceServer).AddToken(ctx, req.(*AddTokenQ))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CentralSource_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PingQS)
 	if err := dec(in); err != nil {
@@ -379,6 +411,10 @@ var CentralSource_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "push",
 			Handler:    _CentralSource_Push_Handler,
+		},
+		{
+			MethodName: "addToken",
+			Handler:    _CentralSource_AddToken_Handler,
 		},
 		{
 			MethodName: "ping",

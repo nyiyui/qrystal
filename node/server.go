@@ -13,6 +13,7 @@ import (
 	"github.com/nyiyui/qanms/mio"
 	"github.com/nyiyui/qanms/node/api"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"google.golang.org/grpc/credentials"
 )
 
 type NodeConfig struct {
@@ -22,6 +23,7 @@ type NodeConfig struct {
 	MioToken []byte
 	CSHost   string
 	CSToken  string
+	CSCreds  credentials.TransportCredentials
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -57,6 +59,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		mio:     mh,
 		csHost:  cfg.CSHost,
 		csToken: cfg.CSToken,
+		csCreds: cfg.CSCreds,
 	}
 	return node, nil
 }
@@ -68,6 +71,7 @@ type Node struct {
 	coordPrivKey ed25519.PrivateKey
 	csHost       string
 	csToken      string
+	csCreds      credentials.TransportCredentials
 
 	state       serverState
 	serversLock sync.RWMutex
