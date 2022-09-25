@@ -38,7 +38,6 @@ func convertTokens(tokens []Token) ([]cs.Token, error) {
 	return res, nil
 }
 
-var addr string
 var configPath string
 
 func loadConfig() (*Config, error) {
@@ -60,7 +59,6 @@ func loadConfig() (*Config, error) {
 }
 
 func main() {
-	flag.StringVar(&addr, "addr", "", "bind address")
 	flag.StringVar(&configPath, "config", "", "config file path")
 	flag.Parse()
 
@@ -78,7 +76,7 @@ func main() {
 	server.ReplaceTokens(config.Tokens.raw)
 	gs := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterCentralSourceServer(gs, server)
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp", config.Addr)
 	log.Print("聞きます…")
 	if err != nil {
 		log.Fatalf("listen: %s", err)
