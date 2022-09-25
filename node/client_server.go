@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qrystal/node/api"
 	"google.golang.org/grpc"
 )
 

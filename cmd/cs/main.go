@@ -8,8 +8,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/nyiyui/qanms/cs"
-	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qrystal/cs"
+	"github.com/nyiyui/qrystal/node/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"

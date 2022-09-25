@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/nyiyui/qanms/mio"
+	"github.com/nyiyui/qrystal/mio"
 )
 
 func main() {

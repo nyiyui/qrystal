@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nyiyui/qanms/node"
-	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/node/api"
 )
 
 type CentralSource struct {

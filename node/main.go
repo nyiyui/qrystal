@@ -10,7 +10,7 @@ type Server struct {
 }
 
 func (s *Server) doReq(r *http.Request) (*http.Response, error) {
-	r.Header.Set("User-Agent", "QANMSClient/dev")
+	r.Header.Set("User-Agent", "QrystalClient/dev")
 	client := &http.Client{}
 	return client.Do(r)
 }
@@ -124,7 +124,7 @@ func (s *Server) syncPeer(cn CentralNetwork, lrp CentralPeer) (*wgtypes.PeerConf
 	q, _ := url.ParseQuery(r.URL.RawQuery)
 	q.Add("nid", cn.Name)
 	r.URL.RawQuery = q.Encode()
-	r.Header.Set("User-Agent", "QANMSClient/dev")
+	r.Header.Set("User-Agent", "QrystalClient/dev")
 	resp, err := s.doReq(r)
 	if err != nil {
 		return nil, fmt.Errorf("do request: %w", err)
@@ -201,8 +201,8 @@ const (
 
 func (s *Server) restrictClient(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.UserAgent(), "QANMSClient") {
-			http.Error(w, "only usable by QANMSClient", 403)
+		if !strings.Contains(r.UserAgent(), "QrystalClient") {
+			http.Error(w, "only usable by QrystalClient", 403)
 			return
 		}
 		handler.ServeHTTP(w, r)
@@ -238,7 +238,7 @@ func (s *Server) network(handler http.Handler) http.Handler {
 
 		/*
 			{
-				tokenAttempt := []byte(r.Header.Get("X-QANMS-Token"))
+				tokenAttempt := []byte(r.Header.Get("X-Qrystal-Token"))
 				tokenOk := false
 				for _, token := range net.Tokens {
 					tokenOk = bytes.Equal(tokenAttempt, token) || tokenOk

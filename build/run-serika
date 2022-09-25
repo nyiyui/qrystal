@@ -4,8 +4,8 @@ set -eux
 
 make clean
 GOOS=linux GOARCH=arm make runner
-rsync -rP ./runner qanms-test@serika.umi:/home/qanms-test/
-rsync -rP ./testnet-serika.yml qanms-test@serika.umi:/home/qanms-test/runner/testnet.yml
-rsync -rP ../local/rootCACert.pem qanms-test@serika.umi:/home/qanms-test/cert.pem
-rsync -rP ../local/rootCACert.pem qanms-test@serika.umi:/home/qanms-test/rootCACert.pem
-ssh -t qanms-test@serika.umi -- 'cd runner && sudo ./runner-bin -config ./runner-config.yml'
+rsync -rP ./runner qrystal-test@serika.umi:/home/qrystal-test/
+rsync -rP ./testnet-serika.yml qrystal-test@serika.umi:/home/qrystal-test/runner/testnet.yml
+rsync -rP ../local/rootCACert.pem qrystal-test@serika.umi:/home/qrystal-test/cert.pem
+rsync -rP ../local/rootCACert.pem qrystal-test@serika.umi:/home/qrystal-test/rootCACert.pem
+ssh -t qrystal-test@serika.umi -- 'cd runner && sudo ./runner-bin -config ./runner-config.yml'

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nyiyui/qanms/util"
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"

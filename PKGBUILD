@@ -1,15 +1,16 @@
-#!/bin/env bash
-pkgname='qanms'
+#!/bin/bash
+
+pkgname='qrystal'
 pkgver='0.1'
 pkgrel='1'
 arch=('x86_64')
-url='https://nyiyui.ca/qanms'
+url='https://nyiyui.ca/qrystal'
 license=('GPL')
 depends=('wireguard-tools')
 makedepends=('go')
 checkdepends=('go')
 noextract=('.')
-backup=('etc/qanms/node-config.yml' 'etc/qanms/cs-config.yml')
+backup=('etc/qrystal/node-config.yml' 'etc/qrystal/cs-config.yml')
 changelog='CHANGELOG.md'
 source=()
 md5sums=()
@@ -38,12 +39,12 @@ build() {
 
 package() {
 	mkdir -p "$pkgdir/usr/bin"
-	cp build2/runner "$pkgdir/usr/bin/qanms-runner"
-	cp build2/gen-keys "$pkgdir/usr/bin/qanms-gen-keys"
-	cp build2/cs "$pkgdir/usr/bin/qanms-cs"
-	mkdir -p "$pkgdir/opt/qanms"
-	cp build2/runner-mio "$pkgdir/opt/qanms/"
-	cp build2/runner-node "$pkgdir/opt/qanms/"
-	cp build2/dev-add.sh "$pkgdir/opt/qanms/"
-	cp build2/dev-remove.sh "$pkgdir/opt/qanms/"
+	cp build2/runner "$pkgdir/usr/bin/qrystal-runner"
+	cp build2/gen-keys "$pkgdir/usr/bin/qrystal-gen-keys"
+	cp build2/cs "$pkgdir/usr/bin/qrystal-cs"
+	mkdir -p "$pkgdir/opt/qrystal"
+	cp build2/runner-mio "$pkgdir/opt/qrystal/"
+	cp build2/runner-node "$pkgdir/opt/qrystal/"
+	cp build2/dev-add.sh "$pkgdir/opt/qrystal/"
+	cp build2/dev-remove.sh "$pkgdir/opt/qrystal/"
 }

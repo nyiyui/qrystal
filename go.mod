@@ -1,4 +1,4 @@
-module github.com/nyiyui/qanms
+module github.com/nyiyui/qrystal
 
 go 1.19
 

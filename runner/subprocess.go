@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/nyiyui/qanms/runner/config"
+	"github.com/nyiyui/qrystal/runner/config"
 )
 
 func newSubprocess(cfg config.Subprocess) (*exec.Cmd, error) {

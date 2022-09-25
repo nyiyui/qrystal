@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/duration.proto";
 
-option go_package = "github.com/nyiyui/qanms/node/api";
+option go_package = "github.com/nyiyui/qrystal/node/api";
 
 message Ok {
 }

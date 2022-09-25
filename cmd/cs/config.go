@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/nyiyui/qanms/cs"
-	"github.com/nyiyui/qanms/node"
-	"github.com/nyiyui/qanms/util"
+	"github.com/nyiyui/qrystal/cs"
+	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/util"
 	"gopkg.in/yaml.v3"
 )
 

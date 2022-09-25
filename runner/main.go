@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/nyiyui/qanms/runner/config"
+	"github.com/nyiyui/qrystal/runner/config"
 	"gopkg.in/yaml.v3"
 )
 

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nyiyui/qanms/runner/config"
+	"github.com/nyiyui/qrystal/runner/config"
 )
 
 // mioHandle has information about a Mio process.

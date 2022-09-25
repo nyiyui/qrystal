@@ -1,6 +1,6 @@
 package cs
 
-import "github.com/nyiyui/qanms/node"
+import "github.com/nyiyui/qrystal/node"
 
 func (s *CentralSource) ReplaceCC(cc *node.CentralConfig) {
 	s.ccLock.Lock()

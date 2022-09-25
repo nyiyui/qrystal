@@ -1,3 +1,5 @@
+#!/bin/sh
+
 set -eux
 
 name="$1"

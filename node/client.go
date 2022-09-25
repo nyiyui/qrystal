@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nyiyui/qanms/mio"
-	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qrystal/mio"
+	"github.com/nyiyui/qrystal/node/api"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 

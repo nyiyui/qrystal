@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/nyiyui/qanms/node"
-	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/node/api"
 	"gopkg.in/yaml.v3"
 )
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nyiyui/qanms/node/api"
+	"github.com/nyiyui/qrystal/node/api"
 )
 
 type authConn interface {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/nyiyui/qanms/runner/config"
+	"github.com/nyiyui/qrystal/runner/config"
 )
 
 type nodeHandle struct {

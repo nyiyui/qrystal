@@ -4,9 +4,9 @@ import (
 	"crypto/ed25519"
 	"fmt"
 
-	"github.com/nyiyui/qanms/node"
-	"github.com/nyiyui/qanms/node/api"
-	"github.com/nyiyui/qanms/util"
+	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 

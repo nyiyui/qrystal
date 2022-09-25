@@ -7,7 +7,7 @@ import (
 )
 
 type exchangeReq struct {
-	HRPubKey   ed25519.PublicKey `json:"hr-qanms-pubkey"`
+	HRPubKey   ed25519.PublicKey `json:"hr-qrystal-pubkey"`
 	Challenge  []byte            `json:"chall"`
 	HRWGPubKey wgtypes.Key       `json:"hr-wg-pubkey"`
 	HRWGPSK    wgtypes.Key       `json:"hr-wg-psk"`

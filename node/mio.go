@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/rpc"
 
-	"github.com/nyiyui/qanms/mio"
+	"github.com/nyiyui/qrystal/mio"
 )
 
 type mioHandle struct {
@@ -26,7 +26,7 @@ func newMio(port uint16, token []byte) (*mioHandle, error) {
 
 // ConfigureDevice requests mio to configure the WireGuard device.
 //
-// Note: q.Name will have "qanms-" prepended for the WireGuard name.
+// Note: q.Name will have "qrystal-" prepended for the WireGuard name.
 func (h *mioHandle) ConfigureDevice(q mio.ConfigureDeviceQ) (err error) {
 	var errString string
 	log.Printf("%#v", q)

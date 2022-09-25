@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/nyiyui/qanms/node/api"
-	"github.com/nyiyui/qanms/util"
+	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 )
 
 func NewCCFromAPI(cc *api.CentralConfig) (cc2 *CentralConfig, err error) {

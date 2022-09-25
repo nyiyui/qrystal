@@ -3,7 +3,7 @@ quasi-automatic network manager system
 各ノードは：
 各ネットワークに対して：
     - 一元的ピアディスカバリーサーバーからピアの列を取得する。
-        - 補足：ピアリストには各ピアのQANMS公開鍵とIPアドレスの列（もしくはドメイン）がある。
+        - 補足：ピアリストには各ピアのQrystal公開鍵とIPアドレスの列（もしくはドメイン）がある。
         - 補足：ピアリストで上位にあるピアは下位のピアへと接続を要求する。（つまり、POST /v1/exchange する。）
     - 各ピアに対して：
         - POST /v1/exchange でWG用の鍵を交換する。
@@ -14,4 +14,4 @@ quasi-automatic network manager system
         - WG接続を確認する。
             - 接続を確認出来ない場合はピアディスカバリーサーバーに報告する。
     - 定期的に各ノードに対して：
-        - QANMS鍵とWG鍵を更新する。
+        - Qrystal鍵とWG鍵を更新する。

@@ -8,9 +8,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/nyiyui/qanms/cs"
-	"github.com/nyiyui/qanms/node/api"
-	"github.com/nyiyui/qanms/util"
+	"github.com/nyiyui/qrystal/cs"
+	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
