@@ -1,4 +1,4 @@
-#!/bin/bash
+# Maintainer: Ken Shibata <kenxshibata@gmail.com>
 
 pkgname='qrystal'
 pkgver=r19.a9b8796
