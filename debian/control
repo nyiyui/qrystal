@@ -1,0 +1,9 @@
+Source: qrystal
+Maintainer: Ken Shibata <kenxshibata@gmail.com>
+Priority: optional
+Build-Depends: wireguard-tools
+
+Package: qrystal
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: TODO

@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+dh_clean:
+	rm runner-mio runner-node runner gen-keys cs
+dh_auto_build:
+	go build -o runner-mio ../../cmd/runner-mio
+	go build -o runner-node ../../cmd/runner-node
+	go build -o runner ../../cmd/runner
+	go build -o gen-keys ../../cmd/gen-keys
+	go build -o cs ../../cmd/cs
+dh_install:
+	mkdir -p ./debian/opt/qrystal
+	cp runner-mio ./debian/opt/qrystal/
+	cp runner-node ./debian/opt/qrystal/
+	cp runner ./debian/opt/qrystal/
+	mkdir -p ./debian/usr/bin
+	cp gen-keys ./debian/usr/bin/qrystal-gen-keys
+	cp cs ./debian/opt/qrystal/cs
