@@ -1,7 +1,7 @@
 # Maintainer: Ken Shibata <kenxshibata@gmail.com>
 
 pkgname='qrystal'
-pkgver=r26.ca2db92
+pkgver=r27.47fb6c0
 pkgrel=1
 pkgdesc='An network configuration manager for WireGuard.'
 arch=('x86_64')
@@ -56,5 +56,11 @@ package() {
 	cp ../mio/dev-add.sh "$pkgdir/opt/qrystal/"
 	cp ../mio/dev-remove.sh "$pkgdir/opt/qrystal/"
 	mkdir -p "$pkgdir/etc/qrystal"
-	cp ../config/* "$pkgdir/etc/qrystal/"
+	cp \
+		'../config/cs-config.yml' \
+		'../config/node-config.yml' \
+		'../config/runner-config.yml' \
+		"$pkgdir/etc/qrystal/"
+	mkdir -p "$pkgdir/usr/lib/sysusers.d"
+	cp '../config/sysusers.conf' "$pkgdir/usr/lib/sysusers.d/qrystal.conf"
 }
