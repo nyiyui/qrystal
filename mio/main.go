@@ -3,7 +3,6 @@
 package mio
 
 import (
-	"bytes"
 	"crypto/rand"
 	_ "embed"
 	"encoding/base64"
@@ -88,6 +87,38 @@ type Mio struct {
 	token  []byte
 }
 
+type RemoveDeviceQ struct {
+	Token []byte // put token here for simplicity
+	Name  string
+}
+
+func (sm *Mio) RemoveDevice(q RemoveDeviceQ, r *string) error {
+	sm.ensureTokenOk(q.Token)
+
+	if q.Name == "" {
+		return errors.New("q.Name blank")
+	}
+	if len(q.Name) > 15 {
+		return errors.New("q.Name too long")
+	}
+	_, err := sm.client.Device(q.Name)
+	if errors.Is(err, os.ErrNotExist) {
+		*r = "デバイスは無い"
+		return nil
+	} else if err != nil {
+		*r = fmt.Sprintf("wg dev: %s", err)
+		return nil
+	}
+	log.Printf("デバイスを削除：%s", q.Name)
+	err = devRemove(q.Name)
+	if err != nil {
+		*r = fmt.Sprintf("devRemove: %s", err)
+		return nil
+	}
+	*r = ""
+	return nil
+}
+
 type ConfigureDeviceQ struct {
 	Token   []byte // put token here for simplicity
 	Name    string
@@ -95,65 +126,29 @@ type ConfigureDeviceQ struct {
 	Address []net.IPNet
 }
 
-func toString(config *wgtypes.Config) string {
-	b := new(strings.Builder)
-	fmt.Fprint(b, "[Interface]\n")
-	fmt.Fprintf(b, "PrivateKey = %s\n", config.PrivateKey)
-	fmt.Fprintf(b, "ListenPort = %d\n", config.ListenPort)
-	fmt.Fprintf(b, "FirewallMark = %d\n", config.FirewallMark)
-	fmt.Fprintf(b, "ReplacePeers = %t\n", config.ReplacePeers)
-	for i, peer := range config.Peers {
-		fmt.Fprintf(b, "\n[Peer %d]\n", i)
-		fmt.Fprintf(b, "PublicKey = %s\n", peer.PublicKey)
-		fmt.Fprintf(b, "Remove = %t\n", peer.Remove)
-		fmt.Fprintf(b, "UpdateOnly = %t\n", peer.UpdateOnly)
-		fmt.Fprintf(b, "PresharedKey = %s\n", peer.PresharedKey)
-		fmt.Fprintf(b, "Endpoint = %s\n", peer.Endpoint)
-		fmt.Fprintf(b, "PersistentKeepalive = %s\n", peer.PersistentKeepaliveInterval)
-		fmt.Fprintf(b, "ReplaceAllowedIPs = %t\n", peer.ReplaceAllowedIPs)
-		allowedIPs := new(bytes.Buffer)
-		for i, allowedIP := range peer.AllowedIPs {
-			fmt.Fprintf(allowedIPs, "%s", allowedIP)
-			if i != len(peer.AllowedIPs)-1 {
-				fmt.Fprint(allowedIPs, ", ")
-			}
-		}
-		fmt.Fprintf(b, "AllowedIPs = %s\n", allowedIPs)
-	}
-	return b.String()
-}
-
 // TODO: allow removing devices
 
 func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
-	if !bytes.Equal(sm.token, q.Token) {
-		// Better to die as *something* is broken or someone is trying to do something bad.
-		panic("token mismatch")
-	}
+	sm.ensureTokenOk(q.Token)
 
-	// These errors shouldn't happen but this way, these are easier to debug.
+	// These errors shouldn't happen but this way, but this is easier to debug.
 	// TODO: consider returning an error (instead of setting *r) for these types of errors.
 	if q.Name == "" {
-		*r = "q.Name blank"
-		return nil
+		return errors.New("q.Name blank")
 	}
 	if q.Config == nil {
-		*r = "q.Config nil"
-		return nil
+		return errors.New("q.Config nil")
 	}
 	if len(q.Address) == 0 {
-		*r = "q.Address blank"
-		return nil
+		return errors.New("q.Address blank")
 	}
 	if len(q.Name) > 15 {
-		*r = "q.Name too long"
-		// NOTE: this behaviour was found when testing
-		return nil
+		return errors.New("q.Name too long")
 	}
 
 	_, err := sm.client.Device(q.Name)
 	if errors.Is(err, os.ErrNotExist) {
-		log.Printf("※新たなデバイス：%s\n%s", q.Name, toString(q.Config))
+		log.Printf("デバイスを追加：%s\n%s", q.Name, wgConfigToString(q.Config))
 		err = devAdd(q.Name, devConfig{
 			Address:    q.Address,
 			PrivateKey: q.Config.PrivateKey,
@@ -166,7 +161,7 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		*r = fmt.Sprintf("wg dev: %s", err)
 		return nil
 	} else {
-		log.Printf("既存デバイス：%s\n%s", q.Name, toString(q.Config))
+		log.Printf("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
 	}
 	err = sm.client.ConfigureDevice(q.Name, *q.Config)
 	if err != nil {

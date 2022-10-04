@@ -60,6 +60,10 @@ func (n *Node) ListenCS() error {
 			for cnn, cn := range cc.Networks {
 				log.Printf("net %s: %#v", cnn, cn)
 			}
+			err = n.RemoveAllDevices()
+			if err != nil {
+				return fmt.Errorf("rm all devs: %w", err)
+			}
 			n.ReplaceCC(cc)
 			log.Printf("新たなCCで同期します。")
 			res, err := n.Sync(context.Background())
