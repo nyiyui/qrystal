@@ -4,6 +4,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"syscall"
@@ -19,14 +20,15 @@ func newSubprocess(cfg config.Subprocess) (*exec.Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	cred, err := cfg.Credential.ToCredential()
+	if err != nil {
+		return nil, fmt.Errorf("ToCredential: %w", err)
+	}
+
 	cmd := exec.Command(path)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid:         cfg.Credential.UID,
-			Gid:         cfg.Credential.GID,
-			Groups:      cfg.Credential.Groups,
-			NoSetGroups: cfg.Credential.NoSetGroups,
-		},
+		Credential: cred,
 	}
 	return cmd, nil
 }
