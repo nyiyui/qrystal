@@ -1,0 +1,17 @@
+name: パッケージ化
+
+on:
+  push:
+
+jobs:
+  pkgbuild:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: makepkg
+      uses: edlanglois/pkgbuild-action@v1
+    - name: Upload Package Archive
+      uses: actions/upload-artifact@v2
+      with:
+        path: ${{ steps.makepkg.outputs.pkgfile0 }}
