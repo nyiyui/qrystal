@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Qrystal CS.
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+Type=simple
+ExecStart=qrystal-cs -config /etc/qrystal/cs-config.yml
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,11 @@
 [Unit]
 Description=Run Qrystal Node using Runner.
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
 Type=simple
 ExecStart=qrystal-runner -config /etc/qrystal/runner-config.yml
+
+[Install]
+WantedBy=multi-user.target
