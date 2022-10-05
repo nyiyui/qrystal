@@ -1,14 +1,14 @@
 mio:
   subprocess:
     # Mio sets WireGuard configs so needs to be root for this machine (using Linux kernel impl).
-    path: /opt/qanms/runner-mio
+    path: /opt/qrystal/runner-mio
     credential:
       user: root
       group: root
 node:
   config-path: /etc/qanms/node-config.yml
   subprocess:
-    path: /opt/qanms/runner-node
+    path: /opt/qrystal/runner-node
     credential:
       user: qrystal-node
       group: qrystal-node

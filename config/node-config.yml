@@ -3,5 +3,5 @@
 # Address of Node gRPC server.
 #addr: :39251
 #cs:
-#  host: <qrsytal-cs>:39252
+#  host: <qrystal-cs>:39252
 #  token: <token>

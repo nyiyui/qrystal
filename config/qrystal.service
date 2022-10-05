@@ -1,0 +1,6 @@
+[Unit]
+Description=Run Qrystal Node using Runner.
+
+[Service]
+Type=simple
+ExecStart=qrystal-runner -config /etc/qrystal/runner-config.yml
