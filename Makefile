@@ -6,8 +6,6 @@ build2:
 	go build -o build2/gen-keys ./cmd/gen-keys
 	go build -o build2/cs ./cmd/cs
 
-BACKUP_OPTS="--backup=numbered"
-
 pre_install:
 	systemctl stop qrystal-runner
 	systemctl stop qrystal-cs
@@ -25,13 +23,15 @@ install: build2
 	mkdir -p "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
 	chmod 770 "${pkgdir}/etc/qrystal"
-	install ${BACKUP_OPTS} \
+	cp -n \
 		'./config/cs-config.yml' \
 		'./config/runner-config.yml' \
 		"${pkgdir}/etc/qrystal/"
-	install ${BACKUP_OPTS} -m 640 -o root -g qrystal-node \
+	cp -n \
 		'./config/node-config.yml' \
 		"${pkgdir}/etc/qrystal/"
+	chmod 640 "${pkgdir}/etc/qrystal"
+	chown root:qrystal-node "${pkgdir}/etc/qrystal"
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	cp './config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
 	systemctl restart systemd-sysusers
