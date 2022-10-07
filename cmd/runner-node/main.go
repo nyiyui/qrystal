@@ -20,12 +20,16 @@ import (
 )
 
 type config struct {
-	TLSCertPath string             `yaml:"tls-cert-path"`
-	TLSKeyPath  string             `yaml:"tls-key-path"`
-	PrivKey     string             `yaml:"private-key"`
-	Addr        string             `yaml:"addr"`
-	Central     node.CentralConfig `yaml:"central"`
-	CS          csConfig           `yaml:"cs"`
+	PrivKey string             `yaml:"private-key"`
+	Server  *serverConfig      `yaml:"server"`
+	Central node.CentralConfig `yaml:"central"`
+	CS      csConfig           `yaml:"cs"`
+}
+
+type serverConfig struct {
+	TLSCertPath string `yaml:"tls-cert-path"`
+	TLSKeyPath  string `yaml:"tls-key-path"`
+	Addr        string `yaml:"addr"`
 }
 
 type configValidated config
@@ -72,14 +76,15 @@ func main() {
 	}
 	privKey2 := ed25519.NewKeyFromSeed([]byte(privKey))
 
-	clientCreds, err := credentials.NewClientTLSFromFile(c.TLSCertPath, "")
-	if err != nil {
-		log.Fatalf("client tls: %s", err)
-	}
+	clientCreds := credentials.NewTLS(nil)
 
-	serverCreds, err := credentials.NewServerTLSFromFile(c.TLSCertPath, c.TLSKeyPath)
-	if err != nil {
-		log.Fatalf("client tls: %s", err)
+	var serverCreds credentials.TransportCredentials
+	if c.Server != nil {
+		s := c.Server
+		serverCreds, err = credentials.NewServerTLSFromFile(s.TLSCertPath, s.TLSKeyPath)
+		if err != nil {
+			log.Fatalf("client tls: %s", err)
+		}
 	}
 
 	c.Central.DialOpts = []grpc.DialOption{
@@ -106,18 +111,20 @@ func main() {
 		panic(err)
 	}
 
-	go func() {
-		server := grpc.NewServer(grpc.Creds(serverCreds))
-		api.RegisterNodeServer(server, n)
-		lis, err := net.Listen("tcp", c.Addr)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = server.Serve(lis)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	if c.Server != nil {
+		go func() {
+			server := grpc.NewServer(grpc.Creds(serverCreds))
+			api.RegisterNodeServer(server, n)
+			lis, err := net.Listen("tcp", c.Server.Addr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = server.Serve(lis)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
+	}
 	go func() {
 		err := n.ListenCS()
 		if err != nil {
