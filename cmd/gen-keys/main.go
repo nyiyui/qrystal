@@ -34,6 +34,14 @@ func main() {
 	fmt.Printf("hash        = %s\n", hashEnc)
 	if genConfig {
 		fmt.Print("\n\n\n\n")
+		fmt.Printf(`## qrystal/cs.conf:
+  - name: # put the name here
+		hash: %s
+		can-pull: true
+		networks:
+			# put networks here
+`, hashEnc)
+		fmt.Print("\n\n\n\n")
 		fmt.Printf(`## qrystal/node.conf:
 # Private key of this Node. Auto-generated using qrystal-gen-keys -config.
 #private-key: %s
@@ -42,7 +50,7 @@ func main() {
 #cs:
 #  host: <qrystal-cs>:39252
 #  token: %s
-`, pubKeyEnc, hashEnc)
+`, pubKeyEnc, token)
 	}
 }
 

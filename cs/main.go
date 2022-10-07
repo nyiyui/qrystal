@@ -24,7 +24,9 @@ type CentralSource struct {
 
 func New(cc node.CentralConfig) *CentralSource {
 	return &CentralSource{
-		cc: cc,
+		notifyChs: map[string]chan change{},
+		cc:        cc,
+		tokens:    newTokenStore(),
 	}
 }
 

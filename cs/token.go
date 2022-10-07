@@ -13,6 +13,12 @@ type tokenStore struct {
 	tokensLock sync.RWMutex
 }
 
+func newTokenStore() tokenStore {
+	return tokenStore{
+		tokens: map[[sha256.Size]byte]TokenInfo{},
+	}
+}
+
 func (s *tokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool) {
 	s.tokensLock.Lock()
 	defer s.tokensLock.Unlock()
