@@ -135,6 +135,8 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPeerRes) {
 	cn := c.cc.Networks[cnn]
 	peer := cn.Peers[pn]
+	peer.lock.RLock()
+	defer peer.lock.RUnlock()
 	if peer.Host != "" {
 		return SyncPeerRes{skip: true}
 	}
@@ -158,9 +160,6 @@ func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPee
 		return SyncPeerRes{err: fmt.Errorf("xch: %w", err)}
 	}
 	log.Printf("postxch")
-	peer := cn.Peers[pn]
-	peer.lock.RLock()
-	defer peer.lock.RUnlock()
 	hostOnly, _, err := net.SplitHostPort(peer.Host)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("SplitHostPort: %w", err)}
