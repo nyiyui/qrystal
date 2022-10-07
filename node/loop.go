@@ -19,7 +19,7 @@ func (n *Node) setupCS() (api.CentralSourceClient, error) {
 	cl := api.NewCentralSourceClient(conn)
 	_, err = cl.Ping(context.Background(), &api.PingQS{})
 	if err != nil {
-		return nil, fmt.Errorf("ping: %w", err)
+		return nil, fmt.Errorf("ping %s: %w", n.csHost, err)
 	}
 	return cl, nil
 }
