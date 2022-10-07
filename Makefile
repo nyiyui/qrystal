@@ -8,6 +8,10 @@ build2:
 
 BACKUP_OPTS="--backup=numbered"
 
+pre_install:
+	systemctl stop qrystal-runner
+	systemctl stop qrystal-cs
+
 install: build2
 	mkdir -p "${pkgdir}/usr/bin"
 	cp build2/runner "${pkgdir}/usr/bin/qrystal-runner"
