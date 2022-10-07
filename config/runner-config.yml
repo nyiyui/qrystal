@@ -6,7 +6,7 @@ mio:
       user: root
       group: root
 node:
-  config-path: /etc/qanms/node-config.yml
+  config-path: /etc/qrystal/node-config.yml
   subprocess:
     path: /opt/qrystal/runner-node
     credential:
