@@ -27,15 +27,17 @@ install: build2
 	mkdir -p "${pkgdir}/usr/lib/systemd/system"
 	cp './config/runner.service' "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service"
 	cp './config/cs.service' "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
+	systemctl daemon-reload
 
 uninstall:
-	rm "${pkgdir}/usr/bin/qrystal-runner"
-	rm "${pkgdir}/usr/bin/qrystal-gen-keys"
-	rm "${pkgdir}/usr/bin/qrystal-cs"
-	rm -r "${pkgdir}/opt/qrystal"
-	rm -r "${pkgdir}/etc/qrystal"
-	rm "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
-	rm "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service'
-	rm "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service'
+	rm -rf "${pkgdir}/opt/qrystal" \
+		"${pkgdir}/etc/qrystal"
+	rm -f "${pkgdir}/usr/bin/qrystal-runner" \
+		"${pkgdir}/usr/bin/qrystal-gen-keys" \
+		"${pkgdir}/usr/bin/qrystal-cs" \
+		"${pkgdir}/usr/lib/sysusers.d/qrystal.conf" \
+		"${pkgdir}/usr/lib/systemd/system/qrystal-runner.service" \
+		"${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
+	systemctl daemon-reload
 
 .PHONY: install uninstall

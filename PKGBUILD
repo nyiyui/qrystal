@@ -1,7 +1,7 @@
 # Maintainer: Ken Shibata <kenxshibata@gmail.com>
 
 pkgname='qrystal'
-pkgver=r29.4fbd6a0
+pkgver=r30.930f7f5
 pkgrel=1
 pkgdesc='An network configuration manager for WireGuard.'
 arch=('x86_64')
@@ -20,16 +20,47 @@ changelog='CHANGELOG.md'
 source=()
 md5sums=()
 
+arch_to_goarch() {
+	case $1  in
+		x86_64) printf 'amd64' ;;
+	esac
+}
+
 pkgver() {
-	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+		printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
 build() {
-	cd ..
-	make build2
+	(
+		mkdir -p build2
+		cd build2
+		GOOS='linux'
+		GOARCH="$(arch_to_goarch $CARCH)"
+		export GOOS GOARCH
+		go build -o runner-mio ../../cmd/runner-mio
+		go build -o runner-node ../../cmd/runner-node
+		go build -o runner ../../cmd/runner
+		go build -o gen-keys ../../cmd/gen-keys
+		go build -o cs ../../cmd/cs
+	)
 }
 
 package() {
-	cd ..
-	make pkgdir="$pkgdir" install
+	mkdir -p "$pkgdir/usr/bin"
+	cp build2/runner "$pkgdir/usr/bin/qrystal-runner"
+	cp build2/gen-keys "$pkgdir/usr/bin/qrystal-gen-keys"
+	cp build2/cs "$pkgdir/usr/bin/qrystal-cs"
+	mkdir -p "$pkgdir/opt/qrystal"
+	cp build2/runner-mio "$pkgdir/opt/qrystal/"
+	cp build2/runner-node "$pkgdir/opt/qrystal/"
+	cp ../mio/dev-add.sh "$pkgdir/opt/qrystal/"
+	cp ../mio/dev-remove.sh "$pkgdir/opt/qrystal/"
+	mkdir -p "$pkgdir/etc/qrystal"
+	cp \
+		'../config/cs-config.yml' \
+		'../config/node-config.yml' \
+		'../config/runner-config.yml' \
+		"$pkgdir/etc/qrystal/"
+	mkdir -p "$pkgdir/usr/lib/sysusers.d"
+	cp '../config/sysusers.conf' "$pkgdir/usr/lib/sysusers.d/qrystal.conf"
 }
