@@ -19,6 +19,7 @@ install: build2
 	cp ./mio/dev-add.sh "${pkgdir}/opt/qrystal/"
 	cp ./mio/dev-remove.sh "${pkgdir}/opt/qrystal/"
 	mkdir -p "${pkgdir}/etc/qrystal"
+	chmod 770 "${pkgdir}/etc/qrystal"
 	install ${BACKUP_OPTS} \
 		'./config/cs-config.yml' \
 		'./config/runner-config.yml' \
