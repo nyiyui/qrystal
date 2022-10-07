@@ -45,13 +45,18 @@ func (r *SyncNetRes) String() string {
 }
 
 type SyncPeerRes struct {
+	skip   bool
 	err    error
 	config wgtypes.PeerConfig
 }
 
 func (r *SyncPeerRes) String() string {
 	b := new(strings.Builder)
-	fmt.Fprintf(b, "\t\terr: %s\n", r.err)
+	if r.skip {
+		fmt.Fprintf(b, "\t\tskip\n")
+	} else {
+		fmt.Fprintf(b, "\t\terr: %s\n", r.err)
+	}
 	return b.String()
 }
 
@@ -113,12 +118,6 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 		if pn == cn.Me {
 			continue
 		}
-		/*
-			// TODO: fix deadlock when syncing to each other
-			if pn == "ko" {
-				continue
-			}
-		*/
 		log.Printf("syncing net %s peer %s", cn.name, pn)
 		ps := c.syncPeer(ctx, cnn, pn)
 		res.peerStatus[pn] = ps
@@ -135,6 +134,10 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 
 func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPeerRes) {
 	cn := c.cc.Networks[cnn]
+	peer := cn.Peers[pn]
+	if peer.Host != "" {
+		return SyncPeerRes{skip: true}
+	}
 	err := c.ensureClient(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ensure client: %w", err)}
