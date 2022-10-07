@@ -6,7 +6,7 @@ build2:
 	go build -o build2/gen-keys ./cmd/gen-keys
 	go build -o build2/cs ./cmd/cs
 
-BACKUP_OPTS="--backup numbered"
+BACKUP_OPTS="--backup=numbered"
 
 install: build2
 	mkdir -p "${pkgdir}/usr/bin"
