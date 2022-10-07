@@ -24,7 +24,8 @@ install: build2
 		'./config/runner-config.yml' \
 		"${pkgdir}/etc/qrystal/"
 	install ${BACKUP_OPTS} -m 640 -o root -g qrystal-node \
-		'./config/node-config.yml'
+		'./config/node-config.yml' \
+		"${pkgdir}/etc/qrystal/"
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	cp './config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
 	systemctl restart systemd-sysusers
