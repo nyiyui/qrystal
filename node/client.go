@@ -82,7 +82,10 @@ func (c *Node) syncNetworkWG(cn *CentralNetwork, peers []wgtypes.PeerConfig) err
 		ReplacePeers: true,
 		Peers:        peers,
 	}
-	me := cn.Peers[cn.Me]
+	me, ok := cn.Peers[cn.Me]
+	if !ok {
+		return fmt.Errorf("peer %s not found", cn.Me)
+	}
 	err := c.mio.ConfigureDevice(mio.ConfigureDeviceQ{
 		Name:    cn.name,
 		Config:  &cfg,
