@@ -2,6 +2,7 @@ package cs
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"sync"
 )
 
@@ -56,4 +57,9 @@ func convertTokens(tokens []Token) map[[sha256.Size]byte]TokenInfo {
 		m[token.Hash] = token.Info
 	}
 	return m
+}
+
+func newTokenAuthError(token string) error {
+	sum := sha256.Sum256([]byte(token))
+	return fmt.Errorf("token auth failed with hash %x", sum)
 }

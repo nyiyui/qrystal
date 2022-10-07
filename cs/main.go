@@ -39,7 +39,7 @@ func (s *CentralSource) Ping(ctx context.Context, ss *api.PingQS) (*api.PingQS, 
 func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) error {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
-		return errors.New("token auth failed")
+		return newTokenAuthError(q.CentralToken)
 	}
 	if !ti.CanPull {
 		return errors.New("cannot pull")
@@ -58,7 +58,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 			// token status could change while this is called
 			ti, ok := s.tokens.getToken(q.CentralToken)
 			if !ok {
-				return errors.New("token auth failed")
+				return newTokenAuthError(q.CentralToken)
 			}
 			if !ti.CanPull {
 				return errors.New("cannot pull")
@@ -133,7 +133,7 @@ func (s *CentralSource) notifyChange() {
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
-		return nil, errors.New("token auth failed")
+		return nil, newTokenAuthError(q.CentralToken)
 	}
 	if !ti.CanPush {
 		return nil, errors.New("cannot push")
@@ -160,7 +160,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.AddTokenS, error) {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
-		return nil, errors.New("token auth failed")
+		return nil, newTokenAuthError(q.CentralToken)
 	}
 	if ti.CanAddTokens == nil {
 		return nil, errors.New("cannot add tokens")
