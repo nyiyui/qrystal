@@ -15,6 +15,7 @@ import (
 
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -53,6 +54,7 @@ type csConfig struct {
 func main() {
 	log.SetPrefix("node: ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
+	util.ShowCurrent()
 
 	var c config
 	data, err := ioutil.ReadFile(os.Getenv("CONFIG_PATH"))

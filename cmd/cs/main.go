@@ -10,6 +10,7 @@ import (
 
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
@@ -61,6 +62,7 @@ func loadConfig() (*Config, error) {
 func main() {
 	flag.StringVar(&configPath, "config", "", "config file path")
 	flag.Parse()
+	util.ShowCurrent()
 
 	config, err := loadConfig()
 	if err != nil {
