@@ -3,7 +3,6 @@ module github.com/nyiyui/qrystal
 go 1.19
 
 require (
-	github.com/gorilla/mux v1.8.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220916014741-473347a5e6e3
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
