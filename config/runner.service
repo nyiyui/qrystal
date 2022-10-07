@@ -6,6 +6,7 @@ After=network.target network-online.target
 [Service]
 Type=simple
 ExecStart=qrystal-runner -config /etc/qrystal/runner-config.yml
+WorkingDirectory=/opt/qrystal
 
 [Install]
 WantedBy=multi-user.target

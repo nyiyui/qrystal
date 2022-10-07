@@ -20,6 +20,7 @@ func newNode(cfg *config.Node, mh *mioHandle) (*nodeHandle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("subprocess: %w", err)
 	}
+	cmd.Dir = cfg.Dir
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Env = []string{

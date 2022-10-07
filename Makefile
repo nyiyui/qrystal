@@ -11,6 +11,9 @@ pre_install:
 	systemctl stop qrystal-cs
 
 install: build2
+	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
+	cp './config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
+	systemctl restart systemd-sysusers
 	mkdir -p "${pkgdir}/usr/bin"
 	cp build2/runner "${pkgdir}/usr/bin/qrystal-runner"
 	cp build2/gen-keys "${pkgdir}/usr/bin/qrystal-gen-keys"
@@ -32,9 +35,6 @@ install: build2
 		"${pkgdir}/etc/qrystal/"
 	chmod 750 "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
-	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
-	cp './config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
-	systemctl restart systemd-sysusers
 	mkdir -p "${pkgdir}/usr/lib/systemd/system"
 	cp './config/runner.service' "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service"
 	cp './config/cs.service' "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"

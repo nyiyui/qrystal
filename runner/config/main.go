@@ -14,6 +14,7 @@ type Mio struct {
 // Node configures a Node process.
 type Node struct {
 	Subprocess Subprocess `yaml:"subprocess"`
+	Dir        string     `yaml:"working-dir"`
 	ConfigPath string     `yaml:"config-path"`
 }
 
