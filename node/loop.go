@@ -8,11 +8,11 @@ import (
 
 	"github.com/nyiyui/qrystal/node/api"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 func (n *Node) setupCS() (api.CentralSourceClient, error) {
-	conn, err := grpc.Dial(n.csHost, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(n.csHost, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(credentials.NewTLS(nil)))
 	if err != nil {
 		return nil, fmt.Errorf("connecting: %w", err)
 	}
