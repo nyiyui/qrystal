@@ -30,7 +30,7 @@ install: build2
 	cp -n \
 		'./config/node-config.yml' \
 		"${pkgdir}/etc/qrystal/"
-	chmod 640 "${pkgdir}/etc/qrystal"
+	chmod 750 "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	cp './config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
