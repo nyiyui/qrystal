@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net"
@@ -26,6 +27,24 @@ type config struct {
 	CS          csConfig           `yaml:"cs"`
 }
 
+type configValidated config
+
+func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
+	var c2 config
+	err := value.Decode(&c2)
+	if err != nil {
+		return err
+	}
+	if len(c.PrivKey) == 0 {
+		return errors.New("private-key cannot be blank")
+	}
+	if c.PrivKey[0] != 'R' {
+		return errors.New("private-key is not a private key (starts with \"R\")")
+	}
+	*c = configValidated(c2)
+	return nil
+}
+
 type csConfig struct {
 	Host  string `yaml:"host"`
 	Token string `yaml:"token"`
@@ -38,19 +57,16 @@ func main() {
 	var c config
 	data, err := ioutil.ReadFile(os.Getenv("CONFIG_PATH"))
 	if err != nil {
-		panic(err)
+		log.Fatalf("read config: %s", err)
 	}
 	err = yaml.Unmarshal(data, &c)
 	if err != nil {
-		panic(err)
+		log.Fatalf("load config: %s", err)
 	}
 
-	if c.PrivKey[0] != 'R' {
-		log.Fatal("not a private key")
-	}
 	privKey, err := base64.StdEncoding.DecodeString(c.PrivKey[2:])
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("load config: decoding private key failed: %s", err)
 	}
 	privKey2 := ed25519.NewKeyFromSeed([]byte(privKey))
 

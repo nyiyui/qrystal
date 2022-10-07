@@ -8,11 +8,11 @@ import (
 )
 
 type Config struct {
+	Addr        string              `yaml:"addr"`
 	TLSCertPath string              `yaml:"tls-cert-path"`
 	TLSKeyPath  string              `yaml:"tls-key-path"`
 	CC          *node.CentralConfig `yaml:"central"`
 	Tokens      *Tokens             `yaml:"tokens"`
-	Addr        string              `yaml:"addr"`
 }
 
 type Tokens struct {
