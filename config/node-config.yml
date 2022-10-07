@@ -1,7 +1,10 @@
 # Private key of this Node. Generate using qrystal-gen-keys.
-#private-key: <node-private-key>
-# Address of Node gRPC server.
-#addr: :39251
-#cs:
-#  host: <qrystal-cs>:39252
-#  token: <token>
+private-key: <node-private-key>
+server:
+  # Address of Node gRPC server.
+  addr: :39251
+  tls-cert-path:
+  tls-key-path:
+cs:
+  host: <qrystal-cs>:39252
+  token: <token>
