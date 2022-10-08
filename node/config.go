@@ -79,9 +79,14 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 	}
 	var host *net.UDPAddr
 	if peer.Host != "" {
-		host, err = net.ResolveUDPAddr("udp", peer.Host)
+		hostOnly, _, err := net.SplitHostPort(peer.Host)
 		if err != nil {
-			return nil, false, fmt.Errorf("resolving peer host %s failed", peer.Host)
+			return nil, false, fmt.Errorf("peer %s: splitting failed", peer.name)
+		}
+		toResolve := fmt.Sprintf("%s:%d", hostOnly, cn.ListenPort)
+		host, err = net.ResolveUDPAddr("udp", toResolve)
+		if err != nil {
+			return nil, false, fmt.Errorf("peer %s: resolving failed", toResolve)
 		}
 	}
 
