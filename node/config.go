@@ -30,7 +30,7 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 		Config:  config,
 		Address: ToIPNets(cn.IPs),
 	}
-	if false && s.forwardingRequired(cn.name) {
+	if s.forwardingRequired(cn.name) {
 		// TODO: figure out how to run sysctl
 		// TODO: how to agree between all peers to select one forwarder? or one forwarder for a specific peer, another forwarder for another peer, and so on?
 		outbound, err := getOutbound()
@@ -39,6 +39,13 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 		}
 		q.PostUp = makePostUp(cn.name, outbound)
 		q.PostDown = makePostDown(cn.name, outbound)
+		err = s.mio.Forwarding(mio.ForwardingQ{
+			Type:   mio.ForwardingTypeIPv4,
+			Enable: true,
+		})
+		if err != nil {
+			return fmt.Errorf("Forwarding: %w", err)
+		}
 	}
 	err = s.mio.ConfigureDevice(q)
 	if err != nil {

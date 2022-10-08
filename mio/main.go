@@ -22,6 +22,8 @@ import (
 
 func init() {
 	gob.Register(new(ConfigureDeviceQ))
+	gob.Register(new(RemoveDeviceQ))
+	gob.Register(new(ForwardingQ))
 }
 
 type Server struct {
@@ -186,6 +188,19 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	*r = ""
 	return nil
 }
+
+type ForwardingQ struct {
+	Token  []byte // put token here for simplicity
+	Type   ForwardingType
+	Enable bool
+}
+
+type ForwardingType uint8
+
+const (
+	ForwardingTypeInvalid ForwardingType = iota
+	ForwardingTypeIPv4
+)
 
 // blockNonLocal aborts connections from hosts that are not localhost.
 //

@@ -54,3 +54,17 @@ func (h *mioHandle) RemoveDevice(q mio.RemoveDeviceQ) (err error) {
 	}
 	return nil
 }
+
+func (h *mioHandle) Forwarding(q mio.ForwardingQ) (err error) {
+	var errString string
+	log.Printf("%#v", q)
+	q.Token = h.token
+	err = h.client.Call("Mio.Forwarding", q, &errString)
+	if err != nil {
+		return fmt.Errorf("call: %w", err)
+	}
+	if errString != "" {
+		return fmt.Errorf("content: %s", errString)
+	}
+	return nil
+}
