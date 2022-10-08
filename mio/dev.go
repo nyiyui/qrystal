@@ -3,6 +3,7 @@ package mio
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net"
 	"os/exec"
 	"strings"
@@ -41,6 +42,7 @@ func devAdd(name string, cfg devConfig) error {
 	if err != nil {
 		return &scriptError{err: errBuf.Bytes(), wrapped: err}
 	}
+	log.Printf("dev-add %s err:\n%s", name, errBuf)
 	return nil
 }
 
@@ -52,5 +54,6 @@ func devRemove(name string) error {
 	if err != nil {
 		return &scriptError{err: errBuf.Bytes(), wrapped: err}
 	}
+	log.Printf("dev-remove %s err:\n%s", name, errBuf)
 	return nil
 }
