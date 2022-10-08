@@ -14,7 +14,8 @@ var outboundRe = regexp.MustCompile(`(dev )(?P<dev>\S+)`)
 func getOutbound() (string, error) {
 	errBuf := new(bytes.Buffer)
 	outBuf := new(bytes.Buffer)
-	cmd := exec.Command("ip", "route", "show", "default")
+	// NOTE: workaround for $PATH being weird
+	cmd := exec.Command("/usr/bin/ip", "route", "show", "default")
 	cmd.Stderr = errBuf
 	cmd.Stdout = outBuf
 	err := cmd.Run()
