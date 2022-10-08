@@ -28,7 +28,7 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 	q := mio.ConfigureDeviceQ{
 		Name:    cn.name,
 		Config:  config,
-		Address: ToIPNets(cn.IPs),
+		Address: ToIPNets(me.AllowedIPs),
 	}
 	if s.forwardingRequired(cn.name) {
 		// TODO: figure out how to run sysctl
