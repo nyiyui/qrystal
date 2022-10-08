@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/nyiyui/qrystal/node/api"
@@ -26,6 +27,7 @@ func (c *Node) ensureClient(ctx context.Context, cnn string, pn string) (err err
 func (c *Node) newClient(ctx context.Context, cnn string, pn string) (err error) {
 	peer := c.cc.Networks[cnn].Peers[pn]
 	peer.lock.Lock()
+	log.Printf("LOCK net %s peer %s", cnn, pn)
 	defer peer.lock.Unlock()
 	var cs clientServer
 	opts := make([]grpc.DialOption, len(c.cc.DialOpts))

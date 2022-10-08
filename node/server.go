@@ -249,28 +249,37 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	if time.Since(you.lsa) < 1*time.Second {
 		return nil, errors.New("attempted to sync too recently")
 	}
-	you.lock.Lock()
-	defer you.lock.Unlock()
-	yourPubKey, err := wgtypes.NewKey(q.PubKey)
-	if err != nil {
-		return nil, errors.New("invalid public key")
-	}
-	you.pubKey = &yourPubKey
-	yourPSK, err := wgtypes.NewKey(q.Psk)
-	if err != nil {
-		return nil, errors.New("invalid psk")
-	}
-	you.psk = &yourPSK
-	log.Println("SET2 PSK:", you, yourPSK)
 
-	log.Printf("net %s peer %s: generating", cnn, you.name)
-	err = ensureWGPrivKey(cn)
-	if err != nil {
-		return nil, errors.New("private key generation failed")
-	}
-	myPubKey := cn.myPrivKey.PublicKey()
+	var myPubKey wgtypes.Key
+	err = func() error {
+		you.lock.Lock()
+		log.Printf("LOCKYOU net %s peer %s", cnn, sc.name)
+		defer you.lock.Unlock()
+		yourPubKey, err := wgtypes.NewKey(q.PubKey)
+		if err != nil {
+			return errors.New("invalid public key")
+		}
+		you.pubKey = &yourPubKey
+		yourPSK, err := wgtypes.NewKey(q.Psk)
+		if err != nil {
+			return errors.New("invalid psk")
+		}
+		you.psk = &yourPSK
+		log.Println("SET2 PSK:", you, yourPSK)
 
-	you.accessible = true
+		log.Printf("net %s peer %s: generating", cnn, you.name)
+		err = ensureWGPrivKey(cn)
+		if err != nil {
+			return errors.New("private key generation failed")
+		}
+		myPubKey = cn.myPrivKey.PublicKey()
+
+		you.accessible = true
+		return nil
+	}()
+	if err != nil {
+		return nil, err
+	}
 
 	log.Printf("net %s peer %s: configuring network", cnn, you.name)
 	// TODO: consider running this in a goroutine or something
