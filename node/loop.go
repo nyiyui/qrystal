@@ -1,6 +1,7 @@
 package node
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -60,6 +61,14 @@ func (n *Node) ListenCS() error {
 			for cnn, cn := range cc.Networks {
 				log.Printf("net %s: %#v", cnn, cn)
 			}
+
+			for cnn, cn := range cc.Networks {
+				me := cn.Peers[cn.Me]
+				if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().([]byte))) {
+					return fmt.Errorf("net %s: key pair mismatch", cnn)
+				}
+			}
+
 			err = n.RemoveAllDevices()
 			if err != nil {
 				return fmt.Errorf("rm all devs: %w", err)
