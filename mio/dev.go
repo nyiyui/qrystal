@@ -14,6 +14,8 @@ import (
 type devConfig struct {
 	Address    []net.IPNet
 	PrivateKey *wgtypes.Key
+	PostUp     string
+	PostDown   string
 }
 
 type scriptError struct {
@@ -36,7 +38,7 @@ func devAdd(name string, cfg devConfig) error {
 	}
 	address := strings.Join(addresses, ", ")
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address)
+	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown)
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
