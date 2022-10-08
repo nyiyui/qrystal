@@ -19,14 +19,12 @@ import (
 type Config struct {
 	Server       string `yaml:"server"`
 	CentralToken string `yaml:"token"`
-	TLSCertPath  string `yaml:"tls-cert-path"`
 }
 
 type TmpConfig struct {
-	ConfigPath string                   `yaml:"config-path"`
-	Overwrite  bool                     `yaml:"overwrite"`
-	Name       string                   `yaml:"name"`
-	Networks   map[string]NetworkConfig `yaml:"networks"`
+	Overwrite bool                     `yaml:"overwrite"`
+	Name      string                   `yaml:"name"`
+	Networks  map[string]NetworkConfig `yaml:"networks"`
 
 	PublicKey util.Ed25519PublicKey `yaml:"public-key"`
 	TokenHash util.HexBytes         `yaml:"token-hash"`
@@ -38,11 +36,13 @@ type NetworkConfig struct {
 	Host string   `yaml:"host"`
 }
 
+var cPath string
 var tcPath string
 var cfg Config
 var tc TmpConfig
 
 func main() {
+	flag.StringVar(&cPath, "config", "", "path to config file")
 	flag.StringVar(&tcPath, "tmp-config", "", "path to tmp config file")
 	flag.Parse()
 
@@ -55,7 +55,7 @@ func main() {
 		log.Fatalf("config unmarshal: %s", err)
 	}
 
-	raw, err = ioutil.ReadFile(tc.ConfigPath)
+	raw, err = ioutil.ReadFile(cPath)
 	if err != nil {
 		log.Fatalf("config read: %s", err)
 	}
@@ -64,10 +64,7 @@ func main() {
 		log.Fatalf("config unmarshal: %s", err)
 	}
 
-	creds, err := credentials.NewClientTLSFromFile(cfg.TLSCertPath, "")
-	if err != nil {
-		log.Fatalf("client tls: %s", err)
-	}
+	creds := credentials.NewTLS(nil)
 
 	conn, err := grpc.Dial(cfg.Server, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(creds))
 	if err != nil {

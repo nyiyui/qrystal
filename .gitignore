@@ -2,3 +2,4 @@
 /pkg
 /build2
 qrystal-*.pkg*
+/cs-push-config.yml
