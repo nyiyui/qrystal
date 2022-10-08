@@ -67,9 +67,12 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 	if !peer.accessible {
 		return nil, false, nil
 	}
-	host, err := net.ResolveUDPAddr("udp", peer.Host)
-	if err != nil {
-		return nil, false, fmt.Errorf("resolving peer host %s failed", peer.Host)
+	var host *net.UDPAddr
+	if peer.Host != "" {
+		host, err = net.ResolveUDPAddr("udp", peer.Host)
+		if err != nil {
+			return nil, false, fmt.Errorf("resolving peer host %s failed", peer.Host)
+		}
 	}
 
 	if peer.pubKey == nil {
