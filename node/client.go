@@ -89,10 +89,12 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 		if pn == cn.Me {
 			continue
 		}
-		log.Printf("syncing net %s peer %s", cn.name, pn)
+		log.Printf("net %s peer %s syncing", cn.name, pn)
 		ps := c.xchPeer(ctx, cnn, pn)
+		log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 		res.peerStatus[pn] = ps
 	}
+	log.Printf("net %s synced", cn.name)
 	err = c.configNetwork(cn)
 	if err != nil {
 		return nil, err
@@ -105,7 +107,8 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	peer := cn.Peers[pn]
 	peer.lock.RLock()
 	defer peer.lock.RUnlock()
-	if peer.Host != "" {
+	log.Printf("net %s peer %s: %#v", cnn, pn, peer)
+	if peer.Host == "" {
 		return SyncPeerRes{skip: true}
 	}
 	err := c.ensureClient(ctx, cnn, pn)
