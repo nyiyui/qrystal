@@ -30,6 +30,9 @@ install: build2
 		'./config/cs-config.yml' \
 		'./config/runner-config.yml' \
 		"${pkgdir}/etc/qrystal/"
+	touch "${pkgdir}/etc/qrystal/cs-backport.yml"
+	chmod 600 "${pkgdir}/etc/qrystal/cs-backport.yml"
+	chown qrystal-node:qrystal-node "${pkgdir}/etc/qrystal/cs-backport.yml"
 	cp -n \
 		'./config/node-config.yml' \
 		"${pkgdir}/etc/qrystal/"
