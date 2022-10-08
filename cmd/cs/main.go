@@ -28,16 +28,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("server tls: %s", err)
 	}
+	log.Printf("TLS creds read")
 
-	server := cs.New(*config.CC)
+	server := cs.New(*config.CC, config.BackportPath)
 	server.ReplaceTokens(config.Tokens.Raw)
+	if config.BackportPath != "" {
+		err = server.ReadBackport()
+		if err != nil {
+			log.Fatalf("read backport: %s", err)
+		}
+		log.Printf("read backport from %s", config.BackportPath)
+	}
 	gs := grpc.NewServer(grpc.Creds(creds))
 	api.RegisterCentralSourceServer(gs, server)
 	lis, err := net.Listen("tcp", config.Addr)
-	log.Print("聞きます…")
 	if err != nil {
 		log.Fatalf("listen: %s", err)
 	}
+	log.Print("will serve…")
 	err = gs.Serve(lis)
 	if err != nil {
 		log.Fatalf("serve: %s", err)

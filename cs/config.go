@@ -12,11 +12,12 @@ import (
 )
 
 type Config struct {
-	Addr        string              `yaml:"addr"`
-	TLSCertPath string              `yaml:"tls-cert-path"`
-	TLSKeyPath  string              `yaml:"tls-key-path"`
-	CC          *node.CentralConfig `yaml:"central"`
-	Tokens      *TokensConfig       `yaml:"tokens"`
+	Addr         string              `yaml:"addr"`
+	TLSCertPath  string              `yaml:"tls-cert-path"`
+	TLSKeyPath   string              `yaml:"tls-key-path"`
+	CC           *node.CentralConfig `yaml:"central"`
+	Tokens       *TokensConfig       `yaml:"tokens"`
+	BackportPath string              `yaml:"backport-path"`
 }
 
 type TokensConfig struct {
@@ -85,4 +86,44 @@ func LoadConfig(configPath string) (*Config, error) {
 		}
 	}
 	return &config, nil
+}
+
+func (s *CentralSource) backport() error {
+	s.backportLock.Lock()
+	defer s.backportLock.Unlock()
+	var encoded []byte
+	var err error
+	func() {
+		s.ccLock.Lock()
+		defer s.ccLock.Unlock()
+		encoded, err = yaml.Marshal(s.cc)
+	}()
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(s.backportPath, encoded, 0o0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *CentralSource) ReadBackport() error {
+	s.backportLock.Lock()
+	defer s.backportLock.Unlock()
+	encoded, err := ioutil.ReadFile(s.backportPath)
+	if err != nil {
+		return err
+	}
+	var cc2 node.CentralConfig
+	err = yaml.Unmarshal(encoded, &cc2)
+	if err != nil {
+		return err
+	}
+	func() {
+		s.ccLock.Lock()
+		defer s.ccLock.Unlock()
+		s.cc = cc2
+	}()
+	return nil
 }

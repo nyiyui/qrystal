@@ -20,13 +20,18 @@ type CentralSource struct {
 	cc            node.CentralConfig
 	ccLock        sync.RWMutex
 	tokens        tokenStore
+	backportLock  sync.Mutex
+	// keep it simple (RWMutex might be more appropriate but we're not writing
+	// backports simultaneously (I hope))
+	backportPath string
 }
 
-func New(cc node.CentralConfig) *CentralSource {
+func New(cc node.CentralConfig, backportPath string) *CentralSource {
 	return &CentralSource{
-		notifyChs: map[string]chan change{},
-		cc:        cc,
-		tokens:    newTokenStore(),
+		notifyChs:    map[string]chan change{},
+		cc:           cc,
+		tokens:       newTokenStore(),
+		backportPath: backportPath,
 	}
 }
 
@@ -119,6 +124,12 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 }
 
 func (s *CentralSource) notifyChange() {
+	err := s.backport()
+	if err != nil {
+		log.Printf("backport error: %s", err)
+	} else {
+		log.Printf("backport ok")
+	}
 	s.notifyChsLock.RLock()
 	defer s.notifyChsLock.RUnlock()
 	for _, cnCh := range s.notifyChs {
