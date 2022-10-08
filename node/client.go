@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"strings"
 	"time"
 
-	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -45,9 +43,8 @@ func (r *SyncNetRes) String() string {
 }
 
 type SyncPeerRes struct {
-	skip   bool
-	err    error
-	config wgtypes.PeerConfig
+	skip bool
+	err  error
 }
 
 func (r *SyncPeerRes) String() string {
@@ -78,33 +75,6 @@ func (c *Node) Sync(ctx context.Context) (*SyncRes, error) {
 	return &res, nil
 }
 
-func (c *Node) syncNetworkWG(cn *CentralNetwork, peers []wgtypes.PeerConfig) error {
-	cn.lock.Lock()
-	defer cn.lock.Unlock()
-	cfg := wgtypes.Config{
-		PrivateKey:   cn.myPrivKey,
-		ReplacePeers: true,
-		Peers:        peers,
-	}
-	me, ok := cn.Peers[cn.Me]
-	if !ok {
-		return fmt.Errorf("peer %s not found", cn.Me)
-	}
-	if me.Host != "" {
-		cfg.ListenPort = &cn.ListenPort
-	}
-	err := c.mio.ConfigureDevice(mio.ConfigureDeviceQ{
-		Name:    cn.name,
-		Config:  &cfg,
-		Address: ToIPNets(me.AllowedIPs),
-		// TODO: fix to use my IPs
-	})
-	if err != nil {
-		return fmt.Errorf("mio ConfigureDevice: %w", err)
-	}
-	return nil
-}
-
 func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error) {
 	cn := c.cc.Networks[cnn]
 	err := ensureWGPrivKey(cn)
@@ -115,26 +85,22 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 	res := SyncNetRes{
 		peerStatus: map[string]SyncPeerRes{},
 	}
-	peers := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn := range cn.Peers {
 		if pn == cn.Me {
 			continue
 		}
 		log.Printf("syncing net %s peer %s", cn.name, pn)
-		ps := c.syncPeer(ctx, cnn, pn)
+		ps := c.xchPeer(ctx, cnn, pn)
 		res.peerStatus[pn] = ps
-		if ps.err == nil && !ps.skip {
-			peers = append(peers, ps.config)
-		}
 	}
-	err = c.syncNetworkWG(cn, peers)
+	err = c.configNetwork(cn)
 	if err != nil {
 		return nil, err
 	}
 	return &res, nil
 }
 
-func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPeerRes) {
+func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeerRes) {
 	cn := c.cc.Networks[cnn]
 	peer := cn.Peers[pn]
 	peer.lock.RLock()
@@ -146,42 +112,19 @@ func (c *Node) syncPeer(ctx context.Context, cnn string, pn string) (res SyncPee
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ensure client: %w", err)}
 	}
-	log.Printf("preping")
 	err = c.ping(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ping: %w", err)}
 	}
-	log.Printf("preauth")
 	err = c.auth(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("auth: %w", err)}
 	}
-	log.Printf("prexch")
 	err = c.xch(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("xch: %w", err)}
 	}
-	log.Printf("postxch")
-	hostOnly, _, err := net.SplitHostPort(peer.Host)
-	if err != nil {
-		return SyncPeerRes{err: fmt.Errorf("SplitHostPort: %w", err)}
-	}
-	wgHost := fmt.Sprintf("%s:%d", hostOnly, cn.ListenPort)
-	resolvedHost, err := net.ResolveUDPAddr("udp", wgHost)
-	if err != nil {
-		return SyncPeerRes{err: fmt.Errorf("resolve host: %w", err)}
-	}
-	keepalive := cn.Keepalive
-	config := wgtypes.PeerConfig{
-		PublicKey:                   *peer.pubKey,
-		Remove:                      false,
-		PresharedKey:                peer.psk,
-		Endpoint:                    resolvedHost,
-		PersistentKeepaliveInterval: &keepalive,
-		ReplaceAllowedIPs:           true,
-		AllowedIPs:                  ToIPNets(peer.AllowedIPs),
-	}
-	return SyncPeerRes{config: config}
+	return SyncPeerRes{}
 }
 
 func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {

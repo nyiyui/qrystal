@@ -6,11 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"sync"
 	"time"
 
-	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc/credentials"
@@ -225,71 +223,6 @@ func (s *Node) readToken(token []byte) (sc serverClient, ok bool) {
 	defer s.state.lock.RUnlock()
 	sc, ok = s.state.tokenSecrets[string(token)]
 	return sc, ok
-}
-
-func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
-	config, err := s.convertNetwork(cn)
-	if err != nil {
-		return fmt.Errorf("convert: %w", err)
-	}
-	me := cn.Peers[cn.Me]
-	q := mio.ConfigureDeviceQ{
-		Name:    cn.name,
-		Config:  config,
-		Address: ToIPNets(me.AllowedIPs),
-		// TODO: fix to use my IPs
-	}
-	err = s.mio.ConfigureDevice(q)
-	if err != nil {
-		return fmt.Errorf("mio: %w", err)
-	}
-	return nil
-}
-
-func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err error) {
-	cn.lock.RLock()
-	defer cn.lock.RUnlock()
-	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
-	for pn, peer := range cn.Peers {
-		if !peer.accessible {
-			continue
-		}
-		config, err := s.convertPeer(cn, peer)
-		if err != nil {
-			return nil, fmt.Errorf("peer %s: %w", pn, err)
-		}
-		configs = append(configs, *config)
-	}
-	config = &wgtypes.Config{
-		PrivateKey:   cn.myPrivKey,
-		ListenPort:   &cn.ListenPort,
-		ReplacePeers: true,
-		Peers:        configs,
-	}
-	return config, nil
-}
-
-func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtypes.PeerConfig, err error) {
-	host, err := net.ResolveUDPAddr("udp", peer.Host)
-	if err != nil {
-		return nil, fmt.Errorf("resolving peer host %s failed", peer.Host)
-	}
-
-	if peer.pubKey == nil {
-		panic(fmt.Sprintf("net %#v peer %#v pubKey is nil", cn, peer))
-	}
-
-	return &wgtypes.PeerConfig{
-		PublicKey:                   *peer.pubKey,
-		Remove:                      false,
-		UpdateOnly:                  false,
-		PresharedKey:                peer.psk,
-		Endpoint:                    host,
-		PersistentKeepaliveInterval: &cn.Keepalive,
-		ReplaceAllowedIPs:           true,
-		AllowedIPs:                  ToIPNets(peer.AllowedIPs),
-	}, nil
-
 }
 
 func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
