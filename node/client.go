@@ -231,9 +231,9 @@ func (c *Node) ping(ctx context.Context, cnn string, pn string) (err error) {
 	if err != nil {
 		return
 	}
-	log.Printf("LOCK ccLock")
-	c.ccLock.Lock()
-	defer c.ccLock.Unlock()
+	c.ccLock.RLock()
+	log.Printf("RLOCK ccLock")
+	defer c.ccLock.RUnlock()
 	peer := c.cc.Networks[cnn].Peers[pn]
 	peer.lock.RLock()
 	log.Printf("LOCK net %s peer %s", cnn, pn)
