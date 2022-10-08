@@ -222,6 +222,7 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	peer.psk = &psk
 	log.Println("SET1 PSK", peer, "same", psk)
 	peer.latestSync = time.Now()
+	peer.accessible = true
 	return nil
 }
 
@@ -231,13 +232,5 @@ func (c *Node) ping(ctx context.Context, cnn string, pn string) (err error) {
 	if err != nil {
 		return
 	}
-	c.ccLock.RLock()
-	log.Printf("RLOCK ccLock")
-	defer c.ccLock.RUnlock()
-	peer := c.cc.Networks[cnn].Peers[pn]
-	peer.lock.RLock()
-	log.Printf("LOCK net %s peer %s", cnn, pn)
-	defer peer.lock.RUnlock()
-	peer.accessible = true
 	return
 }
