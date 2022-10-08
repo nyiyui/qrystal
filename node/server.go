@@ -121,10 +121,12 @@ func (s *Node) Auth(conn api.Node_AuthServer) error {
 	}
 	err := state.solveChall()
 	if err != nil {
+		log.Printf("solve chall failed: %s", err)
 		return fmt.Errorf("solve chall: %w", err)
 	}
 	err = state.verifyChall(state.cn.name, state.you.name)
 	if err != nil {
+		log.Printf("verify chall failed: %s", err)
 		return fmt.Errorf("verify chall: %w", err)
 	}
 	err = func() error {
