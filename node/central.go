@@ -34,7 +34,8 @@ type CentralPeer struct {
 	Host       string   `yaml:"host"`
 	AllowedIPs []IPNet2 `yaml:"allowed-ips"`
 	// TODO: use UnmarshalYAML
-	PublicKey util.Ed25519PublicKey `yaml:"public-key"`
+	PublicKey  util.Ed25519PublicKey `yaml:"public-key"`
+	CanForward bool                  `yaml:"can-forward"`
 
 	lsa     time.Time
 	lsaLock sync.RWMutex

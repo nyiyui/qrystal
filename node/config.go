@@ -31,6 +31,16 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 		Address: ToIPNets(me.AllowedIPs),
 		// TODO: fix to use my IPs
 	}
+	if false && s.forwardingRequired(cn.name) {
+		// TODO: figure out how to run sysctl
+		// TODO: how to agree between all peers to select one forwarder? or one forwarder for a specific peer, another forwarder for another peer, and so on?
+		outbound, err := getOutbound()
+		if err != nil {
+			return fmt.Errorf("getOutbound: %w", err)
+		}
+		q.PostUp = makePostUp(cn.name, outbound)
+		q.PostDown = makePostDown(cn.name, outbound)
+	}
 	err = s.mio.ConfigureDevice(q)
 	if err != nil {
 		return fmt.Errorf("mio: %w", err)

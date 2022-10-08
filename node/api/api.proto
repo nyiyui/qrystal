@@ -22,6 +22,7 @@ service Node {
 
 service CentralSource {
   rpc pull(PullQ) returns (stream PullS);
+  rpc canForward(CanForwardQ) returns (CanForwardS);
   rpc push(PushQ) returns (PushS);
   rpc addToken(AddTokenQ) returns (AddTokenS);
 
@@ -70,6 +71,8 @@ message PullQ {
 
 message PullS {
   CentralConfig cc = 1;
+  ForwardPreQ fc = 2;
+  //TODO: eventually migrate to oneof
 }
 
 message PushQ {
@@ -101,6 +104,7 @@ message CentralNetwork {
 message CentralPeer {
   string host = 1;
   repeated IPNet allowedIPs = 2;
+  repeated IPNet forwaringIPs = 4;
   PublicKey publicKey = 3;
 }
 
@@ -123,3 +127,27 @@ message AddTokenQ {
 }
 
 message AddTokenS {}
+
+message ForwardPreQ {
+  string network = 1;
+  string forwardee_peer = 2;
+}
+
+message CanForwardQ {
+  string network = 1;
+  string forwardee_peer = 2;
+  ForwardMetric metric = 3;
+}
+
+message ForwardMetric {
+  uint64 latency = 1;
+  // latency in nanoseconds
+  double bandwidth = 2;
+  // bandwidth in bps
+}
+
+message CanForwardS {
+  bool yycf = 1;
+  // yycf means "yes, you can forward"
+  // NOTE: this is only for debug purposes, as the forwaring settings will be propageated using CentralSource.pull.
+}

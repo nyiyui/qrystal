@@ -120,10 +120,12 @@ func (sm *Mio) RemoveDevice(q RemoveDeviceQ, r *string) error {
 }
 
 type ConfigureDeviceQ struct {
-	Token   []byte // put token here for simplicity
-	Name    string
-	Config  *wgtypes.Config
-	Address []net.IPNet
+	Token    []byte // put token here for simplicity
+	Name     string
+	Config   *wgtypes.Config
+	Address  []net.IPNet
+	PostUp   string
+	PostDown string
 }
 
 // TODO: allow removing devices
