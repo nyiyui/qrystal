@@ -89,7 +89,7 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 type Backport struct {
-	CC node.CentralConfig `yaml:"cc"`
+	CC *node.CentralConfig `yaml:"cc"`
 }
 
 func (s *CentralSource) backport() error {
@@ -101,7 +101,7 @@ func (s *CentralSource) backport() error {
 		s.ccLock.Lock()
 		defer s.ccLock.Unlock()
 		encoded, err = yaml.Marshal(Backport{
-			CC: s.cc,
+			CC: &s.cc,
 		})
 	}()
 	if err != nil {
@@ -126,10 +126,12 @@ func (s *CentralSource) ReadBackport() error {
 	if err != nil {
 		return err
 	}
-	func() {
-		s.ccLock.Lock()
-		defer s.ccLock.Unlock()
-		s.cc = b.CC
-	}()
+	if b.CC != nil {
+		func() {
+			s.ccLock.Lock()
+			defer s.ccLock.Unlock()
+			s.cc = *b.CC
+		}()
+	}
 	return nil
 }
