@@ -83,13 +83,15 @@ func (c *Node) syncNetworkWG(cn *CentralNetwork, peers []wgtypes.PeerConfig) err
 	defer cn.lock.Unlock()
 	cfg := wgtypes.Config{
 		PrivateKey:   cn.myPrivKey,
-		ListenPort:   &cn.ListenPort,
 		ReplacePeers: true,
 		Peers:        peers,
 	}
 	me, ok := cn.Peers[cn.Me]
 	if !ok {
 		return fmt.Errorf("peer %s not found", cn.Me)
+	}
+	if me.Host != "" {
+		cfg.ListenPort = &cn.ListenPort
 	}
 	err := c.mio.ConfigureDevice(mio.ConfigureDeviceQ{
 		Name:    cn.name,
