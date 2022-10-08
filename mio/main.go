@@ -164,6 +164,7 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		}
 		log.Printf("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
 	}
+	log.Printf("DEV_ADD %#v", q.Config.Peers)
 	err = devAdd(q.Name, devConfig{
 		Address:    q.Address,
 		PrivateKey: q.Config.PrivateKey,

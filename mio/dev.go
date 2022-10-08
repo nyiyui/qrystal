@@ -39,6 +39,7 @@ func devAdd(name string, cfg devConfig) error {
 	}
 
 	after := toAfter(cfg.Peers)
+	log.Printf("AFTER %s", after)
 
 	address := strings.Join(addresses, ", ")
 	errBuf := new(bytes.Buffer)
@@ -68,7 +69,7 @@ func toAfter(peers []wgtypes.PeerConfig) string {
 	b := new(strings.Builder)
 	for i, peer := range peers {
 		fmt.Fprintf(b, "[Peer] # peer %d (NOTE: peers only need the bare for wg-quick to route things)\n", i)
-		fmt.Fprintf(b, "PublicKey=%s", peer.PublicKey)
+		fmt.Fprintf(b, "PublicKey=%s\n", peer.PublicKey)
 		fmt.Fprint(b, "AllowedIPs=")
 		for j, ip := range peer.AllowedIPs {
 			fmt.Fprintf(b, "%s", ip)

@@ -6,8 +6,10 @@ name="$1"
 private_key="$2"
 address="$3"
 post_up="$4"
-post_down="$4"
-after="$5"
+post_down="$5"
+after="$6"
+
+echo after "$after"
 
 umask 077
 cat > "/etc/wireguard/$name.conf" << EOF
