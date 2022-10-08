@@ -39,11 +39,10 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 }
 
 func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err error) {
-	cn.lock.RLock()
-	defer cn.lock.RUnlock()
-	log.Print("postconfig lock")
+	log.Print("postconfig lock", len(cn.Peers))
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn, peer := range cn.Peers {
+		log.Printf("peer %s config", pn)
 		config, accessible, err := s.convertPeer(cn, peer)
 		if err != nil {
 			return nil, fmt.Errorf("peer %s: %w", pn, err)
@@ -61,8 +60,9 @@ func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err e
 }
 
 func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtypes.PeerConfig, accessible bool, err error) {
-	peer.lock.Lock()
-	defer peer.lock.Unlock()
+	peer.lock.RLock()
+	defer peer.lock.RUnlock()
+	log.Printf("convertPeer postlock")
 	if !peer.accessible {
 		return nil, false, nil
 	}
