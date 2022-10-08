@@ -49,7 +49,6 @@ func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err e
 	}
 	config = &wgtypes.Config{
 		PrivateKey:   cn.myPrivKey,
-		ListenPort:   &cn.ListenPort,
 		ReplacePeers: true,
 		Peers:        configs,
 	}
