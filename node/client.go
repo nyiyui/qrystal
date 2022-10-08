@@ -118,6 +118,7 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	if skip {
 		return SyncPeerRes{skip: skip}
 	}
+
 	log.Printf("net %s peer %s: ensuring", cnn, pn)
 	err := c.ensureClient(ctx, cnn, pn)
 	if err != nil {
@@ -227,5 +228,16 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 func (c *Node) ping(ctx context.Context, cnn string, pn string) (err error) {
 	cs := c.servers[networkPeerPair{cnn, pn}]
 	_, err = cs.cl.Ping(ctx, &api.PingQS{})
+	if err != nil {
+		return
+	}
+	log.Printf("LOCK ccLock")
+	c.ccLock.Lock()
+	defer c.ccLock.Unlock()
+	peer := c.cc.Networks[cnn].Peers[pn]
+	peer.lock.RLock()
+	log.Printf("LOCK net %s peer %s", cnn, pn)
+	defer peer.lock.RUnlock()
+	peer.accessible = true
 	return
 }
