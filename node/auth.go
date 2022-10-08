@@ -51,7 +51,7 @@ func (s *authState) solveChall() error {
 
 		signThis := make([]byte, 64)
 		copy(signThis, sq1.Chall)
-		signThis = append(signThis, added...)
+		copy(signThis[32:], added)
 		challResp = ed25519.Sign(s.coordPrivKey, signThis)
 		log.Printf("signee: %x", signThis)
 		log.Printf("signature: %x", challResp)
@@ -93,7 +93,7 @@ func (s *authState) verifyChall(cnn, yourName string) error {
 	sq4 := sq4Raw.Sq.(*api.AuthSQ_S).S
 	signed := make([]byte, 64)
 	copy(signed, chall)
-	signed = append(signed, sq4.ChallAdded...)
+	copy(signed[32:], sq4.ChallAdded)
 	log.Printf("your pubkey: %x", s.you.PublicKey)
 	log.Printf("signee: %x", signed)
 	log.Printf("signature: %x", sq4.ChallResp)
