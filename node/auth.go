@@ -36,6 +36,9 @@ func (s *authState) solveChall() error {
 	if !ok {
 		return fmt.Errorf("unknown network: %s", sq1.Network)
 	}
+	if sq1.You != s.cn.Me {
+		return errors.New("not me")
+	}
 	s.you, ok = s.cn.Peers[sq1.Me]
 	if !ok {
 		return errors.New("unknown you")
