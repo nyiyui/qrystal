@@ -7,6 +7,7 @@ private_key="$2"
 address="$3"
 post_up="$4"
 post_down="$4"
+after="$5"
 
 umask 077
 cat > "/etc/wireguard/$name.conf" << EOF
@@ -18,6 +19,8 @@ Address=$address
 
 PostUp=$post_up
 PostDown=$post_down
+
+$after
 EOF
 
 wg-quick up "$name"

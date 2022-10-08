@@ -16,6 +16,7 @@ type devConfig struct {
 	PrivateKey *wgtypes.Key
 	PostUp     string
 	PostDown   string
+	Peers      []wgtypes.PeerConfig
 }
 
 type scriptError struct {
@@ -36,9 +37,12 @@ func devAdd(name string, cfg devConfig) error {
 	for i := range cfg.Address {
 		addresses[i] = cfg.Address[i].String()
 	}
+
+	after := toAfter(cfg.Peers)
+
 	address := strings.Join(addresses, ", ")
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown)
+	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after)
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
@@ -58,4 +62,21 @@ func devRemove(name string) error {
 	}
 	log.Printf("dev-remove %s err:\n%s", name, errBuf)
 	return nil
+}
+
+func toAfter(peers []wgtypes.PeerConfig) string {
+	b := new(strings.Builder)
+	for i, peer := range peers {
+		fmt.Fprintf(b, "[Peer] # peer %d (NOTE: peers only need the bare for wg-quick to route things)\n", i)
+		fmt.Fprintf(b, "PublicKey=%s", peer.PublicKey)
+		fmt.Fprint(b, "AllowedIPs=")
+		for j, ip := range peer.AllowedIPs {
+			fmt.Fprintf(b, "%s", ip)
+			if j != len(peer.AllowedIPs)-1 {
+				fmt.Fprint(b, ", ")
+			}
+		}
+		fmt.Fprintf(b, "\n")
+	}
+	return b.String()
 }
