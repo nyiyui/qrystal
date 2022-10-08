@@ -104,13 +104,20 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 
 func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeerRes) {
 	cn := c.cc.Networks[cnn]
-	peer := cn.Peers[pn]
-	peer.lock.RLock()
-	defer peer.lock.RUnlock()
-	log.Printf("net %s peer %s: %#v", cnn, pn, peer)
-	if peer.Host == "" {
-		return SyncPeerRes{skip: true}
+	skip := func() bool {
+		peer := cn.Peers[pn]
+		peer.lock.RLock()
+		defer peer.lock.RUnlock()
+		log.Printf("net %s peer %s: %#v", cnn, pn, peer)
+		if peer.Host == "" {
+			return true
+		}
+		return false
+	}()
+	if skip {
+		return SyncPeerRes{skip: skip}
 	}
+	log.Printf("net %s peer %s: ensuring", cnn, pn)
 	err := c.ensureClient(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ensure client: %w", err)}
@@ -156,13 +163,13 @@ func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
 		you:          cn.Peers[pn],
 	}
 	log.Print("preauthboth")
-	err = state.authMine(cnn, pn)
+	err = state.verifyChall(cnn, pn)
 	if err != nil {
-		return fmt.Errorf("authenticating me: %w", err)
+		return fmt.Errorf("verify chall: %w", err)
 	}
-	err = state.authOthers()
+	err = state.solveChall()
 	if err != nil {
-		return fmt.Errorf("authenticating you: %w", err)
+		return fmt.Errorf("solve chall: %w", err)
 	}
 
 	sq, err := conn.Recv()

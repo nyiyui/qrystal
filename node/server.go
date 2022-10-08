@@ -119,13 +119,13 @@ func (s *Node) Auth(conn api.Node_AuthServer) error {
 		conn:         conn,
 		cc:           s.cc,
 	}
-	err := state.authOthers()
+	err := state.solveChall()
 	if err != nil {
-		return fmt.Errorf("authenticating you: %w", err)
+		return fmt.Errorf("solve chall: %w", err)
 	}
-	err = state.authMine(state.cn.name, state.you.name)
+	err = state.verifyChall(state.cn.name, state.you.name)
 	if err != nil {
-		return fmt.Errorf("authenticating me: %w", err)
+		return fmt.Errorf("verify chall: %w", err)
 	}
 	err = func() error {
 		state.cn.lock.Lock()

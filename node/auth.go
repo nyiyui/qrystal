@@ -18,13 +18,13 @@ type authState struct {
 	conn         authConn
 	cc           CentralConfig
 
-	// the following are dynamically set by authOthers
+	// the following are dynamically set by authYours
 
 	cn  *CentralNetwork
 	you *CentralPeer
 }
 
-func (s *authState) authOthers() error {
+func (s *authState) solveChall() error {
 	sq1Raw, err := s.conn.Recv()
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (s *authState) authOthers() error {
 	return nil
 }
 
-func (s *authState) authMine(cnn, yourName string) error {
+func (s *authState) verifyChall(cnn, yourName string) error {
 	if s.you == nil {
 		return errors.New("authMine: authState.you is nil")
 	}
