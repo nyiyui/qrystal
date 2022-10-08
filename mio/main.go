@@ -153,14 +153,6 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	_, err := sm.client.Device(q.Name)
 	if errors.Is(err, os.ErrNotExist) {
 		log.Printf("デバイスを追加：%s\n%s", q.Name, wgConfigToString(q.Config))
-		err = devAdd(q.Name, devConfig{
-			Address:    q.Address,
-			PrivateKey: q.Config.PrivateKey,
-		})
-		if err != nil {
-			*r = fmt.Sprintf("devAdd: %s", err)
-			return nil
-		}
 	} else if err != nil {
 		*r = fmt.Sprintf("wg dev: %s", err)
 		return nil
@@ -170,15 +162,16 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 			*r = fmt.Sprintf("devRemove2: %s", err)
 			return nil
 		}
-		err = devAdd(q.Name, devConfig{
-			Address:    q.Address,
-			PrivateKey: q.Config.PrivateKey,
-		})
-		if err != nil {
-			*r = fmt.Sprintf("devAdd2: %s", err)
-			return nil
-		}
 		log.Printf("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
+	}
+	err = devAdd(q.Name, devConfig{
+		Address:    q.Address,
+		PrivateKey: q.Config.PrivateKey,
+		Peers:      q.Config.Peers,
+	})
+	if err != nil {
+		*r = fmt.Sprintf("devAdd: %s", err)
+		return nil
 	}
 	err = sm.client.ConfigureDevice(q.Name, *q.Config)
 	if err != nil {
