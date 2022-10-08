@@ -3,6 +3,7 @@ package node
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"log"
 	"time"
@@ -64,7 +65,7 @@ func (n *Node) ListenCS() error {
 
 			for cnn, cn := range cc.Networks {
 				me := cn.Peers[cn.Me]
-				if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().([]byte))) {
+				if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
 					return fmt.Errorf("net %s: key pair mismatch", cnn)
 				}
 			}
