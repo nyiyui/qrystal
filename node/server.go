@@ -263,6 +263,7 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	you.psk = &yourPSK
 	log.Println("SET2 PSK:", you, yourPSK)
 
+	log.Printf("net %s peer %s: generating", cnn, you.name)
 	err = ensureWGPrivKey(cn)
 	if err != nil {
 		return nil, errors.New("private key generation failed")

@@ -132,11 +132,12 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("auth: %w", err)}
 	}
-	log.Printf("net %s peer %s: xched", cnn, pn)
+	log.Printf("net %s peer %s: authed", cnn, pn)
 	err = c.xch(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("xch: %w", err)}
 	}
+	log.Printf("net %s peer %s: xched", cnn, pn)
 	return SyncPeerRes{}
 }
 
@@ -207,7 +208,6 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 		PubKey: pubKey[:],
 		Psk:    psk[:],
 	})
-
 	if err != nil {
 		return fmt.Errorf("send request: %w", err)
 	}

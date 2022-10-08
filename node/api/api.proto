@@ -60,7 +60,6 @@ message XchQ {
 
 message XchS {
   bytes pubKey = 1;
-  bytes psk = 2;
 }
 
 message PingQS {}
