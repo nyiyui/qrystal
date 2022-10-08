@@ -272,6 +272,7 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 
 	you.accessible = true
 
+	log.Printf("net %s peer %s: configuring network", cnn, you.name)
 	// TODO: consider running this in a goroutine or something
 	err = s.configNetwork(cn)
 	if err != nil {

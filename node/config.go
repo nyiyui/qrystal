@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/nyiyui/qrystal/mio"
@@ -9,10 +10,12 @@ import (
 )
 
 func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
+	log.Print("preconfig")
 	config, err := s.convertNetwork(cn)
 	if err != nil {
 		return fmt.Errorf("convert: %w", err)
 	}
+	log.Print("postconfig")
 	me, ok := cn.Peers[cn.Me]
 	if !ok {
 		return fmt.Errorf("peer %s not found", cn.Me)
@@ -21,6 +24,7 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 		listenPort := cn.ListenPort
 		config.ListenPort = &listenPort
 	}
+	log.Print("preconfigdevice")
 	q := mio.ConfigureDeviceQ{
 		Name:    cn.name,
 		Config:  config,
@@ -37,6 +41,7 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err error) {
 	cn.lock.RLock()
 	defer cn.lock.RUnlock()
+	log.Print("postconfig lock")
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn, peer := range cn.Peers {
 		config, accessible, err := s.convertPeer(cn, peer)
