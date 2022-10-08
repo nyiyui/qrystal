@@ -12,8 +12,8 @@ func wgConfigToString(config *wgtypes.Config) string {
 	b := new(strings.Builder)
 	fmt.Fprint(b, "[Interface]\n")
 	fmt.Fprintf(b, "PrivateKey = %s\n", config.PrivateKey)
-	fmt.Fprintf(b, "ListenPort = %d\n", config.ListenPort)
-	fmt.Fprintf(b, "FirewallMark = %d\n", config.FirewallMark)
+	fmt.Fprintf(b, "ListenPort = %d\n", *config.ListenPort)
+	fmt.Fprintf(b, "FirewallMark = %d\n", *config.FirewallMark)
 	fmt.Fprintf(b, "ReplacePeers = %t\n", config.ReplacePeers)
 	for i, peer := range config.Peers {
 		fmt.Fprintf(b, "\n[Peer %d]\n", i)
