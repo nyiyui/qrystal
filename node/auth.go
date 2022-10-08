@@ -53,6 +53,7 @@ func (s *authState) solveChall() error {
 		copy(signThis, sq1.Chall)
 		copy(signThis[32:], added)
 		challResp = ed25519.Sign(s.coordPrivKey, signThis)
+		log.Printf("my pubkey: %x", s.coordPrivKey.Public())
 		log.Printf("signee: %x", signThis)
 		log.Printf("signature: %x", challResp)
 	}
