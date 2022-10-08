@@ -172,6 +172,7 @@ func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
 		return fmt.Errorf("solve chall: %w", err)
 	}
 
+	log.Printf("net %s peer %s: waiting for token", cnn, pn)
 	sq, err := conn.Recv()
 	if err != nil {
 		return err

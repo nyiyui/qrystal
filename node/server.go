@@ -129,6 +129,7 @@ func (s *Node) Auth(conn api.Node_AuthServer) error {
 		log.Printf("verify chall failed: %s", err)
 		return fmt.Errorf("verify chall: %w", err)
 	}
+	log.Printf("net %s peer %s: generating token", state.cn.name, state.you.name)
 	err = func() error {
 		state.cn.lock.Lock()
 		defer state.cn.lock.Unlock()
