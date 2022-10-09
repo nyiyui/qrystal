@@ -190,7 +190,6 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 				}
 				peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip}})
 			}
-			return nil, nil
 		}
 		// TODO: impl checks for PublicKey, host, net overlap
 		cn.Peers[q.PeerName] = peer
