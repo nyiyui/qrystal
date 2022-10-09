@@ -63,7 +63,7 @@ func (i *IPNet2) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (i *IPNet2) MarshalYAML() (interface{}, error) {
+func (i IPNet2) MarshalYAML() (interface{}, error) {
 	return i.IPNet.String(), nil
 }
 
