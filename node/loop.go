@@ -33,9 +33,11 @@ func (n *Node) ListenCS() error {
 		return err
 	}
 
-	err = n.azusa.setup(n, cl)
-	if err != nil {
-		return fmt.Errorf("azusa: %w", err)
+	if n.azusa.enabled {
+		err = n.azusa.setup(n, cl)
+		if err != nil {
+			return fmt.Errorf("azusa: %w", err)
+		}
 	}
 
 	conn, err := cl.Pull(context.Background(), &api.PullQ{

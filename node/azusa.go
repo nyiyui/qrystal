@@ -10,11 +10,13 @@ import (
 )
 
 type azusa struct {
+	enabled  bool
 	networks map[string]string
 	host     string
 }
 
 func (n *Node) AzusaConfigure(networks map[string]string, host string) {
+	n.azusa.enabled = true
 	n.azusa.networks = networks
 	n.azusa.host = host
 }
