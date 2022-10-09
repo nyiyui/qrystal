@@ -32,7 +32,7 @@ func main() {
 
 	server := cs.New(*config.CC, config.BackportPath)
 	server.ReplaceTokens(config.Tokens.Raw)
-	if config.BackportPath != "" {
+	if config.BackportPath != "" && false {
 		err = server.ReadBackport()
 		if err != nil {
 			log.Fatalf("read backport: %s", err)
