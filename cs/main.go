@@ -159,6 +159,9 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	if q.PeerName != pattern {
 		return nil, fmt.Errorf("cannot push to net %s peer %s", q.Cnn, q.PeerName)
 	}
+
+	log.Printf("push %#v", q)
+
 	peer, err := convertPeer(q.Peer)
 	if err != nil {
 		return &api.PushS{
