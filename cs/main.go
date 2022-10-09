@@ -203,6 +203,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	}
 	log.Printf("push net %s peer %s: notify change", q.Cnn, q.PeerName)
 	log.Printf("debug: %#v", s.cc.Networks[q.Cnn])
+	log.Printf("debug: %#v", s.cc.Networks[q.Cnn].Peers[q.PeerName])
 	s.notifyChange()
 	return &api.PushS{
 		S: &api.PushS_Ok{},
