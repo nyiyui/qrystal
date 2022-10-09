@@ -13,7 +13,7 @@ import (
 
 type CentralConfig struct {
 	Networks map[string]*CentralNetwork `yaml:"networks"`
-	DialOpts []grpc.DialOption
+	DialOpts []grpc.DialOption          `yaml:"-"`
 }
 type CentralNetwork struct {
 	name string
