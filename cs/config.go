@@ -98,8 +98,8 @@ func (s *CentralSource) backport() error {
 	var encoded []byte
 	var err error
 	func() {
-		s.ccLock.Lock()
-		defer s.ccLock.Unlock()
+		s.ccLock.RLock()
+		defer s.ccLock.RUnlock()
 		encoded, err = yaml.Marshal(Backport{
 			CC: &s.cc,
 		})

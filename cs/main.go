@@ -74,8 +74,6 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 
 			log.Printf("%sに送ります。", ti.Name)
 
-			s.ccLock.RLock()
-			defer s.ccLock.RUnlock()
 			newCC, err := s.convertCC(ti.Networks)
 			if err != nil {
 				log.Printf("convertCC: %s", err)
@@ -170,7 +168,9 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 			},
 		}, nil
 	}
+	log.Printf("locking ccLock")
 	s.ccLock.Lock()
+	log.Printf("locked ccLock")
 	defer s.ccLock.Unlock()
 	cn := s.cc.Networks[q.Cnn]
 	if len(peer.AllowedIPs) == 0 {
