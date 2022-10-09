@@ -72,7 +72,7 @@ func toAfter(peers []wgtypes.PeerConfig) string {
 		fmt.Fprintf(b, "PublicKey=%s\n", peer.PublicKey)
 		fmt.Fprint(b, "AllowedIPs=")
 		for j, ip := range peer.AllowedIPs {
-			fmt.Fprintf(b, "%s", ip)
+			fmt.Fprintf(b, "%s", &ip)
 			if j != len(peer.AllowedIPs)-1 {
 				fmt.Fprint(b, ", ")
 			}
