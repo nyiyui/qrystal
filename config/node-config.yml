@@ -5,6 +5,12 @@ server:
   addr: :39251
   tls-cert-path:
   tls-key-path:
+# Central configuration (note that this will be overridden by CS if applicable).
+central:
 cs:
   host: <qrystal-cs>:39252
   token: <token>
+# Automatically push nodes onto networks using cs.
+azusa:
+  networks:
+    <some-network>: <peer-name>

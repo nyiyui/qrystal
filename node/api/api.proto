@@ -80,12 +80,14 @@ message PushQ {
   string cnn = 2;
   string peerName = 3;
   CentralPeer peer = 4;
+  // peer to add. If CentralPeer.allowedIPs is blank, 1 IP address (which is not already used) is assigned automatically.
 }
 
 message PushS {
   oneof s {
     Ok ok = 1;
     string invalidData = 2;
+    string overflow = 3;
   }
 }
 
@@ -123,7 +125,11 @@ message AddTokenQ {
   string name = 4;
   map<string, string> networks = 5;
   bool canPull = 6;
-  bool canPush = 7;
+  CanPush canPush = 7;
+}
+
+message CanPush {
+  map<string, string> networks = 1;
 }
 
 message AddTokenS {}

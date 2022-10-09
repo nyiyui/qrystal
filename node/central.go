@@ -49,7 +49,7 @@ type CentralPeer struct {
 }
 
 type IPNet2 struct {
-	ipNet net.IPNet
+	IPNet net.IPNet
 }
 
 func (i *IPNet2) UnmarshalYAML(value *yaml.Node) error {
@@ -66,7 +66,7 @@ func (i *IPNet2) UnmarshalYAML(value *yaml.Node) error {
 func ToIPNets(is2 []IPNet2) []net.IPNet {
 	dest := make([]net.IPNet, len(is2))
 	for i, i2 := range is2 {
-		dest[i] = net.IPNet(i2.ipNet)
+		dest[i] = net.IPNet(i2.IPNet)
 	}
 	return dest
 }

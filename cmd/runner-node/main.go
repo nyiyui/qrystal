@@ -23,13 +23,19 @@ type config struct {
 	PrivKey string             `yaml:"private-key"`
 	Server  *serverConfig      `yaml:"server"`
 	Central node.CentralConfig `yaml:"central"`
-	CS      csConfig           `yaml:"cs"`
+	CS      *csConfig          `yaml:"cs"`
+	Azusa   *azusaConfig       `yaml:"azusa"`
 }
 
 type serverConfig struct {
 	TLSCertPath string `yaml:"tls-cert-path"`
 	TLSKeyPath  string `yaml:"tls-key-path"`
 	Addr        string `yaml:"addr"`
+}
+
+type azusaConfig struct {
+	Networks map[string]string `yaml:"networks"`
+	Host     string            `yaml:"host"`
 }
 
 type configValidated config
@@ -111,6 +117,10 @@ func main() {
 		panic(err)
 	}
 
+	if c.CS == nil && c.Azusa != nil {
+		log.Fatal("config: azusa requires cs")
+	}
+
 	if c.Server != nil {
 		go func() {
 			server := grpc.NewServer(grpc.Creds(serverCreds))
@@ -125,11 +135,16 @@ func main() {
 			}
 		}()
 	}
-	go func() {
-		err := n.ListenCS()
-		if err != nil {
-			log.Printf("listen: %s", err)
+	if c.CS != nil {
+		if c.Azusa != nil {
+			n.AzusaConfigure(c.Azusa.Networks, c.Azusa.Host)
 		}
-	}()
+		go func() {
+			err := n.ListenCS()
+			if err != nil {
+				log.Printf("listen: %s", err)
+			}
+		}()
+	}
 	select {}
 }

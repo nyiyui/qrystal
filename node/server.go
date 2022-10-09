@@ -58,6 +58,8 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		csHost:  cfg.CSHost,
 		csToken: cfg.CSToken,
 		csCreds: cfg.CSCreds,
+
+		azusa: new(azusa),
 	}
 	return node, nil
 }
@@ -76,6 +78,8 @@ type Node struct {
 	servers     map[networkPeerPair]*clientServer
 
 	mio *mioHandle
+
+	azusa *azusa
 }
 
 var _ api.NodeServer = (*Node)(nil)

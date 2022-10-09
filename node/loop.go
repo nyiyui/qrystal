@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -30,6 +31,11 @@ func (n *Node) ListenCS() error {
 	cl, err := n.setupCS()
 	if err != nil {
 		return err
+	}
+
+	err = n.azusa.setup(n, cl)
+	if err != nil {
+		return fmt.Errorf("azusa: %w", err)
 	}
 
 	conn, err := cl.Pull(context.Background(), &api.PullQ{
@@ -70,11 +76,19 @@ func (n *Node) ListenCS() error {
 				}
 			}
 
-			err = n.RemoveAllDevices()
+			err = func() error {
+				n.ccLock.Lock()
+				defer n.ccLock.Unlock()
+				err = n.removeAllDevices()
+				if err != nil {
+					return fmt.Errorf("rm all devs: %w", err)
+				}
+				n.replaceCC(cc)
+				return nil
+			}()
 			if err != nil {
-				return fmt.Errorf("rm all devs: %w", err)
+				return err
 			}
-			n.ReplaceCC(cc)
 			log.Printf("新たなCCで同期します。")
 			res, err := n.Sync(context.Background())
 			if err != nil {
@@ -88,4 +102,19 @@ func (n *Node) ListenCS() error {
 			}
 		}
 	}
+}
+
+func (c *Node) removeAllDevices() error {
+	for nn := range c.cc.Networks {
+		err := c.mio.RemoveDevice(mio.RemoveDeviceQ{
+			Name: nn,
+		})
+		if err != nil {
+			return fmt.Errorf("mio RemoveDevice %s: %w", nn, err)
+		}
+	}
+	return nil
+}
+func (n *Node) replaceCC(cc2 *CentralConfig) {
+	n.cc = *cc2
 }

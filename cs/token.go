@@ -40,9 +40,9 @@ func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool) {
 
 type TokenInfo struct {
 	Name         string
-	Networks     map[string]string `yaml:"networks"`
+	Networks     map[string]string
 	CanPull      bool
-	CanPush      bool
+	CanPush      *CanPush
 	CanAddTokens *CanAddTokens
 }
 
@@ -50,6 +50,10 @@ type CanAddTokens struct {
 	CanPull bool `yaml:"can-pull"`
 	CanPush bool `yaml:"can-push"`
 	// don't allow CanAddTokens to make logic simpler
+}
+
+type CanPush struct {
+	Networks map[string]string `yaml:"networks"`
 }
 
 type Token struct {

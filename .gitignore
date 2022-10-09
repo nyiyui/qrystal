@@ -3,3 +3,4 @@
 /build2
 qrystal-*.pkg*
 /cs-push-config.yml
+/tmp-config.yml

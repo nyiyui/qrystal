@@ -11,6 +11,7 @@ import (
 
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 )
 
 type CentralSource struct {
@@ -148,8 +149,15 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	if !ok {
 		return nil, newTokenAuthError(q.CentralToken)
 	}
-	if !ti.CanPush {
+	if ti.CanPush == nil {
 		return nil, errors.New("cannot push")
+	}
+	pattern, ok := ti.CanPush.Networks[q.Cnn]
+	if !ok {
+		return nil, fmt.Errorf("cannot push to net %s", q.Cnn)
+	}
+	if q.PeerName != pattern {
+		return nil, fmt.Errorf("cannot push to net %s peer %s", q.Cnn, q.PeerName)
 	}
 	peer, err := convertPeer(q.Peer)
 	if err != nil {
@@ -162,6 +170,24 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	s.ccLock.Lock()
 	defer s.ccLock.Unlock()
 	cn := s.cc.Networks[q.Cnn]
+	if len(peer.AllowedIPs) == 0 {
+		// assign an IP address chosen by me
+		for _, ipNet := range cn.IPs {
+			usedIPs := []net.IPNet{}
+			for _, peer := range cn.Peers {
+				usedIPs = append(usedIPs, node.ToIPNets(peer.AllowedIPs)...)
+			}
+			ip, err := util.AssignAddress(&ipNet.IPNet, usedIPs)
+			if err != nil {
+				return &api.PushS{
+					S: &api.PushS_Overflow{
+						Overflow: fmt.Sprint(err),
+					},
+				}, nil
+			}
+			peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip}})
+		}
+	}
 	// TODO: impl checks for PublicKey, host, net overlap
 	cn.Peers[q.PeerName] = peer
 	s.notifyChange()
@@ -184,13 +210,21 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
 	}
 	alreadyExists := s.tokens.AddToken(hash, TokenInfo{
-		Name:     q.Name,
-		Networks: q.Networks,
-		CanPull:  q.CanPull,
-		CanPush:  q.CanPush,
+		Name:    q.Name,
+		CanPull: q.CanPull,
+		CanPush: convCanPush(q.CanPush),
 	}, q.Overwrite)
 	if alreadyExists {
 		return nil, errors.New("same hash already exists")
 	}
 	return &api.AddTokenS{}, nil
+}
+
+func convCanPush(c *api.CanPush) *CanPush {
+	if c == nil {
+		return nil
+	}
+	return &CanPush{
+		Networks: c.Networks,
+	}
 }

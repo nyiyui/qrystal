@@ -43,7 +43,7 @@ type TokenConfig struct {
 	Hash         *util.HexBytes    `yaml:"hash"`
 	Networks     map[string]string `yaml:"networks"`
 	CanPull      bool              `yaml:"can-pull"`
-	CanPush      bool              `yaml:"can-push"`
+	CanPush      *CanPush          `yaml:"can-push"`
 	CanAddTokens *CanAddTokens     `yaml:"can-add-tokens"`
 }
 
