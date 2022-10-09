@@ -168,31 +168,41 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 			},
 		}, nil
 	}
-	log.Printf("locking ccLock")
-	s.ccLock.Lock()
-	log.Printf("locked ccLock")
-	defer s.ccLock.Unlock()
-	cn := s.cc.Networks[q.Cnn]
-	if len(peer.AllowedIPs) == 0 {
-		// assign an IP address chosen by me
-		for _, ipNet := range cn.IPs {
-			usedIPs := []net.IPNet{}
-			for _, peer := range cn.Peers {
-				usedIPs = append(usedIPs, node.ToIPNets(peer.AllowedIPs)...)
+	pushS, err := func() (*api.PushS, error) {
+		s.ccLock.Lock()
+		defer s.ccLock.Unlock()
+		cn := s.cc.Networks[q.Cnn]
+		if len(peer.AllowedIPs) == 0 {
+			log.Printf("push net %s peer %s: assigning IP", q.Cnn, q.PeerName)
+			// assign an IP address chosen by me
+			for _, ipNet := range cn.IPs {
+				usedIPs := []net.IPNet{}
+				for _, peer := range cn.Peers {
+					usedIPs = append(usedIPs, node.ToIPNets(peer.AllowedIPs)...)
+				}
+				ip, err := util.AssignAddress(&ipNet.IPNet, usedIPs)
+				if err != nil {
+					return &api.PushS{
+						S: &api.PushS_Overflow{
+							Overflow: fmt.Sprint(err),
+						},
+					}, nil
+				}
+				peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip}})
 			}
-			ip, err := util.AssignAddress(&ipNet.IPNet, usedIPs)
-			if err != nil {
-				return &api.PushS{
-					S: &api.PushS_Overflow{
-						Overflow: fmt.Sprint(err),
-					},
-				}, nil
-			}
-			peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip}})
+			return nil, nil
 		}
+		// TODO: impl checks for PublicKey, host, net overlap
+		cn.Peers[q.PeerName] = peer
+		return nil, nil
+	}()
+	if err != nil {
+		return nil, err
 	}
-	// TODO: impl checks for PublicKey, host, net overlap
-	cn.Peers[q.PeerName] = peer
+	if pushS != nil {
+		return pushS, nil
+	}
+	log.Printf("push net %s peer %s: notify change", q.Cnn, q.PeerName)
 	s.notifyChange()
 	return &api.PushS{
 		S: &api.PushS_Ok{},
