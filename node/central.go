@@ -59,11 +59,11 @@ func (i *IPNet2) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 	_, ipNet, err := net.ParseCIDR(raw)
-	*i = IPNet2{*ipNet}
+	i.IPNet = *ipNet
 	return nil
 }
 
-func (i IPNet2) MarshalYAML() (interface{}, error) {
+func (i *IPNet2) MarshalYAML() (interface{}, error) {
 	return i.IPNet.String(), nil
 }
 
