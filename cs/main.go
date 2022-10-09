@@ -104,6 +104,9 @@ func (s *CentralSource) rmChangeNotify(name string) {
 func FromIPNets(nets []net.IPNet) (dest []*api.IPNet) {
 	dest = make([]*api.IPNet, len(nets))
 	for i, n := range nets {
+		if n == nil {
+			panic("nil IPNet")
+		}
 		dest[i] = &api.IPNet{Cidr: n.String()}
 	}
 	return
