@@ -3,6 +3,7 @@ package cs
 import (
 	"crypto/ed25519"
 	"fmt"
+	"log"
 
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/node/api"
@@ -22,6 +23,7 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 		}
 		peers := map[string]*api.CentralPeer{}
 		for pn, peer := range cn.Peers {
+			log.Printf("net %s peer %s: %#v", cnn, pn, peer)
 			peers[pn] = &api.CentralPeer{
 				Host:       peer.Host,
 				AllowedIPs: FromIPNets(node.ToIPNets(peer.AllowedIPs)),
