@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -51,61 +52,73 @@ func (n *Node) ListenCS() error {
 	ctx := conn.Context()
 	retryInterval := 1 * time.Second
 	for {
+		retryInterval *= 2
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("disconnected; retry in %s", retryInterval)
+			log.Printf("listen: disconnected; retry in %s", retryInterval)
 		default:
-			s, err := conn.Recv()
-			if err != nil {
-				return fmt.Errorf("pull recv: %w", err)
-			}
-			log.Printf("preconv: %s", s.Cc)
-			cc, err := newCCFromAPI(s.Cc)
-			if err != nil {
-				return fmt.Errorf("conv: %w", err)
-			}
-			cc.DialOpts = []grpc.DialOption{
-				grpc.WithTransportCredentials(n.csCreds),
-			}
-			log.Printf("新たなCCを受信: %#v", cc)
-			for cnn, cn := range cc.Networks {
-				log.Printf("net %s: %#v", cnn, cn)
-			}
-
-			for cnn, cn := range cc.Networks {
-				me := cn.Peers[cn.Me]
-				log.Printf("my peer not found %s", cn.Me)
-				if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
-					return fmt.Errorf("net %s: key pair mismatch", cnn)
-				}
-			}
-
 			err = func() error {
-				n.ccLock.Lock()
-				defer n.ccLock.Unlock()
-				err = n.removeAllDevices()
+				s, err := conn.Recv()
 				if err != nil {
-					return fmt.Errorf("rm all devs: %w", err)
+					return fmt.Errorf("pull recv: %w", err)
 				}
-				n.applyCC(cc)
+				log.Printf("preconv: %s", s.Cc)
+				cc, err := newCCFromAPI(s.Cc)
+				if err != nil {
+					return fmt.Errorf("conv: %w", err)
+				}
+				cc.DialOpts = []grpc.DialOption{
+					grpc.WithTransportCredentials(n.csCreds),
+				}
+				log.Printf("新たなCCを受信: %#v", cc)
+				for cnn, cn := range cc.Networks {
+					log.Printf("net %s: %#v", cnn, cn)
+				}
+
+				for cnn, cn := range cc.Networks {
+					me := cn.Peers[cn.Me]
+					log.Printf("my peer not found %s", cn.Me)
+					if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
+						return fmt.Errorf("net %s: key pair mismatch", cnn)
+					}
+				}
+
+				err = func() error {
+					n.ccLock.Lock()
+					defer n.ccLock.Unlock()
+					err = n.removeAllDevices()
+					if err != nil {
+						return fmt.Errorf("rm all devs: %w", err)
+					}
+					n.applyCC(cc)
+					return nil
+				}()
+				if err != nil {
+					return err
+				}
+				log.Printf("新たなCCで同期します。")
+				res, err := n.Sync(context.Background())
+				if err != nil {
+					return fmt.Errorf("sync: %w", err)
+				}
+				// TODO: check res
+				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
+				log.Printf("新たなCCで同期：\n%s", res)
+				if err != nil {
+					return err
+				}
 				return nil
 			}()
 			if err != nil {
-				return err
-			}
-			log.Printf("新たなCCで同期します。")
-			res, err := n.Sync(context.Background())
-			if err != nil {
-				return fmt.Errorf("sync: %w", err)
-			}
-			// TODO: check res
-			// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-			log.Printf("新たなCCで同期：\n%s", res)
-			if err != nil {
-				return err
+				log.Printf("listen: %s; retry in %s s", err, retryInterval)
 			}
 		}
+		time.Sleep(retryInterval)
+		if retryInterval > 65536*time.Second {
+			break
+		}
 	}
+	return errors.New("failed")
 }
 
 func (c *Node) removeAllDevices() error {
