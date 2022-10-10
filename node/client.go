@@ -91,6 +91,12 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 		if pn == cn.Me {
 			continue
 		}
+		err := c.ensureClient(ctx, cnn, pn)
+		if err != nil {
+			res.peerStatus[pn] = SyncPeerRes{
+				err: err,
+			}
+		}
 		log.Printf("net %s peer %s syncing", cn.name, pn)
 		ps := c.xchPeer(ctx, cnn, pn)
 		log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
