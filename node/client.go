@@ -43,8 +43,9 @@ func (r *SyncNetRes) String() string {
 }
 
 type SyncPeerRes struct {
-	skip bool
-	err  error
+	skip       bool
+	err        error
+	forwardErr error
 }
 
 func (r *SyncPeerRes) String() string {
@@ -52,7 +53,8 @@ func (r *SyncPeerRes) String() string {
 	if r.skip {
 		fmt.Fprintf(b, "\t\tskip\n")
 	} else {
-		fmt.Fprintf(b, "\t\terr: %s\n", r.err)
+		fmt.Fprintf(b, "\t\txch     err: %s\n", r.err)
+		fmt.Fprintf(b, "\t\tforward err: %s\n", r.err)
 	}
 	return b.String()
 }
@@ -93,6 +95,27 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 		ps := c.xchPeer(ctx, cnn, pn)
 		log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 		res.peerStatus[pn] = ps
+		err = func() error {
+			log.Printf("net %s peer %s advertising forwarding capability", cn.name, pn)
+			peer := cn.Peers[pn]
+			peer.lock.RLock()
+			log.Printf("LOCK net %s peer %s", cnn, pn)
+			defer peer.lock.RUnlock()
+			cs := c.servers[networkPeerPair{cnn, pn}]
+			if cs.token == "" {
+				return errors.New("blank token")
+			}
+			_, err := c.csCl.CanForward(ctx, &api.CanForwardQ{
+				CentralToken:  c.csToken,
+				Network:       cnn,
+				ForwardeePeer: pn,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		}()
+		ps.forwardErr = err
 	}
 	log.Printf("net %s synced", cn.name)
 	err = c.configNetwork(cn)

@@ -32,6 +32,7 @@ func (n *Node) ListenCS() error {
 	if err != nil {
 		return err
 	}
+	n.csCl = cl
 
 	if n.azusa.enabled {
 		err = n.azusa.setup(n, cl)
@@ -132,6 +133,7 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 		}
 		cn.name = cnn2
 		cn.IPs = cn2.IPs
+		forwardingPeers := map[string]struct{}{}
 		for pn2, peer2 := range cn2.Peers {
 			peer, ok := cn.Peers[pn2]
 			if !ok {
@@ -142,6 +144,14 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 			peer.name = pn2
 			peer.Host = peer2.Host
 			peer.AllowedIPs = peer2.AllowedIPs
+			peer.ForwardingPeers = []string{}
+			for _, forwardingPeer := range peer2.ForwardingPeers {
+				_, ok := forwardingPeers[forwardingPeer]
+				if !ok {
+					peer.ForwardingPeers = append(peer.ForwardingPeers, forwardingPeer)
+					forwardingPeers[forwardingPeer] = struct{}{}
+				}
+			}
 			peer.PublicKey = peer2.PublicKey
 			peer.CanForward = peer2.CanForward
 		}

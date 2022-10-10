@@ -47,6 +47,7 @@ func newCNFromAPI(cnn string, cn *api.CentralNetwork) (cn2 *CentralNetwork, err 
 		ListenPort: int(cn.ListenPort),
 	}, nil
 }
+
 func FromAPIToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	dest = make([]net.IPNet, len(nets))
 	var n2 *net.IPNet
@@ -72,9 +73,10 @@ func newPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *CentralPeer, err e
 		return nil, fmt.Errorf("ToIPNets: %w", err)
 	}
 	return &CentralPeer{
-		name:       pn,
-		Host:       peer.Host,
-		AllowedIPs: FromIPNets(ipNets),
-		PublicKey:  util.Ed25519PublicKey(peer.PublicKey.Raw),
+		name:            pn,
+		Host:            peer.Host,
+		AllowedIPs:      FromIPNets(ipNets),
+		ForwardingPeers: peer.ForwardingPeers,
+		PublicKey:       util.Ed25519PublicKey(peer.PublicKey.Raw),
 	}, nil
 }

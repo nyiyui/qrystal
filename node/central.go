@@ -30,9 +30,10 @@ type CentralNetwork struct {
 }
 
 type CentralPeer struct {
-	name       string
-	Host       string   `yaml:"host"`
-	AllowedIPs []IPNet2 `yaml:"allowed-ips"`
+	name            string
+	Host            string   `yaml:"host"`
+	AllowedIPs      []IPNet2 `yaml:"allowed-ips"`
+	ForwardingPeers []string `yaml:"-"`
 	// TODO: use UnmarshalYAML
 	PublicKey  util.Ed25519PublicKey `yaml:"public-key"`
 	CanForward bool                  `yaml:"can-forward"`

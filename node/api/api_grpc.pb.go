@@ -210,9 +210,9 @@ var Node_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CentralSourceClient interface {
 	Pull(ctx context.Context, in *PullQ, opts ...grpc.CallOption) (CentralSource_PullClient, error)
-	CanForward(ctx context.Context, in *CanForwardQ, opts ...grpc.CallOption) (*CanForwardS, error)
 	Push(ctx context.Context, in *PushQ, opts ...grpc.CallOption) (*PushS, error)
 	AddToken(ctx context.Context, in *AddTokenQ, opts ...grpc.CallOption) (*AddTokenS, error)
+	CanForward(ctx context.Context, in *CanForwardQ, opts ...grpc.CallOption) (*CanForwardS, error)
 	Ping(ctx context.Context, in *PingQS, opts ...grpc.CallOption) (*PingQS, error)
 }
 
@@ -256,15 +256,6 @@ func (x *centralSourcePullClient) Recv() (*PullS, error) {
 	return m, nil
 }
 
-func (c *centralSourceClient) CanForward(ctx context.Context, in *CanForwardQ, opts ...grpc.CallOption) (*CanForwardS, error) {
-	out := new(CanForwardS)
-	err := c.cc.Invoke(ctx, "/CentralSource/canForward", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *centralSourceClient) Push(ctx context.Context, in *PushQ, opts ...grpc.CallOption) (*PushS, error) {
 	out := new(PushS)
 	err := c.cc.Invoke(ctx, "/CentralSource/push", in, out, opts...)
@@ -277,6 +268,15 @@ func (c *centralSourceClient) Push(ctx context.Context, in *PushQ, opts ...grpc.
 func (c *centralSourceClient) AddToken(ctx context.Context, in *AddTokenQ, opts ...grpc.CallOption) (*AddTokenS, error) {
 	out := new(AddTokenS)
 	err := c.cc.Invoke(ctx, "/CentralSource/addToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *centralSourceClient) CanForward(ctx context.Context, in *CanForwardQ, opts ...grpc.CallOption) (*CanForwardS, error) {
+	out := new(CanForwardS)
+	err := c.cc.Invoke(ctx, "/CentralSource/canForward", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -297,9 +297,9 @@ func (c *centralSourceClient) Ping(ctx context.Context, in *PingQS, opts ...grpc
 // for forward compatibility
 type CentralSourceServer interface {
 	Pull(*PullQ, CentralSource_PullServer) error
-	CanForward(context.Context, *CanForwardQ) (*CanForwardS, error)
 	Push(context.Context, *PushQ) (*PushS, error)
 	AddToken(context.Context, *AddTokenQ) (*AddTokenS, error)
+	CanForward(context.Context, *CanForwardQ) (*CanForwardS, error)
 	Ping(context.Context, *PingQS) (*PingQS, error)
 	mustEmbedUnimplementedCentralSourceServer()
 }
@@ -311,14 +311,14 @@ type UnimplementedCentralSourceServer struct {
 func (UnimplementedCentralSourceServer) Pull(*PullQ, CentralSource_PullServer) error {
 	return status.Errorf(codes.Unimplemented, "method Pull not implemented")
 }
-func (UnimplementedCentralSourceServer) CanForward(context.Context, *CanForwardQ) (*CanForwardS, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CanForward not implemented")
-}
 func (UnimplementedCentralSourceServer) Push(context.Context, *PushQ) (*PushS, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Push not implemented")
 }
 func (UnimplementedCentralSourceServer) AddToken(context.Context, *AddTokenQ) (*AddTokenS, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddToken not implemented")
+}
+func (UnimplementedCentralSourceServer) CanForward(context.Context, *CanForwardQ) (*CanForwardS, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CanForward not implemented")
 }
 func (UnimplementedCentralSourceServer) Ping(context.Context, *PingQS) (*PingQS, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -357,24 +357,6 @@ func (x *centralSourcePullServer) Send(m *PullS) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _CentralSource_CanForward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CanForwardQ)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CentralSourceServer).CanForward(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/CentralSource/canForward",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CentralSourceServer).CanForward(ctx, req.(*CanForwardQ))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _CentralSource_Push_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PushQ)
 	if err := dec(in); err != nil {
@@ -411,6 +393,24 @@ func _CentralSource_AddToken_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CentralSource_CanForward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CanForwardQ)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CentralSourceServer).CanForward(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CentralSource/canForward",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CentralSourceServer).CanForward(ctx, req.(*CanForwardQ))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CentralSource_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PingQS)
 	if err := dec(in); err != nil {
@@ -437,16 +437,16 @@ var CentralSource_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CentralSourceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "canForward",
-			Handler:    _CentralSource_CanForward_Handler,
-		},
-		{
 			MethodName: "push",
 			Handler:    _CentralSource_Push_Handler,
 		},
 		{
 			MethodName: "addToken",
 			Handler:    _CentralSource_AddToken_Handler,
+		},
+		{
+			MethodName: "canForward",
+			Handler:    _CentralSource_CanForward_Handler,
 		},
 		{
 			MethodName: "ping",

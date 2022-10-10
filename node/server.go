@@ -80,6 +80,7 @@ type Node struct {
 	mio *mioHandle
 
 	azusa *azusa
+	csCl  api.CentralSourceClient
 }
 
 var _ api.NodeServer = (*Node)(nil)

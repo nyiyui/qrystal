@@ -245,3 +245,22 @@ func convCanPush(c *api.CanPush) *CanPush {
 		Networks: c.Networks,
 	}
 }
+
+func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*api.CanForwardS, error) {
+	ti, ok := s.tokens.getToken(q.CentralToken)
+	if !ok {
+		return nil, newTokenAuthError(q.CentralToken)
+	}
+	peerName, ok := ti.Networks[q.Network]
+	if !ok {
+		return nil, errors.New("bad cn")
+	}
+	if q.ForwardeePeer != peerName {
+		return nil, errors.New("bad peer")
+	}
+	cn := s.cc.Networks[q.Network]
+	peer := cn.Peers[q.ForwardeePeer]
+	peer.ForwardingPeers = append(peer.ForwardingPeers, q.ForwardeePeer)
+	go s.notifyChange()
+	return &api.CanForwardS{}, nil
+}

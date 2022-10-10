@@ -22,9 +22,9 @@ service Node {
 
 service CentralSource {
   rpc pull(PullQ) returns (stream PullS);
-  rpc canForward(CanForwardQ) returns (CanForwardS);
   rpc push(PushQ) returns (PushS);
   rpc addToken(AddTokenQ) returns (AddTokenS);
+  rpc canForward(CanForwardQ) returns (CanForwardS);
 
   rpc ping(PingQS) returns (PingQS);
 }
@@ -106,7 +106,10 @@ message CentralNetwork {
 message CentralPeer {
   string host = 1;
   repeated IPNet allowedIPs = 2;
-  repeated IPNet forwaringIPs = 4;
+  repeated string forwardingPeers = 4;
+  // forwardingPeers lists the allowedIPs this peer can forward for.
+  // forwardingPeers may overlap (i.e. duplicate IPs may appear in other
+  // CentralPeers), so nodes must choose one for their WireGuard config.
   PublicKey publicKey = 3;
 }
 
@@ -140,9 +143,10 @@ message ForwardPreQ {
 }
 
 message CanForwardQ {
-  string network = 1;
-  string forwardee_peer = 2;
-  ForwardMetric metric = 3;
+  string centralToken = 1;
+  string network = 2;
+  string forwardee_peer = 3;
+  ForwardMetric metric = 4;
 }
 
 message ForwardMetric {
@@ -152,8 +156,4 @@ message ForwardMetric {
   // bandwidth in bps
 }
 
-message CanForwardS {
-  bool yycf = 1;
-  // yycf means "yes, you can forward"
-  // NOTE: this is only for debug purposes, as the forwaring settings will be propageated using CentralSource.pull.
-}
+message CanForwardS {}
