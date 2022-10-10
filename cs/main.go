@@ -191,7 +191,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 						},
 					}, nil
 				}
-				peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip}})
+				peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip, Mask: net.IPMask{0xff, 0xff, 0xff, 0xff}}})
 			}
 		}
 		// TODO: impl checks for PublicKey, host, net overlap
