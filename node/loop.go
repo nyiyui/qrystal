@@ -86,7 +86,7 @@ func (n *Node) ListenCS() error {
 				if err != nil {
 					return fmt.Errorf("rm all devs: %w", err)
 				}
-				n.replaceCC(cc)
+				n.applyCC(cc)
 				return nil
 			}()
 			if err != nil {
@@ -118,6 +118,49 @@ func (c *Node) removeAllDevices() error {
 	}
 	return nil
 }
-func (n *Node) replaceCC(cc2 *CentralConfig) {
-	n.cc = *cc2
+
+// applyCC applies cc2 to n.
+// ccLock is locked by the caller
+func (n *Node) applyCC(cc2 *CentralConfig) {
+	// NOTE: shouldn't have to lock any more since ccLock is supposed to override all inner locks
+	for cnn2, cn2 := range cc2.Networks {
+		cn, ok := n.cc.Networks[cnn2]
+		if !ok {
+			// new cn
+			n.cc.Networks[cnn2] = cn2
+			continue
+		}
+		cn.name = cnn2
+		cn.IPs = cn2.IPs
+		for pn2, peer2 := range cn2.Peers {
+			peer, ok := cn.Peers[pn2]
+			if !ok {
+				// new peer
+				cn.Peers[pn2] = peer2
+				continue
+			}
+			peer.name = pn2
+			peer.Host = peer2.Host
+			peer.AllowedIPs = peer2.AllowedIPs
+			peer.PublicKey = peer2.PublicKey
+			peer.CanForward = peer2.CanForward
+		}
+		for pn := range cn.Peers {
+			_, ok := cn2.Peers[pn]
+			if !ok {
+				// removed
+				delete(cn.Peers, pn)
+			}
+		}
+		cn.Me = cn2.Me
+		cn.Keepalive = cn2.Keepalive
+		cn.ListenPort = cn2.ListenPort
+	}
+	for cnn := range n.cc.Networks {
+		_, ok := cc2.Networks[cnn]
+		if !ok {
+			// removed
+			delete(n.cc.Networks, cnn)
+		}
+	}
 }
