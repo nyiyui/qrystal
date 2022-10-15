@@ -2,12 +2,32 @@
 
 Qrystal sets up several WireGuard tunnels between servers. In addition, it provides centralised configuration management.
 
+## TODO
+
+### Host Fallback
+
+Specify multiple hosts for peers.
+
+Example
+```yaml
+central:
+  networks:
+    examplenet:
+      …
+      peers:
+        vps0:
+          public-key: …
+            hosts:
+              - qrystal.vps0.example.net:39251
+              - 123.45.67.89:39251
+```
+
 ## Example
 
 - centralsource runs on `main.example.net:39252`
 - node runs on `{database, main}.example.net:39251`
 
-```yml
+```yaml
 # cs-config.yml on main
 addr: :39252
 tokens:
@@ -43,7 +63,7 @@ central:
             - 10.123.0.2/32
 ```
 
-```yml
+```yaml
 # node-config.yml on main
 private-key: R_iTwh5DNRokc8J2iSZHkPgSJkSAM7CdX2QP0PFbrZBoU=
 addr: :39251
@@ -52,7 +72,7 @@ cs:
   token: 54haXJnLrts59/PNZBQUobzu71fEaiinMrTaBnOtmg208+uDA1cvndkiVKVABmdLxmOF8YjCAfZoiM74ioMEeg==
 ```
 
-```yml
+```yaml
 # node-config.yml on database
 private-key: R_C0MatgWVGXquCEGjQH60jnL9imUAK6N3knVfSpjt9q4=
 addr: :39251
@@ -61,13 +81,13 @@ cs:
   token: /ghrTpjdIRqQJQdUQiNfabmJncTl5KN7nukLTyXZwSLp1rWi/C9OTXVrs8WMYAQ/aNqvc1lr4Xcr2gj9PlyUow==
 ```
 
-```yml
+```yaml
 # cs-push-config.yml on sysadmin's computer
 server: main.example.net:39252
 token: 8qYQRldGIwXB98lCqe/VqeOp1NJ/lN+tM+mUDfdqjdZabsIWYiD0ru6nINe02C5XHlrkXJByLZXM7Q1SFvyKnQ==
 ```
 
-```yml
+```yaml
 # cs-push-tmp-config.yml on sysadmin's computer (generated per invocation)
 config-path: /home/nyiyui/cs-push-config.yml
 overwrite: false
