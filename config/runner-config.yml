@@ -13,3 +13,5 @@ node:
     credential:
       user: qrystal-node
       group: qrystal-node
+      groups:
+        - qrystal-tls
