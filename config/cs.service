@@ -6,6 +6,7 @@ After=network.target network-online.target
 [Service]
 Type=simple
 ExecStart=qrystal-cs -config /etc/qrystal/cs-config.yml
+User=qrystal-cs
 
 [Install]
 WantedBy=multi-user.target

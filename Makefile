@@ -29,13 +29,16 @@ install: build2
 	cp -n \
 		'./config/cs-config.yml' \
 		'./config/runner-config.yml' \
+		'./config/node-config.yml' \
 		"${pkgdir}/etc/qrystal/"
+	chown root:qrystal-cs "${pkgdir}/etc/qrystal/cs-config.yml"
+	chmod 640 "${pkgdir}/etc/qrystal/cs-config.yml"
+	chown root:qrystal-node "${pkgdir}/etc/qrystal/node-config.yml"
+	chmod 640 "${pkgdir}/etc/qrystal/node-config.yml"
+	chmod 600 "${pkgdir}/etc/qrystal/runner-config.yml"
 	touch "${pkgdir}/etc/qrystal/cs-backport.yml"
 	chmod 600 "${pkgdir}/etc/qrystal/cs-backport.yml"
 	chown qrystal-node:qrystal-node "${pkgdir}/etc/qrystal/cs-backport.yml"
-	cp -n \
-		'./config/node-config.yml' \
-		"${pkgdir}/etc/qrystal/"
 	chmod 750 "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
 	mkdir -p "${pkgdir}/usr/lib/systemd/system"
