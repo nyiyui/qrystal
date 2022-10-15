@@ -15,6 +15,9 @@ tokens:
   - name: desktop0
     hash: …
     can-pull: true
+    # if can-push: true and networks is not blank, can-push can only push e.g.
+    # peer desktop to network examplenet.
+    can-push: true
     networks:
       examplenet: desktop
 central:
