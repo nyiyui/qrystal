@@ -25,7 +25,7 @@ install: build2
 	cp ./mio/dev-remove.sh "${pkgdir}/opt/qrystal/"
 	mkdir -p "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
-	chmod 770 "${pkgdir}/etc/qrystal"
+	chmod 755 "${pkgdir}/etc/qrystal"
 	cp -n \
 		'./config/cs-config.yml' \
 		'./config/runner-config.yml' \
@@ -39,8 +39,6 @@ install: build2
 	touch "${pkgdir}/etc/qrystal/cs-backport.yml"
 	chmod 600 "${pkgdir}/etc/qrystal/cs-backport.yml"
 	chown qrystal-node:qrystal-node "${pkgdir}/etc/qrystal/cs-backport.yml"
-	chmod 750 "${pkgdir}/etc/qrystal"
-	chown root:qrystal-node "${pkgdir}/etc/qrystal"
 	mkdir -p "${pkgdir}/usr/lib/systemd/system"
 	cp './config/runner.service' "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service"
 	cp './config/cs.service' "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
