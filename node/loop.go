@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const backoffTimeout = 5 * time.Minute
+
 func (n *Node) setupCS(csc CSConfig) (api.CentralSourceClient, error) {
 	conn, err := grpc.Dial(csc.Host, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(csc.Creds))
 	if err != nil {
@@ -68,7 +70,7 @@ RetryLoop:
 		if resetBackoff {
 			backoff = 1 * time.Second
 		}
-		if backoff > 65536*time.Second {
+		if backoff > backoffTimeout {
 			break RetryLoop
 		}
 	}
@@ -211,7 +213,7 @@ RetryLoop:
 		)
 		time.Sleep(backoff)
 		backoff *= 2
-		if backoff > 65536*time.Second {
+		if backoff > backoffTimeout {
 			break RetryLoop
 		}
 	}
