@@ -14,7 +14,7 @@ import (
 	"github.com/nyiyui/qrystal/util"
 )
 
-const forwardingCommitDelay = 1 * time.Second
+const commitDelay = 1 * time.Second
 
 type CentralSource struct {
 	api.UnimplementedCentralSourceServer
@@ -136,6 +136,7 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 }
 
 func (s *CentralSource) notifyChange(ch change) {
+	time.Sleep(commitDelay)
 	err := s.backport()
 	if err != nil {
 		log.Printf("backport error: %s", err)
@@ -274,9 +275,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 		peer := cn.Peers[forwardeePeer]
 		peer.ForwardingPeers = append(peer.ForwardingPeers, forwarderPeer)
 	}
-	go func() {
-		time.Sleep(forwardingCommitDelay)
-		s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true})
-	}()
+	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true})
 	return &api.CanForwardS{}, nil
 }

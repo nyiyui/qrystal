@@ -128,8 +128,9 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 			log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 			res.peerStatus[pn] = ps
 			pns = append(pns, pn)
+		} else {
+			log.Printf("net %s peer %s noxch", cn.name, pn)
 		}
-		log.Printf("net %s synced", cn.name)
 	}
 	if xch {
 		log.Printf("net %s peers %s advertising forwarding capability", cn.name, pns)
@@ -146,6 +147,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 			return nil, fmt.Errorf("CanForward: %w", err)
 		}
 	}
+	log.Printf("CN: %#v", cn)
 	err = c.configNetwork(cn)
 	if err != nil {
 		return nil, err
