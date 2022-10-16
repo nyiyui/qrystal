@@ -53,6 +53,9 @@ RetryLoop:
 	for {
 		// TODO: don't increase backoff if succees for a while
 		err := n.listenCSOnce(i)
+		if err == nil {
+			continue
+		}
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
 			"err", err,
@@ -145,7 +148,7 @@ func (n *Node) listenCSOnce(i int) error {
 			}
 			if s.ForwardingOnly {
 				log.Printf("===フォワードだけなので同期しません。")
-				res, err := n.Sync(context.Background(), false)
+				res, err := n.syncBackoff(context.Background(), false)
 				if err != nil {
 					return fmt.Errorf("sync: %w", err)
 				}
@@ -154,7 +157,7 @@ func (n *Node) listenCSOnce(i int) error {
 				log.Printf("===フォワードだけ：\n%s", res)
 			} else {
 				log.Printf("===新たなCCで同期します。")
-				res, err := n.Sync(context.Background(), true)
+				res, err := n.syncBackoff(context.Background(), true)
 				if err != nil {
 					return fmt.Errorf("sync: %w", err)
 				}
@@ -164,6 +167,34 @@ func (n *Node) listenCSOnce(i int) error {
 			}
 		}
 	}
+}
+
+func (n *Node) syncBackoff(ctx context.Context, xch bool) (*SyncRes, error) {
+	backoff := 1 * time.Second
+RetryLoop:
+	for {
+		// TODO: don't increase backoff if succees for a while
+		res, err := n.Sync(ctx, xch)
+		if err != nil && res.allOK() {
+			return res, nil
+		}
+		if err != nil {
+			util.S.Errorf("sync: %s; retry in %s", err, backoff)
+		} else {
+			util.S.Errorf("sync res: %s; retry in %s", err, backoff)
+		}
+		util.S.Errorw("sync: error",
+			"err", err,
+			"res", res,
+			"backoff", backoff,
+		)
+		time.Sleep(backoff)
+		backoff *= 2
+		if backoff > 65536*time.Second {
+			break RetryLoop
+		}
+	}
+	return nil, errors.New("backoff exceeded")
 }
 
 func (c *Node) removeAllDevices() error {

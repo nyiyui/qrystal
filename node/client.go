@@ -16,6 +16,15 @@ type SyncRes struct {
 	netStatus map[string]SyncNetRes
 }
 
+func (r *SyncRes) allOK() bool {
+	for _, netRes := range r.netStatus {
+		if !netRes.allOK() {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *SyncRes) String() string {
 	b := new(strings.Builder)
 	for nn, ns := range r.netStatus {
@@ -27,6 +36,21 @@ func (r *SyncRes) String() string {
 type SyncNetRes struct {
 	err        error
 	peerStatus map[string]SyncPeerRes
+}
+
+func (r *SyncNetRes) allOK() bool {
+	if r.err != nil {
+		return false
+	}
+	for _, peerRes := range r.peerStatus {
+		if peerRes.err != nil {
+			return false
+		}
+		if peerRes.forwardErr != nil {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *SyncNetRes) String() string {
