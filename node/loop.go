@@ -161,7 +161,6 @@ func (n *Node) listenCSOnce(i int) error {
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
 				log.Printf("===新たなCCで同期：\n%s", res)
 			}
-			return nil
 		}
 	}
 }
