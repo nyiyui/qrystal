@@ -304,6 +304,15 @@ func convCanPush(c *api.CanPush) *CanPush {
 	}
 }
 
+func contains(ss []string, s string) bool {
+	for _, s2 := range ss {
+		if s == s2 {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*api.CanForwardS, error) {
 	ti, ok := s.tokens.getToken(q.CentralToken)
 	if !ok {
@@ -317,7 +326,9 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	cn := s.cc.Networks[q.Network]
 	for _, forwardeePeer := range q.ForwardeePeers {
 		peer := cn.Peers[forwardeePeer]
-		peer.ForwardingPeers = append(peer.ForwardingPeers, forwarderPeer)
+		if !contains(peer.ForwardingPeers, forwarderPeer) {
+			peer.ForwardingPeers = append(peer.ForwardingPeers, forwarderPeer)
+		}
 	}
 	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true, net: q.Network, forwardeePeers: q.ForwardeePeers, peerName: ti.Name})
 	return &api.CanForwardS{}, nil
