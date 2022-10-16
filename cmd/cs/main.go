@@ -8,6 +8,7 @@ import (
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -17,6 +18,11 @@ var configPath string
 func main() {
 	flag.StringVar(&configPath, "config", "", "config file path")
 	flag.Parse()
+
+	util.L, _ = zap.NewProduction()
+	defer util.L.Sync()
+	util.S = util.L.Sugar()
+
 	util.ShowCurrent()
 
 	config, err := cs.LoadConfig(configPath)
