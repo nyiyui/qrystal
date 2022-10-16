@@ -36,7 +36,9 @@ func New(cc node.CentralConfig, backportPath string) *CentralSource {
 	}
 }
 
-type change struct{}
+type change struct {
+	except string
+}
 
 var _ api.CentralSourceServer = new(CentralSource)
 
@@ -125,7 +127,7 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	return
 }
 
-func (s *CentralSource) notifyChange() {
+func (s *CentralSource) notifyChange(ch change) {
 	err := s.backport()
 	if err != nil {
 		log.Printf("backport error: %s", err)
@@ -134,11 +136,14 @@ func (s *CentralSource) notifyChange() {
 	}
 	s.notifyChsLock.RLock()
 	defer s.notifyChsLock.RUnlock()
-	for _, cnCh := range s.notifyChs {
+	for token, cnCh := range s.notifyChs {
+		if token == ch.except {
+			continue
+		}
 		go func(cnCh chan change) {
 			timer := time.NewTimer(1 * time.Second)
 			select {
-			case cnCh <- change{}:
+			case cnCh <- ch:
 			case <-timer.C:
 			}
 		}(cnCh)
@@ -207,7 +212,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	log.Printf("push net %s peer %s: notify change", q.Cnn, q.PeerName)
 	log.Printf("debug: %#v", s.cc.Networks[q.Cnn])
 	log.Printf("debug: %#v", s.cc.Networks[q.Cnn].Peers[q.PeerName])
-	s.notifyChange()
+	s.notifyChange(change{})
 	return &api.PushS{
 		S: &api.PushS_Ok{},
 	}, nil
@@ -261,6 +266,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	cn := s.cc.Networks[q.Network]
 	peer := cn.Peers[q.ForwardeePeer]
 	peer.ForwardingPeers = append(peer.ForwardingPeers, q.ForwardeePeer)
-	go s.notifyChange()
+	go s.notifyChange(change{except: q.CentralToken})
 	return &api.CanForwardS{}, nil
 }

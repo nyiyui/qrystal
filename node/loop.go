@@ -11,6 +11,7 @@ import (
 
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/grpc"
 )
 
@@ -77,7 +78,7 @@ func (n *Node) listenCS(i int) error {
 		retryInterval *= 2
 		select {
 		case <-ctx.Done():
-			log.Printf("listen: disconnected; retry in %s", retryInterval)
+			util.S.Infof("listen: disconnected; retry in %s", retryInterval)
 		default:
 			err = func() error {
 				s, err := conn.Recv()

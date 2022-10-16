@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -93,6 +94,10 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 }
 
 func main() {
+	util.L, _ = zap.NewProduction()
+	defer util.L.Sync()
+	util.S = util.L.Sugar()
+
 	log.SetPrefix("node: ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	util.ShowCurrent()
