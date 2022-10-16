@@ -23,8 +23,9 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 		peers := map[string]*api.CentralPeer{}
 		for pn, peer := range cn.Peers {
 			peers[pn] = &api.CentralPeer{
-				Host:       peer.Host,
-				AllowedIPs: FromIPNets(node.ToIPNets(peer.AllowedIPs)),
+				Host:            peer.Host,
+				AllowedIPs:      FromIPNets(node.ToIPNets(peer.AllowedIPs)),
+				ForwardingPeers: peer.ForwardingPeers,
 				PublicKey: &api.PublicKey{
 					Raw: []byte(peer.PublicKey),
 				},

@@ -241,11 +241,12 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 		n.cc.Networks = map[string]*CentralNetwork{}
 	}
 	for cnn2, cn2 := range cc2.Networks {
+		util.S.Infof("applying CN: %#v", cn2)
 		cn, ok := n.cc.Networks[cnn2]
 		if !ok {
 			// new cn
-			n.cc.Networks[cnn2] = cn2
-			continue
+			n.cc.Networks[cnn2] = &CentralNetwork{}
+			cn = n.cc.Networks[cnn2]
 		}
 		cn.name = cnn2
 		cn.IPs = cn2.IPs
@@ -254,6 +255,7 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 			cn.Peers = map[string]*CentralPeer{}
 		}
 		for pn2, peer2 := range cn2.Peers {
+			util.S.Infof("applying PEER: %#v", peer2)
 			peer, ok := cn.Peers[pn2]
 			if !ok {
 				// new peer
@@ -263,6 +265,8 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 			peer.name = pn2
 			peer.Host = peer2.Host
 			peer.AllowedIPs = peer2.AllowedIPs
+			log.Printf("LOOP net %s peer %s ForwardingPeers1 %s", cnn2, pn2, peer.ForwardingPeers)
+			log.Printf("LOOP net %s peer %s ForwardingPeers2 %s", cnn2, pn2, peer2.ForwardingPeers)
 			peer.ForwardingPeers = []string{}
 			for _, forwardingPeer := range peer2.ForwardingPeers {
 				_, ok := forwardingPeers[forwardingPeer]
