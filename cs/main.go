@@ -173,21 +173,25 @@ func (s *CentralSource) notifyChange(ch change) {
 		if !ok {
 			panic(fmt.Sprintf("getToken on token %s failed", token))
 		}
-		forwardeePeers := make([]string, 0, len(ch.forwardeePeers))
-		for _, peerName := range ch.forwardeePeers {
-			if peerName != ti.Name {
-				// forwarding for itself is useless
-				forwardeePeers = append(forwardeePeers, peerName)
+		if ch.forwardingOnly {
+			forwardeePeers := make([]string, 0, len(ch.forwardeePeers))
+			for _, peerName := range ch.forwardeePeers {
+				if peerName != ti.Name {
+					// forwarding for itself is useless
+					forwardeePeers = append(forwardeePeers, peerName)
+				}
+			}
+			peer := s.cc.Networks[ch.net].Peers[ti.Name]
+			forwardeePeers = intersect(sliceToMap(peer.ForwardingPeers), sliceToMap(forwardeePeers))
+			if len(forwardeePeers) == 0 {
+				log.Printf("notifyChange net %s peer %s: don't notify", ch.net, ti.Name)
+				continue
 			}
 		}
-		peer := s.cc.Networks[ch.net].Peers[ti.Name]
-		forwardeePeers = intersect(sliceToMap(peer.ForwardingPeers), sliceToMap(forwardeePeers))
-		if len(forwardeePeers) != 0 {
-			timer := time.NewTimer(1 * time.Second)
-			select {
-			case cnCh <- ch:
-			case <-timer.C:
-			}
+		timer := time.NewTimer(1 * time.Second)
+		select {
+		case cnCh <- ch:
+		case <-timer.C:
 		}
 	}
 }
