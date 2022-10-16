@@ -102,6 +102,12 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 
 	keepalive := cn.Keepalive
 
+	allowedIPs := peer.AllowedIPs
+	for _, forwardingPeerName := range peer.ForwardingPeers {
+		forwardingPeer := cn.Peers[forwardingPeerName]
+		allowedIPs = append(allowedIPs, forwardingPeer.AllowedIPs...)
+	}
+
 	return &wgtypes.PeerConfig{
 		PublicKey:                   *peer.pubKey,
 		Remove:                      false,
@@ -110,7 +116,7 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 		Endpoint:                    host,
 		PersistentKeepaliveInterval: &keepalive,
 		ReplaceAllowedIPs:           true,
-		AllowedIPs:                  ToIPNets(peer.AllowedIPs),
+		AllowedIPs:                  ToIPNets(allowedIPs),
 	}, true, nil
 
 }
