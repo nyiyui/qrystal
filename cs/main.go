@@ -37,7 +37,8 @@ func New(cc node.CentralConfig, backportPath string) *CentralSource {
 }
 
 type change struct {
-	except string
+	except         string
+	forwardingOnly bool
 }
 
 var _ api.CentralSourceServer = new(CentralSource)
@@ -64,7 +65,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 		select {
 		case <-ctx.Done():
 			s.rmChangeNotify(q.CentralToken)
-		case <-cnCh:
+		case ch := <-cnCh:
 			// token status could change while this is called
 			ti, ok := s.tokens.getToken(q.CentralToken)
 			if !ok {
@@ -76,12 +77,16 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 
 			log.Printf("%sに送ります。", ti.Name)
 
+			if ch.except == q.CentralToken {
+				continue
+			}
+
 			newCC, err := s.convertCC(ti.Networks)
 			if err != nil {
 				log.Printf("convertCC: %s", err)
 				return errors.New("conversion failed")
 			}
-			err = ss.Send(&api.PullS{Cc: newCC})
+			err = ss.Send(&api.PullS{Cc: newCC, ForwardingOnly: ch.forwardingOnly})
 			if err != nil {
 				return err
 			}
@@ -266,6 +271,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	cn := s.cc.Networks[q.Network]
 	peer := cn.Peers[q.ForwardeePeer]
 	peer.ForwardingPeers = append(peer.ForwardingPeers, q.ForwardeePeer)
-	go s.notifyChange(change{except: q.CentralToken})
+	go s.notifyChange(change{except: q.CentralToken, forwardingOnly: true})
 	return &api.CanForwardS{}, nil
 }

@@ -72,6 +72,7 @@ message PullQ {
 message PullS {
   CentralConfig cc = 1;
   ForwardPreQ fc = 2;
+  bool forwardingOnly = 3;
   //TODO: eventually migrate to oneof
 }
 
