@@ -42,6 +42,8 @@ type change struct {
 	reason         string
 	except         string
 	forwardingOnly bool
+	net            string
+	forwardeePeers []string
 }
 
 var _ api.CentralSourceServer = new(CentralSource)
@@ -135,6 +137,24 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	return
 }
 
+func sliceToMap(ss []string) map[string]struct{} {
+	m := map[string]struct{}{}
+	for _, s := range ss {
+		m[s] = struct{}{}
+	}
+	return m
+}
+
+func intersect(m1, m2 map[string]struct{}) []string {
+	r := []string{}
+	for k := range m1 {
+		if _, ok := m2[k]; ok {
+			r = append(r, k)
+		}
+	}
+	return r
+}
+
 func (s *CentralSource) notifyChange(ch change) {
 	time.Sleep(commitDelay)
 	err := s.backport()
@@ -149,13 +169,26 @@ func (s *CentralSource) notifyChange(ch change) {
 		if token == ch.except {
 			continue
 		}
-		go func(cnCh chan change) {
+		ti, ok := s.tokens.getToken(token)
+		if !ok {
+			panic(fmt.Sprintf("getToken on token %s failed", token))
+		}
+		forwardeePeers := make([]string, 0, len(ch.forwardeePeers))
+		for _, peerName := range ch.forwardeePeers {
+			if peerName != ti.Name {
+				// forwarding for itself is useless
+				forwardeePeers = append(forwardeePeers, peerName)
+			}
+		}
+		peer := s.cc.Networks[ch.net].Peers[ti.Name]
+		forwardeePeers = intersect(sliceToMap(peer.ForwardingPeers), sliceToMap(forwardeePeers))
+		if len(forwardeePeers) != 0 {
 			timer := time.NewTimer(1 * time.Second)
 			select {
 			case cnCh <- ch:
 			case <-timer.C:
 			}
-		}(cnCh)
+		}
 	}
 }
 
@@ -275,6 +308,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 		peer := cn.Peers[forwardeePeer]
 		peer.ForwardingPeers = append(peer.ForwardingPeers, forwarderPeer)
 	}
-	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true})
+	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true, net: q.Network, forwardeePeers: q.ForwardeePeers})
 	return &api.CanForwardS{}, nil
 }
