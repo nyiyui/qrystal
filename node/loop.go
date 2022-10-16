@@ -89,7 +89,7 @@ func (n *Node) listenCS(i int) error {
 				if err != nil {
 					return fmt.Errorf("conv: %w", err)
 				}
-				log.Printf("新たなCCを受信: %#v", cc)
+				log.Printf("===新たなCCを受信: %#v", cc)
 				for cnn, cn := range cc.Networks {
 					log.Printf("net %s: %#v", cnn, cn)
 				}
@@ -125,14 +125,14 @@ func (n *Node) listenCS(i int) error {
 				if err != nil {
 					return err
 				}
-				log.Printf("新たなCCで同期します。")
+				log.Printf("===新たなCCで同期します。")
 				res, err := n.Sync(context.Background())
 				if err != nil {
 					return fmt.Errorf("sync: %w", err)
 				}
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-				log.Printf("新たなCCで同期：\n%s", res)
+				log.Printf("===新たなCCで同期：\n%s", res)
 				if err != nil {
 					return err
 				}
