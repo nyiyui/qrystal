@@ -183,6 +183,7 @@ func (s *CentralSource) notifyChange(ch change) {
 			}
 			peer := s.cc.Networks[ch.net].Peers[ti.Name]
 			forwardeePeers = intersect(sliceToMap(peer.ForwardingPeers), sliceToMap(forwardeePeers))
+			log.Printf("notifyChange net %s peer %s: forwardeePeers: %s", ch.net, ti.Name, forwardeePeers)
 			if len(forwardeePeers) == 0 {
 				log.Printf("notifyChange net %s peer %s: don't notify", ch.net, ti.Name)
 				continue
