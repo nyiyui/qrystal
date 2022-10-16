@@ -48,121 +48,122 @@ func (n *Node) ListenCS() {
 }
 
 func (n *Node) listenCS(i int) error {
-	csc := n.cs[i]
-
-	retryInterval := 1 * time.Second
+	backoff := 1 * time.Second
 RetryLoop:
 	for {
-		// Setup
-		cl, err := n.setupCS(csc)
-		if err != nil {
-			return err
-		}
-		n.csCls[i] = cl
-
-		// Azusa
-		if n.azusa.enabled {
-			err = n.azusa.setup(n, csc, cl)
-			if err != nil {
-				return fmt.Errorf("azusa: %w", err)
-			}
-		}
-
-		conn, err := cl.Pull(context.Background(), &api.PullQ{
-			CentralToken: csc.Token,
-		})
-		if err != nil {
-			return fmt.Errorf("pull init: %w", err)
-		}
-
-		ctx := conn.Context()
-	ConnLoop:
-		for {
-			select {
-			case <-ctx.Done():
-				util.S.Infof("listen: disconnected; retry in %s", retryInterval)
-				break ConnLoop
-			default:
-				err = func() error {
-					s, err := conn.Recv()
-					if err != nil {
-						return fmt.Errorf("pull recv: %w", err)
-					}
-					log.Printf("preconv: %s", s)
-					cc, err := newCCFromAPI(s.Cc)
-					if err != nil {
-						return fmt.Errorf("conv: %w", err)
-					}
-					log.Printf("===新たなCCを受信: %#v", cc)
-					for cnn, cn := range cc.Networks {
-						log.Printf("net %s: %#v", cnn, cn)
-					}
-
-					// NetworksAllowed
-					cc2 := map[string]*CentralNetwork{}
-					for cnn, cn := range cc.Networks {
-						if csc.netAllowed(cnn) {
-							cc2[cnn] = cn
-						} else {
-							log.Printf("net not allowed; ignoring: %s", cnn)
-						}
-					}
-					cc.Networks = cc2
-
-					for cnn, cn := range cc.Networks {
-						me := cn.Peers[cn.Me]
-						if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
-							return fmt.Errorf("net %s me (%s): key pair mismatch", cn.Me, cnn)
-						}
-					}
-
-					err = func() error {
-						n.ccLock.Lock()
-						defer n.ccLock.Unlock()
-						err = n.removeAllDevices()
-						if err != nil {
-							return fmt.Errorf("rm all devs: %w", err)
-						}
-						n.applyCC(cc)
-						return nil
-					}()
-					if err != nil {
-						return err
-					}
-					if s.ForwardingOnly {
-						log.Printf("===フォワードだけなので同期しません。")
-						res, err := n.Sync(context.Background(), false)
-						if err != nil {
-							return fmt.Errorf("sync: %w", err)
-						}
-						// TODO: check res
-						// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-						log.Printf("===フォワードだけ：\n%s", res)
-					} else {
-						log.Printf("===新たなCCで同期します。")
-						res, err := n.Sync(context.Background(), true)
-						if err != nil {
-							return fmt.Errorf("sync: %w", err)
-						}
-						// TODO: check res
-						// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-						log.Printf("===新たなCCで同期：\n%s", res)
-					}
-					return nil
-				}()
-				if err != nil {
-					log.Printf("listen: %s; retry in %s s", err, retryInterval)
-					break ConnLoop
-				}
-			}
-		}
-		time.Sleep(retryInterval)
-		retryInterval *= 2
-		if retryInterval > 65536*time.Second {
+		err := n.listenCSOnce(i)
+		util.S.Errorf("listen: %s; retry in %s", err, backoff)
+		util.S.Errorw("listen: error",
+			"err", err,
+			"backoff", backoff,
+		)
+		time.Sleep(backoff)
+		backoff *= 2
+		if backoff > 65536*time.Second {
 			break RetryLoop
 		}
 	}
-	return errors.New("failed")
+	return errors.New("backoff exceeded")
+}
+
+func (n *Node) listenCSOnce(i int) error {
+	csc := n.cs[i]
+
+	// Setup
+	cl, err := n.setupCS(csc)
+	if err != nil {
+		return err
+	}
+	n.csCls[i] = cl
+
+	// Azusa
+	if n.azusa.enabled {
+		err = n.azusa.setup(n, csc, cl)
+		if err != nil {
+			return fmt.Errorf("azusa: %w", err)
+		}
+	}
+
+	conn, err := cl.Pull(context.Background(), &api.PullQ{
+		CentralToken: csc.Token,
+	})
+	if err != nil {
+		return fmt.Errorf("pull init: %w", err)
+	}
+
+	ctx := conn.Context()
+	for {
+		select {
+		case <-ctx.Done():
+			return errors.New("disconnected")
+		default:
+			s, err := conn.Recv()
+			if err != nil {
+				return fmt.Errorf("pull recv: %w", err)
+			}
+			util.S.Debugf("次を受信: %s", s)
+			cc, err := newCCFromAPI(s.Cc)
+			if err != nil {
+				return fmt.Errorf("conv: %w", err)
+			}
+			util.S.Infof("===新たなCCを受信: %#v", cc)
+			for cnn, cn := range cc.Networks {
+				log.Printf("net %s: %#v", cnn, cn)
+			}
+
+			// NetworksAllowed
+			cc2 := map[string]*CentralNetwork{}
+			for cnn, cn := range cc.Networks {
+				if csc.netAllowed(cnn) {
+					cc2[cnn] = cn
+				} else {
+					log.Printf("net not allowed; ignoring: %s", cnn)
+				}
+			}
+			cc.Networks = cc2
+
+			for cnn, cn := range cc.Networks {
+				me := cn.Peers[cn.Me]
+				if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
+					return fmt.Errorf("net %s me (%s): key pair mismatch", cn.Me, cnn)
+				}
+			}
+
+			err = func() error {
+				n.ccLock.Lock()
+				defer n.ccLock.Unlock()
+				err = n.removeAllDevices()
+				if err != nil {
+					return fmt.Errorf("rm all devs: %w", err)
+				}
+				n.applyCC(cc)
+				return nil
+			}()
+			if err != nil {
+				return err
+			}
+			if s.ForwardingOnly {
+				log.Printf("===フォワードだけなので同期しません。")
+				res, err := n.Sync(context.Background(), false)
+				if err != nil {
+					return fmt.Errorf("sync: %w", err)
+				}
+				// TODO: check res
+				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
+				log.Printf("===フォワードだけ：\n%s", res)
+			} else {
+				log.Printf("===新たなCCで同期します。")
+				res, err := n.Sync(context.Background(), true)
+				if err != nil {
+					return fmt.Errorf("sync: %w", err)
+				}
+				// TODO: check res
+				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
+				log.Printf("===新たなCCで同期：\n%s", res)
+			}
+			return nil
+		}
+	}
 }
 
 func (c *Node) removeAllDevices() error {
