@@ -7,6 +7,7 @@ import (
 
 	"github.com/nyiyui/qrystal/node/api"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type clientServer struct {
@@ -30,10 +31,13 @@ func (c *Node) newClient(ctx context.Context, cnn string, pn string) (err error)
 	log.Printf("LOCK net %s peer %s", cnn, pn)
 	defer peer.lock.Unlock()
 	var cs clientServer
-	opts := make([]grpc.DialOption, len(c.cc.DialOpts))
-	copy(opts, c.cc.DialOpts)
-	opts = append(opts, grpc.WithTimeout(5*time.Second))
-	conn, err := grpc.DialContext(ctx, peer.Host, opts...)
+	var creds credentials.TransportCredentials
+	if peer.creds != nil {
+		creds = peer.creds
+	} else {
+		creds = credentials.NewTLS(nil)
+	}
+	conn, err := grpc.DialContext(ctx, peer.Host, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return err
 	}

@@ -7,14 +7,14 @@ import (
 
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
 )
 
 type CentralConfig struct {
 	Networks map[string]*CentralNetwork `yaml:"networks"`
-	DialOpts []grpc.DialOption          `yaml:"-"`
 }
+
 type CentralNetwork struct {
 	name string
 	IPs  []IPNet2 `yaml:"ips"`
@@ -47,6 +47,8 @@ type CentralPeer struct {
 	// accessible represents whether this peer is accessible in the latest sync.
 	pubKey *wgtypes.Key
 	psk    *wgtypes.Key
+	creds  credentials.TransportCredentials
+	// creds for this specific peer.
 }
 
 type IPNet2 struct {

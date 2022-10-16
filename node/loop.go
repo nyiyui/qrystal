@@ -12,7 +12,6 @@ import (
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 func (n *Node) setupCS(csc CSConfig) (api.CentralSourceClient, error) {
@@ -89,9 +88,6 @@ func (n *Node) listenCS(i int) error {
 				cc, err := newCCFromAPI(s.Cc)
 				if err != nil {
 					return fmt.Errorf("conv: %w", err)
-				}
-				cc.DialOpts = []grpc.DialOption{
-					grpc.WithTransportCredentials(credentials.NewTLS(nil)),
 				}
 				log.Printf("新たなCCを受信: %#v", cc)
 				for cnn, cn := range cc.Networks {
