@@ -166,6 +166,7 @@ func (s *CentralSource) notifyChange(ch change) {
 	}
 	s.notifyChsLock.RLock()
 	defer s.notifyChsLock.RUnlock()
+	forwardsForPeers := make([]string, 0)
 	for token, cnCh := range s.notifyChs {
 		if token == ch.except {
 			continue
@@ -183,20 +184,23 @@ func (s *CentralSource) notifyChange(ch change) {
 				}
 			}
 			peer := s.cc.Networks[ch.net].Peers[ti.Name]
-			log.Printf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, ti.Name, peersToForward)
+			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, ti.Name, peersToForward)
 			peersToForward = missingFromFirst(sliceToMap(peer.ForwardingPeers), sliceToMap(peersToForward))
-			log.Printf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, ti.Name, peersToForward)
+			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, ti.Name, peersToForward)
 			if len(peersToForward) == 0 {
-				log.Printf("notifyChange net %s peer %s: don't notify", ch.net, ti.Name)
 				continue
+			} else {
+				forwardsForPeers = append(forwardsForPeers, ti.Name)
 			}
 		}
 		timer := time.NewTimer(1 * time.Second)
 		select {
 		case cnCh <- ch:
 		case <-timer.C:
+			util.S.Warnf("notifyChange net %s peer %s forwards for peer %s: chan send timeout", ch.net, ch.peerName, ti.Name)
 		}
 	}
+	log.Printf("notifyChange net %s peer %s forwards for peers %s", ch.net, ch.peerName, forwardsForPeers)
 }
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
