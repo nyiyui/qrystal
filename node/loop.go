@@ -175,13 +175,13 @@ RetryLoop:
 	for {
 		// TODO: don't increase backoff if succees for a while
 		res, err := n.Sync(ctx, xch)
-		if err != nil && res.allOK() {
+		if err != nil || res.allOK() {
 			return res, nil
 		}
 		if err != nil {
 			util.S.Errorf("sync: %s; retry in %s", err, backoff)
 		} else {
-			util.S.Errorf("sync res: %s; retry in %s", err, backoff)
+			util.S.Errorf("sync res: %s; retry in %s", res, backoff)
 		}
 		util.S.Errorw("sync: error",
 			"err", err,
