@@ -159,7 +159,6 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			if err != nil {
 				return
 			}
-			resetBackoff = true
 			if s.ForwardingOnly {
 				log.Printf("===フォワードだけなので同期しません。")
 				var res *SyncRes
@@ -183,6 +182,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
 				log.Printf("===新たなCCで同期：\n%s", res)
 			}
+			resetBackoff = true
 		}
 	}
 }
