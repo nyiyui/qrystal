@@ -51,6 +51,7 @@ func (n *Node) listenCS(i int) error {
 	backoff := 1 * time.Second
 RetryLoop:
 	for {
+		// TODO: don't increase backoff if succees for a while
 		err := n.listenCSOnce(i)
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
