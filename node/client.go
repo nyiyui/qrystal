@@ -128,7 +128,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 			ps := c.xchPeer(ctx, cnn, pn)
 			log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 			res.peerStatus[pn] = ps
-			if ps.err == nil {
+			if ps.err == nil && !ps.skip {
 				pns = append(pns, pn)
 			}
 		} else {
