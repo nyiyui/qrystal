@@ -1,4 +1,4 @@
-name: パッケージ化
+name: makepkg
 
 on:
   push:
