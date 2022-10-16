@@ -149,6 +149,9 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			err = func() error {
 				n.ccLock.Lock()
 				defer n.ccLock.Unlock()
+				for cnn := range cc.Networks {
+					n.csNets[cnn] = i
+				}
 				err = n.removeAllDevices()
 				if err != nil {
 					return fmt.Errorf("rm all devs: %w", err)

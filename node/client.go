@@ -131,7 +131,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 		}
 		log.Printf("net %s synced", cn.name)
 	}
-	log.Printf("net %s peer %s advertising forwarding capability", cn.name, pns)
+	log.Printf("net %s peers %s advertising forwarding capability", cn.name, pns)
 	csI, err := c.getCSForNet(cnn)
 	if err != nil {
 		return nil, fmt.Errorf("getCSForNet: %w", err)
