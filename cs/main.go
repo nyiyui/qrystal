@@ -146,10 +146,10 @@ func sliceToMap(ss []string) map[string]struct{} {
 	return m
 }
 
-func intersect(m1, m2 map[string]struct{}) []string {
+func missingFromFirst(m1, m2 map[string]struct{}) []string {
 	r := []string{}
-	for k := range m1 {
-		if _, ok := m2[k]; ok {
+	for k := range m2 {
+		if _, ok := m1[k]; !ok {
 			r = append(r, k)
 		}
 	}
@@ -175,17 +175,17 @@ func (s *CentralSource) notifyChange(ch change) {
 			panic(fmt.Sprintf("getToken on token %s failed", token))
 		}
 		if ch.forwardingOnly {
-			forwardeePeers := make([]string, 0, len(ch.forwardeePeers))
+			peersToForward := make([]string, 0, len(ch.forwardeePeers))
 			for _, peerName := range ch.forwardeePeers {
 				if peerName != ti.Name {
 					// forwarding for itself is useless
-					forwardeePeers = append(forwardeePeers, peerName)
+					peersToForward = append(peersToForward, peerName)
 				}
 			}
 			peer := s.cc.Networks[ch.net].Peers[ti.Name]
-			forwardeePeers = intersect(sliceToMap(peer.ForwardingPeers), sliceToMap(forwardeePeers))
-			log.Printf("notifyChange net %s peer %s forwards for peer %s: forwardeePeers: %s", ch.net, ch.peerName, ti.Name, forwardeePeers)
-			if len(forwardeePeers) == 0 {
+			peersToForward = missingFromFirst(sliceToMap(peer.ForwardingPeers), sliceToMap(peersToForward))
+			log.Printf("notifyChange net %s peer %s forwards for peer %s: peersToForward: %s", ch.net, ch.peerName, ti.Name, peersToForward)
+			if len(peersToForward) == 0 {
 				log.Printf("notifyChange net %s peer %s: don't notify", ch.net, ti.Name)
 				continue
 			}
