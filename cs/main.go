@@ -37,6 +37,7 @@ func New(cc node.CentralConfig, backportPath string) *CentralSource {
 }
 
 type change struct {
+	reason         string
 	except         string
 	forwardingOnly bool
 }
@@ -60,7 +61,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 	ctx := ss.Context()
 	cnCh := s.addChangeNotify(q.CentralToken, 2)
 	defer close(cnCh)
-	cnCh <- change{}
+	cnCh <- change{reason: "local"}
 	for {
 		select {
 		case <-ctx.Done():
@@ -217,7 +218,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	log.Printf("push net %s peer %s: notify change", q.Cnn, q.PeerName)
 	log.Printf("debug: %#v", s.cc.Networks[q.Cnn])
 	log.Printf("debug: %#v", s.cc.Networks[q.Cnn].Peers[q.PeerName])
-	s.notifyChange(change{})
+	s.notifyChange(change{reason: fmt.Sprintf("push net %s peer %s", q.Cnn, q.PeerName)})
 	return &api.PushS{
 		S: &api.PushS_Ok{},
 	}, nil
@@ -271,6 +272,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	cn := s.cc.Networks[q.Network]
 	peer := cn.Peers[q.ForwardeePeer]
 	peer.ForwardingPeers = append(peer.ForwardingPeers, q.ForwardeePeer)
-	go s.notifyChange(change{except: q.CentralToken, forwardingOnly: true})
+	go s.notifyChange(change{reason: "CanForward", except: q.CentralToken, forwardingOnly: true})
 	return &api.CanForwardS{}, nil
 }
