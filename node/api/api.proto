@@ -147,7 +147,7 @@ message ForwardPreQ {
 message CanForwardQ {
   string centralToken = 1;
   string network = 2;
-  string forwardee_peer = 3;
+  repeated string forwardeePeers = 3;
   ForwardMetric metric = 4;
 }
 

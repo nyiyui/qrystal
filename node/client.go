@@ -111,6 +111,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 	res := SyncNetRes{
 		peerStatus: map[string]SyncPeerRes{},
 	}
+	pns := make([]string, 0)
 	for pn := range cn.Peers {
 		if pn == cn.Me {
 			continue
@@ -126,33 +127,22 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 			ps := c.xchPeer(ctx, cnn, pn)
 			log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 			res.peerStatus[pn] = ps
-			err = func() error {
-				log.Printf("net %s peer %s advertising forwarding capability", cn.name, pn)
-				peer := cn.Peers[pn]
-				peer.lock.RLock()
-				log.Printf("LOCK net %s peer %s", cnn, pn)
-				defer peer.lock.RUnlock()
-				cs := c.servers[networkPeerPair{cnn, pn}]
-				if cs.token == "" {
-					return errors.New("blank token")
-				}
-				csI, err := c.getCSForNet(cnn)
-				if err != nil {
-					return fmt.Errorf("getCSForNet: %w", err)
-				}
-				_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
-					CentralToken:  c.cs[csI].Token,
-					Network:       cnn,
-					ForwardeePeer: pn,
-				})
-				if err != nil {
-					return fmt.Errorf("CanForward: %w", err)
-				}
-				return nil
-			}()
-			ps.forwardErr = err
+			pns = append(pns, pn)
 		}
 		log.Printf("net %s synced", cn.name)
+	}
+	log.Printf("net %s peer %s advertising forwarding capability", cn.name, pns)
+	csI, err := c.getCSForNet(cnn)
+	if err != nil {
+		return nil, fmt.Errorf("getCSForNet: %w", err)
+	}
+	_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
+		CentralToken:   c.cs[csI].Token,
+		Network:        cnn,
+		ForwardeePeers: pns,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("CanForward: %w", err)
 	}
 	err = c.configNetwork(cn)
 	if err != nil {

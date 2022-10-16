@@ -262,16 +262,15 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	if !ok {
 		return nil, newTokenAuthError(q.CentralToken)
 	}
-	peerName, ok := ti.Networks[q.Network]
+	forwarderPeer, ok := ti.Networks[q.Network]
 	if !ok {
 		return nil, errors.New("bad cn")
 	}
-	if q.ForwardeePeer != peerName {
-		return nil, errors.New("bad peer")
-	}
 	cn := s.cc.Networks[q.Network]
-	peer := cn.Peers[q.ForwardeePeer]
-	peer.ForwardingPeers = append(peer.ForwardingPeers, q.ForwardeePeer)
-	go s.notifyChange(change{reason: "CanForward", except: q.CentralToken, forwardingOnly: true})
+	for _, forwardeePeer := range q.ForwardeePeers {
+		peer := cn.Peers[forwardeePeer]
+		peer.ForwardingPeers = append(peer.ForwardingPeers, forwarderPeer)
+	}
+	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true})
 	return &api.CanForwardS{}, nil
 }
