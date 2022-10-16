@@ -73,6 +73,7 @@ message PullS {
   CentralConfig cc = 1;
   ForwardPreQ fc = 2;
   bool forwardingOnly = 3;
+  string reason = 4;
   //TODO: eventually migrate to oneof
 }
 

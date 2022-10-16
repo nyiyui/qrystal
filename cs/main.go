@@ -87,7 +87,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 				log.Printf("convertCC: %s", err)
 				return errors.New("conversion failed")
 			}
-			err = ss.Send(&api.PullS{Cc: newCC, ForwardingOnly: ch.forwardingOnly})
+			err = ss.Send(&api.PullS{Cc: newCC, ForwardingOnly: ch.forwardingOnly, Reason: ch.reason})
 			if err != nil {
 				return err
 			}
