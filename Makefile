@@ -10,6 +10,10 @@ pre_install:
 	systemctl stop qrystal-runner
 	systemctl stop qrystal-cs
 
+post_install:
+	systemctl start qrystal-runner
+	systemctl start qrystal-cs
+
 install: build2
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	cp './config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
