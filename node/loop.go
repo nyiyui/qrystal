@@ -128,9 +128,16 @@ func (n *Node) listenCS(i int) error {
 				}
 				if s.ForwardingOnly {
 					log.Printf("===フォワードだけなので同期しません。")
+					res, err := n.Sync(context.Background(), false)
+					if err != nil {
+						return fmt.Errorf("sync: %w", err)
+					}
+					// TODO: check res
+					// TODO: fallback to previous if all fails? perhaps as an option in PullS?
+					log.Printf("===フォワードだけ：\n%s", res)
 				} else {
 					log.Printf("===新たなCCで同期します。")
-					res, err := n.Sync(context.Background())
+					res, err := n.Sync(context.Background(), true)
 					if err != nil {
 						return fmt.Errorf("sync: %w", err)
 					}

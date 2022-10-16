@@ -59,7 +59,7 @@ func (r *SyncPeerRes) String() string {
 	return b.String()
 }
 
-func (c *Node) Sync(ctx context.Context) (*SyncRes, error) {
+func (c *Node) Sync(ctx context.Context, xch bool) (*SyncRes, error) {
 	res := SyncRes{
 		netStatus: map[string]SyncNetRes{},
 	}
@@ -67,7 +67,7 @@ func (c *Node) Sync(ctx context.Context) (*SyncRes, error) {
 	defer c.ccLock.RUnlock()
 	for cnn := range c.cc.Networks {
 		log.Printf("===SYNCING net %s", cnn)
-		netRes, err := c.syncNetwork(ctx, cnn)
+		netRes, err := c.syncNetwork(ctx, cnn, xch)
 		if netRes == nil {
 			netRes = &SyncNetRes{}
 		}
@@ -77,7 +77,7 @@ func (c *Node) Sync(ctx context.Context) (*SyncRes, error) {
 	return &res, nil
 }
 
-func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error) {
+func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetRes, error) {
 	cn := c.cc.Networks[cnn]
 	err := ensureWGPrivKey(cn)
 	if err != nil {
@@ -91,43 +91,45 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 		if pn == cn.Me {
 			continue
 		}
-		err := c.ensureClient(ctx, cnn, pn)
-		if err != nil {
-			res.peerStatus[pn] = SyncPeerRes{
-				err: err,
+		if xch {
+			err := c.ensureClient(ctx, cnn, pn)
+			if err != nil {
+				res.peerStatus[pn] = SyncPeerRes{
+					err: err,
+				}
 			}
+			log.Printf("net %s peer %s syncing", cn.name, pn)
+			ps := c.xchPeer(ctx, cnn, pn)
+			log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
+			res.peerStatus[pn] = ps
+			err = func() error {
+				log.Printf("net %s peer %s advertising forwarding capability", cn.name, pn)
+				peer := cn.Peers[pn]
+				peer.lock.RLock()
+				log.Printf("LOCK net %s peer %s", cnn, pn)
+				defer peer.lock.RUnlock()
+				cs := c.servers[networkPeerPair{cnn, pn}]
+				if cs.token == "" {
+					return errors.New("blank token")
+				}
+				csI, err := c.getCSForNet(cnn)
+				if err != nil {
+					return fmt.Errorf("getCSForNet: %w", err)
+				}
+				_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
+					CentralToken:  c.cs[csI].Token,
+					Network:       cnn,
+					ForwardeePeer: pn,
+				})
+				if err != nil {
+					return fmt.Errorf("CanForward: %w", err)
+				}
+				return nil
+			}()
+			ps.forwardErr = err
 		}
-		log.Printf("net %s peer %s syncing", cn.name, pn)
-		ps := c.xchPeer(ctx, cnn, pn)
-		log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
-		res.peerStatus[pn] = ps
-		err = func() error {
-			log.Printf("net %s peer %s advertising forwarding capability", cn.name, pn)
-			peer := cn.Peers[pn]
-			peer.lock.RLock()
-			log.Printf("LOCK net %s peer %s", cnn, pn)
-			defer peer.lock.RUnlock()
-			cs := c.servers[networkPeerPair{cnn, pn}]
-			if cs.token == "" {
-				return errors.New("blank token")
-			}
-			csI, err := c.getCSForNet(cnn)
-			if err != nil {
-				return fmt.Errorf("getCSForNet: %w", err)
-			}
-			_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
-				CentralToken:  c.cs[csI].Token,
-				Network:       cnn,
-				ForwardeePeer: pn,
-			})
-			if err != nil {
-				return fmt.Errorf("CanForward: %w", err)
-			}
-			return nil
-		}()
-		ps.forwardErr = err
+		log.Printf("net %s synced", cn.name)
 	}
-	log.Printf("net %s synced", cn.name)
 	err = c.configNetwork(cn)
 	if err != nil {
 		return nil, err
