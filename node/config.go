@@ -102,7 +102,9 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 
 	keepalive := cn.Keepalive
 
-	allowedIPs := peer.AllowedIPs
+	allowedIPs := make([]IPNet2, len(peer.AllowedIPs))
+	copy(allowedIPs, peer.AllowedIPs)
+	log.Printf("conv net %s peer %s forwards for %s", cn.name, peer.name, peer.ForwardingPeers)
 	for _, forwardingPeerName := range peer.ForwardingPeers {
 		forwardingPeer := cn.Peers[forwardingPeerName]
 		allowedIPs = append(allowedIPs, forwardingPeer.AllowedIPs...)
