@@ -266,6 +266,7 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	if !ok {
 		return nil, errors.New("bad cn")
 	}
+	log.Printf("%s can forward for %s", forwarderPeer, q.ForwardeePeers)
 	cn := s.cc.Networks[q.Network]
 	for _, forwardeePeer := range q.ForwardeePeers {
 		peer := cn.Peers[forwardeePeer]
