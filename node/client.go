@@ -131,18 +131,20 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 		}
 		log.Printf("net %s synced", cn.name)
 	}
-	log.Printf("net %s peers %s advertising forwarding capability", cn.name, pns)
-	csI, err := c.getCSForNet(cnn)
-	if err != nil {
-		return nil, fmt.Errorf("getCSForNet: %w", err)
-	}
-	_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
-		CentralToken:   c.cs[csI].Token,
-		Network:        cnn,
-		ForwardeePeers: pns,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("CanForward: %w", err)
+	if xch {
+		log.Printf("net %s peers %s advertising forwarding capability", cn.name, pns)
+		csI, err := c.getCSForNet(cnn)
+		if err != nil {
+			return nil, fmt.Errorf("getCSForNet: %w", err)
+		}
+		_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
+			CentralToken:   c.cs[csI].Token,
+			Network:        cnn,
+			ForwardeePeers: pns,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("CanForward: %w", err)
+		}
 	}
 	err = c.configNetwork(cn)
 	if err != nil {
