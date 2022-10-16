@@ -183,8 +183,9 @@ func (s *CentralSource) notifyChange(ch change) {
 				}
 			}
 			peer := s.cc.Networks[ch.net].Peers[ti.Name]
+			log.Printf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, ti.Name, peersToForward)
 			peersToForward = missingFromFirst(sliceToMap(peer.ForwardingPeers), sliceToMap(peersToForward))
-			log.Printf("notifyChange net %s peer %s forwards for peer %s: peersToForward: %s", ch.net, ch.peerName, ti.Name, peersToForward)
+			log.Printf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, ti.Name, peersToForward)
 			if len(peersToForward) == 0 {
 				log.Printf("notifyChange net %s peer %s: don't notify", ch.net, ti.Name)
 				continue
