@@ -113,8 +113,6 @@ func main() {
 	}
 	privKey2 := ed25519.NewKeyFromSeed([]byte(privKey))
 
-	clientCreds := credentials.NewTLS(nil)
-
 	var serverCreds credentials.TransportCredentials
 	if c.Server != nil {
 		s := c.Server
@@ -139,9 +137,6 @@ func main() {
 		ncscs[1+i] = *ncsc
 	}
 
-	c.Central.DialOpts = []grpc.DialOption{
-		grpc.WithTransportCredentials(clientCreds),
-	}
 	mioPort, err := strconv.ParseUint(os.Getenv("MIO_PORT"), 10, 16)
 	if err != nil {
 		log.Fatalf("parse MIO_PORT: %s", err)
