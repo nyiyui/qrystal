@@ -39,7 +39,6 @@ func devAdd(name string, cfg devConfig) error {
 	}
 
 	after := toAfter(cfg.Peers)
-	log.Printf("AFTER %s", after)
 
 	address := strings.Join(addresses, ", ")
 	errBuf := new(bytes.Buffer)
