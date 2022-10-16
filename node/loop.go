@@ -49,31 +49,31 @@ func (n *Node) ListenCS() {
 func (n *Node) listenCS(i int) error {
 	csc := n.cs[i]
 
-	// Setup
-	cl, err := n.setupCS(csc)
-	if err != nil {
-		return err
-	}
-	n.csCls[i] = cl
-
-	// Azusa
-	if n.azusa.enabled {
-		err = n.azusa.setup(n, csc, cl)
-		if err != nil {
-			return fmt.Errorf("azusa: %w", err)
-		}
-	}
-
-	conn, err := cl.Pull(context.Background(), &api.PullQ{
-		CentralToken: csc.Token,
-	})
-	if err != nil {
-		return fmt.Errorf("pull init: %w", err)
-	}
-
-	ctx := conn.Context()
-	retryInterval := 1 * time.Second
 	for {
+		// Setup
+		cl, err := n.setupCS(csc)
+		if err != nil {
+			return err
+		}
+		n.csCls[i] = cl
+
+		// Azusa
+		if n.azusa.enabled {
+			err = n.azusa.setup(n, csc, cl)
+			if err != nil {
+				return fmt.Errorf("azusa: %w", err)
+			}
+		}
+
+		conn, err := cl.Pull(context.Background(), &api.PullQ{
+			CentralToken: csc.Token,
+		})
+		if err != nil {
+			return fmt.Errorf("pull init: %w", err)
+		}
+
+		ctx := conn.Context()
+		retryInterval := 1 * time.Second
 		retryInterval *= 2
 		select {
 		case <-ctx.Done():
