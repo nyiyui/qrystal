@@ -51,10 +51,12 @@ func (n *Node) listenCS(i int) error {
 	backoff := 1 * time.Second
 RetryLoop:
 	for {
-		// TODO: don't increase backoff if succees for a while
-		err := n.listenCSOnce(i)
+		resetBackoff, err := n.listenCSOnce(i)
 		if err == nil {
 			continue
+		}
+		if resetBackoff {
+			backoff = 1 * time.Second
 		}
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
@@ -63,6 +65,9 @@ RetryLoop:
 		)
 		time.Sleep(backoff)
 		backoff *= 2
+		if resetBackoff {
+			backoff = 1 * time.Second
+		}
 		if backoff > 65536*time.Second {
 			break RetryLoop
 		}
@@ -70,13 +75,13 @@ RetryLoop:
 	return errors.New("backoff exceeded")
 }
 
-func (n *Node) listenCSOnce(i int) error {
+func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	csc := n.cs[i]
 
 	// Setup
 	cl, err := n.setupCS(csc)
 	if err != nil {
-		return err
+		return
 	}
 	n.csCls[i] = cl
 
@@ -84,7 +89,8 @@ func (n *Node) listenCSOnce(i int) error {
 	if n.azusa.enabled {
 		err = n.azusa.setup(n, csc, cl)
 		if err != nil {
-			return fmt.Errorf("azusa: %w", err)
+			fmt.Errorf("azusa: %w", err)
+			return
 		}
 	}
 
@@ -92,23 +98,29 @@ func (n *Node) listenCSOnce(i int) error {
 		CentralToken: csc.Token,
 	})
 	if err != nil {
-		return fmt.Errorf("pull init: %w", err)
+		fmt.Errorf("pull init: %w", err)
+		return
 	}
 
 	ctx := conn.Context()
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.New("disconnected")
+			err = errors.New("disconnected")
+			return
 		default:
-			s, err := conn.Recv()
+			var s *api.PullS
+			s, err = conn.Recv()
 			if err != nil {
-				return fmt.Errorf("pull recv: %w", err)
+				err = fmt.Errorf("pull recv: %w", err)
+				return
 			}
 			util.S.Infof("次を受信: %s", s)
-			cc, err := newCCFromAPI(s.Cc)
+			var cc *CentralConfig
+			cc, err = newCCFromAPI(s.Cc)
 			if err != nil {
-				return fmt.Errorf("conv: %w", err)
+				err = fmt.Errorf("conv: %w", err)
+				return
 			}
 			util.S.Infof("===新たなCCを受信: %#v", cc)
 			for cnn, cn := range cc.Networks {
@@ -129,7 +141,8 @@ func (n *Node) listenCSOnce(i int) error {
 			for cnn, cn := range cc.Networks {
 				me := cn.Peers[cn.Me]
 				if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
-					return fmt.Errorf("net %s me (%s): key pair mismatch", cn.Me, cnn)
+					err = fmt.Errorf("net %s me (%s): key pair mismatch", cn.Me, cnn)
+					return
 				}
 			}
 
@@ -144,22 +157,27 @@ func (n *Node) listenCSOnce(i int) error {
 				return nil
 			}()
 			if err != nil {
-				return err
+				return
 			}
+			resetBackoff = true
 			if s.ForwardingOnly {
 				log.Printf("===フォワードだけなので同期しません。")
-				res, err := n.syncBackoff(context.Background(), false)
+				var res *SyncRes
+				res, err = n.syncBackoff(context.Background(), false)
 				if err != nil {
-					return fmt.Errorf("sync: %w", err)
+					err = fmt.Errorf("sync: %w", err)
+					return
 				}
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
 				log.Printf("===フォワードだけ：\n%s", res)
 			} else {
 				log.Printf("===新たなCCで同期します。")
-				res, err := n.syncBackoff(context.Background(), true)
+				var res *SyncRes
+				res, err = n.syncBackoff(context.Background(), true)
 				if err != nil {
-					return fmt.Errorf("sync: %w", err)
+					err = fmt.Errorf("sync: %w", err)
+					return
 				}
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
