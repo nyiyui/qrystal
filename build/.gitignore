@@ -1,9 +1,0 @@
-dev-add.sh
-dev-remove.sh
-runner-mio-bin
-runner-node-bin
-runner-bin
-runner
-testnet.yml
-testnet-serika.yml
-runner-config.yml
