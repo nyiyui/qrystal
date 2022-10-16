@@ -42,7 +42,7 @@ install: build2
 	chmod 600 "${pkgdir}/etc/qrystal/runner-config.yml"
 	touch "${pkgdir}/etc/qrystal/cs-backport.yml"
 	chmod 600 "${pkgdir}/etc/qrystal/cs-backport.yml"
-	chown qrystal-node:qrystal-node "${pkgdir}/etc/qrystal/cs-backport.yml"
+	chown qrystal-cs:qrystal-cs "${pkgdir}/etc/qrystal/cs-backport.yml"
 	mkdir -p "${pkgdir}/usr/lib/systemd/system"
 	cp './config/runner.service' "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service"
 	cp './config/cs.service' "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
