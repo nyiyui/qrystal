@@ -86,6 +86,7 @@ func (n *Node) listenCS(i int) error {
 					return fmt.Errorf("pull recv: %w", err)
 				}
 				log.Printf("preconv: %s", s.Cc)
+				log.Printf("preconv: %s", s.ForwardingOnly)
 				cc, err := newCCFromAPI(s.Cc)
 				if err != nil {
 					return fmt.Errorf("conv: %w", err)
