@@ -59,8 +59,8 @@ func (b *HexBytes) UnmarshalYAML(value *yaml.Node) error {
 type Ed25519PublicKey ed25519.PublicKey
 
 // MarshalYAML implements yaml.Marshaler.
-func (b *Ed25519PublicKey) MarshalYAML() (interface{}, error) {
-	return base64.StdEncoding.EncodeToString(*b), nil
+func (b Ed25519PublicKey) MarshalYAML() (interface{}, error) {
+	return base64.StdEncoding.EncodeToString(b), nil
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler.
