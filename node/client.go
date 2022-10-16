@@ -122,12 +122,15 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 				res.peerStatus[pn] = SyncPeerRes{
 					err: err,
 				}
+				continue
 			}
 			log.Printf("net %s peer %s syncing", cn.name, pn)
 			ps := c.xchPeer(ctx, cnn, pn)
 			log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 			res.peerStatus[pn] = ps
-			pns = append(pns, pn)
+			if ps.err == nil {
+				pns = append(pns, pn)
+			}
 		} else {
 			peer := cn.Peers[pn]
 			// we should lock but this is just for logging
