@@ -105,7 +105,7 @@ func (n *Node) listenCSOnce(i int) error {
 			if err != nil {
 				return fmt.Errorf("pull recv: %w", err)
 			}
-			util.S.Debugf("次を受信: %s", s)
+			util.S.Infof("次を受信: %s", s)
 			cc, err := newCCFromAPI(s.Cc)
 			if err != nil {
 				return fmt.Errorf("conv: %w", err)
