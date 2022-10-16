@@ -14,7 +14,7 @@ import (
 	"github.com/nyiyui/qrystal/util"
 )
 
-const forwardingCommitDelay = 1*time.Second
+const forwardingCommitDelay = 1 * time.Second
 
 type CentralSource struct {
 	api.UnimplementedCentralSourceServer
@@ -277,6 +277,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	go func() {
 		time.Sleep(forwardingCommitDelay)
 		s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true})
-	}
+	}()
 	return &api.CanForwardS{}, nil
 }
