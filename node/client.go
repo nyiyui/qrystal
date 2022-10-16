@@ -152,22 +152,24 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 		return SyncPeerRes{skip: skip}
 	}
 
-	log.Printf("net %s peer %s: ensuring", cnn, pn)
+	log.Printf("net %s peer %s: ensuring client", cnn, pn)
 	err := c.ensureClient(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ensure client: %w", err)}
 	}
-	log.Printf("net %s peer %s: client", cnn, pn)
+	log.Printf("net %s peer %s: pinging", cnn, pn)
 	err = c.ping(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ping: %w", err)}
 	}
 	log.Printf("net %s peer %s: pinged", cnn, pn)
+	log.Printf("net %s peer %s: authenticating", cnn, pn)
 	err = c.auth(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("auth: %w", err)}
 	}
 	log.Printf("net %s peer %s: authed", cnn, pn)
+	log.Printf("net %s peer %s: exchanging", cnn, pn)
 	err = c.xch(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("xch: %w", err)}
