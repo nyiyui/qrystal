@@ -44,6 +44,7 @@ type change struct {
 	forwardingOnly bool
 	net            string
 	forwardeePeers []string
+	peerName       string
 }
 
 var _ api.CentralSourceServer = new(CentralSource)
@@ -183,7 +184,7 @@ func (s *CentralSource) notifyChange(ch change) {
 			}
 			peer := s.cc.Networks[ch.net].Peers[ti.Name]
 			forwardeePeers = intersect(sliceToMap(peer.ForwardingPeers), sliceToMap(forwardeePeers))
-			log.Printf("notifyChange net %s peer %s: forwardeePeers: %s", ch.net, ti.Name, forwardeePeers)
+			log.Printf("notifyChange net %s peer %s forwards for peer %s: forwardeePeers: %s", ch.net, ch.peerName, ti.Name, forwardeePeers)
 			if len(forwardeePeers) == 0 {
 				log.Printf("notifyChange net %s peer %s: don't notify", ch.net, ti.Name)
 				continue
@@ -313,6 +314,6 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 		peer := cn.Peers[forwardeePeer]
 		peer.ForwardingPeers = append(peer.ForwardingPeers, forwarderPeer)
 	}
-	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true, net: q.Network, forwardeePeers: q.ForwardeePeers})
+	go s.notifyChange(change{reason: fmt.Sprintf("CanForward by %s", forwarderPeer), except: q.CentralToken, forwardingOnly: true, net: q.Network, forwardeePeers: q.ForwardeePeers, peerName: ti.Name})
 	return &api.CanForwardS{}, nil
 }
