@@ -11,7 +11,6 @@ import (
 
 	"github.com/nyiyui/qrystal/node/api"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"google.golang.org/grpc/credentials"
 )
 
 type NodeConfig struct {
@@ -19,9 +18,7 @@ type NodeConfig struct {
 	CC       CentralConfig
 	MioPort  uint16
 	MioToken []byte
-	CSHost   string
-	CSToken  string
-	CSCreds  credentials.TransportCredentials
+	CS       []CSConfig
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -55,11 +52,11 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		},
 		servers: map[networkPeerPair]*clientServer{},
 		mio:     mh,
-		csHost:  cfg.CSHost,
-		csToken: cfg.CSToken,
-		csCreds: cfg.CSCreds,
+		cs:      cfg.CS,
+		csNets:  map[string]int{},
 
 		azusa: new(azusa),
+		csCls: make([]api.CentralSourceClient, len(cfg.CS)),
 	}
 	return node, nil
 }
@@ -69,9 +66,8 @@ type Node struct {
 	ccLock       sync.RWMutex
 	cc           CentralConfig
 	coordPrivKey ed25519.PrivateKey
-	csHost       string
-	csToken      string
-	csCreds      credentials.TransportCredentials
+	cs           []CSConfig
+	csNets       map[string]int
 
 	state       serverState
 	serversLock sync.RWMutex
@@ -80,7 +76,7 @@ type Node struct {
 	mio *mioHandle
 
 	azusa *azusa
-	csCl  api.CentralSourceClient
+	csCls []api.CentralSourceClient
 }
 
 var _ api.NodeServer = (*Node)(nil)

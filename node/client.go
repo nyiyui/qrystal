@@ -111,13 +111,17 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string) (*SyncNetRes, error)
 			if cs.token == "" {
 				return errors.New("blank token")
 			}
-			_, err := c.csCl.CanForward(ctx, &api.CanForwardQ{
-				CentralToken:  c.csToken,
+			csI, err := c.getCSForNet(cnn)
+			if err != nil {
+				return fmt.Errorf("getCSForNet: %w", err)
+			}
+			_, err = c.csCls[csI].CanForward(ctx, &api.CanForwardQ{
+				CentralToken:  c.cs[csI].Token,
 				Network:       cnn,
 				ForwardeePeer: pn,
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("CanForward: %w", err)
 			}
 			return nil
 		}()

@@ -21,13 +21,13 @@ func (n *Node) AzusaConfigure(networks map[string]string, host string) {
 	n.azusa.host = host
 }
 
-func (a *azusa) setup(n *Node, cl api.CentralSourceClient) error {
+func (a *azusa) setup(n *Node, csc CSConfig, cl api.CentralSourceClient) error {
 	log.Print("azusa: locking ccLock")
 	for cnn, peerName := range a.networks {
 		log.Printf("azusa: net %s peer %s: pushing", cnn, peerName)
 		pubKey := n.coordPrivKey.Public().(ed25519.PublicKey)
 		q := api.PushQ{
-			CentralToken: n.csToken,
+			CentralToken: csc.Token,
 			Cnn:          cnn,
 			PeerName:     peerName,
 			Peer: &api.CentralPeer{

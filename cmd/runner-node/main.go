@@ -4,10 +4,12 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -24,6 +26,7 @@ type config struct {
 	Server  *serverConfig      `yaml:"server"`
 	Central node.CentralConfig `yaml:"central"`
 	CS      *csConfig          `yaml:"cs"`
+	CS2     []csConfig         `yaml:"cs2"`
 	Azusa   *azusaConfig       `yaml:"azusa"`
 }
 
@@ -57,8 +60,36 @@ func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type csConfig struct {
-	Host  string `yaml:"host"`
-	Token string `yaml:"token"`
+	TLSCertPath string   `yaml:"tls-cert-path"`
+	AllowedNets []string `yaml:"networks"`
+	Host        string   `yaml:"host"`
+	Token       string   `yaml:"token"`
+}
+
+func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
+	var creds credentials.TransportCredentials
+	var err error
+	if cfg.TLSCertPath == "" {
+		creds = credentials.NewTLS(nil)
+	} else {
+		creds, err = credentials.NewClientTLSFromFile(cfg.TLSCertPath, "")
+		if err != nil {
+			return nil, fmt.Errorf("tls cert: %w", err)
+		}
+	}
+	netsAllowed := make([]*regexp.Regexp, len(cfg.AllowedNets))
+	for i, net := range cfg.AllowedNets {
+		netsAllowed[i], err = regexp.Compile(net)
+		if err != nil {
+			return nil, fmt.Errorf("network %d: %w", i, err)
+		}
+	}
+	return &node.CSConfig{
+		Creds:           creds,
+		Host:            cfg.Host,
+		Token:           cfg.Token,
+		NetworksAllowed: netsAllowed,
+	}, err
 }
 
 func main() {
@@ -93,6 +124,21 @@ func main() {
 		}
 	}
 
+	// CS
+	ncscs := make([]node.CSConfig, 1+len(c.CS2))
+	ncsc, err := processCSConfig(c.CS)
+	if err != nil {
+		log.Fatalf("config cs: %s", err)
+	}
+	ncscs[0] = *ncsc
+	for i, csc := range c.CS2 {
+		ncsc, err := processCSConfig(&csc)
+		if err != nil {
+			log.Fatalf("config cs2 %d: %s", i, err)
+		}
+		ncscs[1+i] = *ncsc
+	}
+
 	c.Central.DialOpts = []grpc.DialOption{
 		grpc.WithTransportCredentials(clientCreds),
 	}
@@ -109,9 +155,7 @@ func main() {
 		CC:       c.Central,
 		MioPort:  uint16(mioPort),
 		MioToken: mioToken,
-		CSHost:   c.CS.Host,
-		CSToken:  c.CS.Token,
-		CSCreds:  clientCreds,
+		CS:       ncscs,
 	})
 	if err != nil {
 		panic(err)
@@ -139,12 +183,7 @@ func main() {
 		if c.Azusa != nil {
 			n.AzusaConfigure(c.Azusa.Networks, c.Azusa.Host)
 		}
-		go func() {
-			err := n.ListenCS()
-			if err != nil {
-				log.Printf("listen: %s", err)
-			}
-		}()
+		go n.ListenCS()
 	}
 	select {}
 }

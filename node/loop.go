@@ -15,35 +15,58 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func (n *Node) setupCS() (api.CentralSourceClient, error) {
-	conn, err := grpc.Dial(n.csHost, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(credentials.NewTLS(nil)))
+func (n *Node) setupCS(csc CSConfig) (api.CentralSourceClient, error) {
+	conn, err := grpc.Dial(csc.Host, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(csc.Creds))
 	if err != nil {
 		return nil, fmt.Errorf("connecting: %w", err)
 	}
 	cl := api.NewCentralSourceClient(conn)
 	_, err = cl.Ping(context.Background(), &api.PingQS{})
 	if err != nil {
-		return nil, fmt.Errorf("ping %s: %w", n.csHost, err)
+		return nil, fmt.Errorf("ping %s: %w", csc.Host, err)
 	}
 	return cl, nil
 }
 
-func (n *Node) ListenCS() error {
-	cl, err := n.setupCS()
+type listenError struct {
+	i   int
+	err error
+}
+
+func (n *Node) ListenCS() {
+	errCh := make(chan listenError, len(n.cs))
+	for i := range n.cs {
+		go func(i int) {
+			errCh <- listenError{i: i, err: n.listenCS(i)}
+		}(i)
+	}
+	select {
+	case err := <-errCh:
+		csc := n.cs[err.i]
+		log.Printf("cs %d (%s at %s) error: %s", err.i, csc.Comment, csc.Host, err.err)
+	}
+}
+
+func (n *Node) listenCS(i int) error {
+	csc := n.cs[i]
+
+	// Setup
+	cl, err := n.setupCS(csc)
 	if err != nil {
 		return err
 	}
-	n.csCl = cl
+	n.csCls[i] = cl
 
+	// Azusa
 	if n.azusa.enabled {
-		err = n.azusa.setup(n, cl)
+		err = n.azusa.setup(n, csc, cl)
 		if err != nil {
 			return fmt.Errorf("azusa: %w", err)
 		}
 	}
 
 	conn, err := cl.Pull(context.Background(), &api.PullQ{
-		CentralToken: n.csToken,
+		CentralToken: csc.Token,
 	})
 	if err != nil {
 		return fmt.Errorf("pull init: %w", err)
@@ -68,18 +91,28 @@ func (n *Node) ListenCS() error {
 					return fmt.Errorf("conv: %w", err)
 				}
 				cc.DialOpts = []grpc.DialOption{
-					grpc.WithTransportCredentials(n.csCreds),
+					grpc.WithTransportCredentials(credentials.NewTLS(nil)),
 				}
 				log.Printf("新たなCCを受信: %#v", cc)
 				for cnn, cn := range cc.Networks {
 					log.Printf("net %s: %#v", cnn, cn)
 				}
 
+				// NetworksAllowed
+				cc2 := map[string]*CentralNetwork{}
+				for cnn, cn := range cc.Networks {
+					if csc.netAllowed(cnn) {
+						cc2[cnn] = cn
+					} else {
+						log.Printf("net not allowed; ignoring: %s", cnn)
+					}
+				}
+				cc.Networks = cc2
+
 				for cnn, cn := range cc.Networks {
 					me := cn.Peers[cn.Me]
-					log.Printf("my peer not found %s", cn.Me)
 					if !bytes.Equal(me.PublicKey, []byte(n.coordPrivKey.Public().(ed25519.PublicKey))) {
-						return fmt.Errorf("net %s: key pair mismatch", cnn)
+						return fmt.Errorf("net %s me (%s): key pair mismatch", cn.Me, cnn)
 					}
 				}
 
