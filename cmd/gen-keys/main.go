@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	var genConfig bool
-	flag.BoolVar(&genConfig, "config", false, "不完全設定を作る。")
+	var formatJson bool
+	flag.BoolVar(&formatJson, "json", false, "JSONを出力します。")
 	flag.Parse()
 
 	token, hash, err := genHash()
@@ -27,30 +27,21 @@ func main() {
 	pubKeyEnc := base64.StdEncoding.EncodeToString(pubKey)
 	seedEnc := base64.StdEncoding.EncodeToString(privKey.Seed())
 	hashEnc := hex.EncodeToString(hash[:])
-	fmt.Print("[keys]\n")
-	fmt.Printf("public-key  = U_%s\n", pubKeyEnc)
-	fmt.Printf("private-key = R_%s\n", seedEnc)
-	fmt.Printf("token       = %s\n", token)
-	fmt.Printf("hash        = %s\n", hashEnc)
-	if genConfig {
-		fmt.Print("\n\n\n\n")
-		fmt.Printf(`## qrystal/cs.conf:
-  - name: # put the name here
-		hash: %s
-		can-pull: true
-		networks:
-			# put networks here
-`, hashEnc)
-		fmt.Print("\n\n\n\n")
-		fmt.Printf(`## qrystal/node.conf:
-# Private key of this Node. Auto-generated using qrystal-gen-keys -config.
-#private-key: %s
-# Address of Node gRPC server.
-#addr: :39251
-#cs:
-#  host: <qrystal-cs>:39252
-#  token: %s
-`, pubKeyEnc, token)
+	if formatJson {
+		fmt.Printf(`{
+  "keys": {
+		"public-key": "U_%s",
+		"private-key": "R_%s",
+		"token": "%s",
+		"hash": "%s"
+	}
+}`, pubKeyEnc, seedEnc, token, hashEnc)
+	} else {
+		fmt.Print("[keys]\n")
+		fmt.Printf("public-key  = U_%s\n", pubKeyEnc)
+		fmt.Printf("private-key = R_%s\n", seedEnc)
+		fmt.Printf("token       = %s\n", token)
+		fmt.Printf("hash        = %s\n", hashEnc)
 	}
 }
 

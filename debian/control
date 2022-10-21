@@ -1,7 +1,7 @@
 Source: qrystal
-Maintainer: Ken Shibata <kenxshibata@gmail.com>
+Maintainer: nyiyui <+@nyiyui.ca>
 Priority: optional
-Build-Depends: wireguard-tools
+Depends: wireguard-tools
 
 Package: qrystal
 Architecture: any

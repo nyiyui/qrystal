@@ -36,13 +36,15 @@ type NetworkConfig struct {
 	Host string   `yaml:"host"`
 }
 
-var cPath string
 var tcPath string
 var cfg Config
+var cfgServer string
+var cfgCT string
 var tc TmpConfig
 
 func main() {
-	flag.StringVar(&cPath, "config", "", "path to config file")
+	flag.StringVar(&cfgServer, "server", "", "server address")
+	flag.StringVar(&cfgCT, "token", "", "central token")
 	flag.StringVar(&tcPath, "tmp-config", "", "path to tmp config file")
 	flag.Parse()
 
@@ -55,14 +57,8 @@ func main() {
 		log.Fatalf("config unmarshal: %s", err)
 	}
 
-	raw, err = ioutil.ReadFile(cPath)
-	if err != nil {
-		log.Fatalf("config read: %s", err)
-	}
-	err = yaml.Unmarshal(raw, &cfg)
-	if err != nil {
-		log.Fatalf("config unmarshal: %s", err)
-	}
+	cfg.Server = cfgServer
+	cfg.CentralToken = cfgCT
 
 	creds := credentials.NewTLS(nil)
 

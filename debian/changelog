@@ -1,5 +1,3 @@
-qrystal (0.1-1) UNRELEASED; urgency=medium
-
-  * Initial release. (Closes: #XXXXXX)
-
- -- Ubuntu <kenxshibata@gmail.com>  Tue, 04 Oct 2022 03:19:14 -0400
+qrystal (197.cdfd3bd-1) UNRELEASED; urgency=low
+* Please see the Git log for changes.
+-- Nyiyui <+@nyiyui.ca> 2022-10-20
