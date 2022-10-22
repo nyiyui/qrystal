@@ -101,8 +101,11 @@ func (s *CentralSource) backport() error {
 	func() {
 		s.ccLock.RLock()
 		defer s.ccLock.RUnlock()
+		s.tokens.tokensLock.RLock()
+		defer s.tokens.tokensLock.RUnlock()
 		encoded, err = yaml.Marshal(Backport{
-			CC: &s.cc,
+			CC:     &s.cc,
+			Tokens: s.tokens.tokens,
 		})
 	}()
 	if err != nil {
