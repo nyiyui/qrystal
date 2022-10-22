@@ -250,6 +250,9 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 			},
 		}, nil
 	}
+	if _, ok := s.cc.Networks[q.Cnn]; !ok {
+		return nil, fmt.Errorf("unknown net %s", q.Cnn)
+	}
 	pushS, err := func() (*api.PushS, error) {
 		s.ccLock.Lock()
 		defer s.ccLock.Unlock()
