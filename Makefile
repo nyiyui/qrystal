@@ -35,9 +35,9 @@ install: build2
 	install -o root -g root -m 555 build2/cs       "${pkgdir}/usr/bin/qrystal-cs"
 	mkdir -p "${pkgdir}/opt/qrystal"
 	install -o root -g root -m 500 \
-		build2/runner-mio
-		build2/runner-node
-		${src}/mio/dev-add.sh
+		build2/runner-mio \
+		build2/runner-node \
+		${src}/mio/dev-add.sh \
 		${src}/mio/dev-remove.sh
 	  "${pkgdir}/opt/qrystal/"
 	mkdir -p "${pkgdir}/etc/qrystal"

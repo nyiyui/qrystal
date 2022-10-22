@@ -1,7 +1,7 @@
 # Maintainer: Ken Shibata <kenxshibata@gmail.com>
 
 pkgname='qrystal'
-pkgver=r30.930f7f5
+pkgver=r207.af7f416
 pkgrel=1
 pkgdesc='An network configuration manager for WireGuard.'
 arch=('x86_64')
