@@ -13,6 +13,7 @@ type CSConfig struct {
 	Host            string
 	Token           string
 	NetworksAllowed []*regexp.Regexp
+	Azusa           *AzusaConfig
 }
 
 func (csc *CSConfig) netAllowed(cnn string) bool {

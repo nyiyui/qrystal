@@ -9,6 +9,19 @@ import (
 	"github.com/nyiyui/qrystal/node/api"
 )
 
+type AzusaConfig struct {
+	Host     string
+	Networks map[string]string
+}
+
+func newAzusa(c AzusaConfig) *azusa {
+	return &azusa{
+		enabled:  true,
+		host:     c.Host,
+		networks: c.Networks,
+	}
+}
+
 type azusa struct {
 	enabled  bool
 	networks map[string]string

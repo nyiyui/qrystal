@@ -88,10 +88,17 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	n.csCls[i] = cl
 
 	// Azusa
-	if n.azusa.enabled {
+	if n.azusa.enabled && i == 0 {
 		err = n.azusa.setup(n, csc, cl)
 		if err != nil {
 			err = fmt.Errorf("azusa: %w", err)
+			return
+		}
+	} else if csc.Azusa != nil {
+		nakano := newAzusa(*csc.Azusa)
+		err = nakano.setup(n, csc, cl)
+		if err != nil {
+			err = fmt.Errorf("azusa nakano: %w", err)
 			return
 		}
 	}

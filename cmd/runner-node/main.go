@@ -61,10 +61,11 @@ func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type csConfig struct {
-	TLSCertPath string   `yaml:"tls-cert-path"`
-	AllowedNets []string `yaml:"networks"`
-	Host        string   `yaml:"host"`
-	Token       string   `yaml:"token"`
+	TLSCertPath string       `yaml:"tls-cert-path"`
+	AllowedNets []string     `yaml:"networks"`
+	Host        string       `yaml:"host"`
+	Token       string       `yaml:"token"`
+	Azusa       *azusaConfig `yaml:"azusa"`
 }
 
 func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
@@ -140,6 +141,12 @@ func main() {
 			log.Fatalf("config cs2 %d: %s", i, err)
 		}
 		ncscs[1+i] = *ncsc
+		if csc.Azusa != nil {
+			ncsc.Azusa = node.AzusaConfig{
+				Host:     csc.Azusa.Host,
+				Networks: csc.Azusa.Networks,
+			}
+		}
 	}
 
 	mioPort, err := strconv.ParseUint(os.Getenv("MIO_PORT"), 10, 16)
