@@ -1,4 +1,4 @@
-src="."
+src=.
 
 build2:
 	mkdir -p build2
