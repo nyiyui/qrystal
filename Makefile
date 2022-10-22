@@ -30,16 +30,16 @@ install: build2
 	cp '${src}/config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
 	systemctl restart systemd-sysusers
 	mkdir -p "${pkgdir}/usr/bin"
-	cp build2/runner "${pkgdir}/usr/bin/qrystal-runner"
-	chmod 555 "${pkgdir}/usr/bin/qrystal-runner"
-	cp build2/gen-keys "${pkgdir}/usr/bin/qrystal-gen-keys"
-	chmod 555 "${pkgdir}/usr/bin/qrystal-gen-keys"
-	cp build2/cs "${pkgdir}/usr/bin/qrystal-cs"
+	install -o root -g root -m 555 build2/runner   "${pkgdir}/usr/bin/qrystal-runner"
+	install -o root -g root -m 555 build2/gen-keys "${pkgdir}/usr/bin/qrystal-gen-keys"
+	install -o root -g root -m 555 build2/cs       "${pkgdir}/usr/bin/qrystal-cs"
 	mkdir -p "${pkgdir}/opt/qrystal"
-	cp build2/runner-mio "${pkgdir}/opt/qrystal/"
-	cp build2/runner-node "${pkgdir}/opt/qrystal/"
-	cp ${src}/mio/dev-add.sh "${pkgdir}/opt/qrystal/"
-	cp ${src}/mio/dev-remove.sh "${pkgdir}/opt/qrystal/"
+	install -o root -g root -m 500 \
+		build2/runner-mio
+		build2/runner-node
+		${src}/mio/dev-add.sh
+		${src}/mio/dev-remove.sh
+	  "${pkgdir}/opt/qrystal/"
 	mkdir -p "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
 	chmod 755 "${pkgdir}/etc/qrystal"
