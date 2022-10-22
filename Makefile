@@ -38,7 +38,7 @@ install: build2
 		build2/runner-mio \
 		build2/runner-node \
 		${src}/mio/dev-add.sh \
-		${src}/mio/dev-remove.sh
+		${src}/mio/dev-remove.sh \
 	  "${pkgdir}/opt/qrystal/"
 	mkdir -p "${pkgdir}/etc/qrystal"
 	chown root:qrystal-node "${pkgdir}/etc/qrystal"
