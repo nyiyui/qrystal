@@ -27,7 +27,7 @@ post_install:
 
 install: build2
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
-	cp '${src}/config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
+	install -m 644 '${src}/config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
 	systemctl restart systemd-sysusers
 	mkdir -p "${pkgdir}/usr/bin"
 	install -o root -g root -m 555 build2/runner   "${pkgdir}/usr/bin/qrystal-runner"
@@ -57,8 +57,8 @@ install: build2
 	chmod 600 "${pkgdir}/etc/qrystal/cs-backport.yml"
 	chown qrystal-cs:qrystal-cs "${pkgdir}/etc/qrystal/cs-backport.yml"
 	mkdir -p "${pkgdir}/usr/lib/systemd/system"
-	cp '${src}/config/runner.service' "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service"
-	cp '${src}/config/cs.service' "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
+	install '${src}/config/runner.service' "${pkgdir}/usr/lib/systemd/system/qrystal-runner.service"
+	install '${src}/config/cs.service' "${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
 	systemctl daemon-reload
 
 uninstall:
