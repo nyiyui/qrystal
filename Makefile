@@ -31,7 +31,9 @@ install: build2
 	systemctl restart systemd-sysusers
 	mkdir -p "${pkgdir}/usr/bin"
 	cp build2/runner "${pkgdir}/usr/bin/qrystal-runner"
+	chmod 555 "${pkgdir}/usr/bin/qrystal-runner"
 	cp build2/gen-keys "${pkgdir}/usr/bin/qrystal-gen-keys"
+	chmod 555 "${pkgdir}/usr/bin/qrystal-gen-keys"
 	cp build2/cs "${pkgdir}/usr/bin/qrystal-cs"
 	mkdir -p "${pkgdir}/opt/qrystal"
 	cp build2/runner-mio "${pkgdir}/opt/qrystal/"
