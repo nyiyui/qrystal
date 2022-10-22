@@ -89,7 +89,8 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 type Backport struct {
-	CC *node.CentralConfig `yaml:"cc"`
+	CC     *node.CentralConfig             `yaml:"cc"`
+	Tokens map[[sha256.Size]byte]TokenInfo `yaml:"tokens"`
 }
 
 func (s *CentralSource) backport() error {
