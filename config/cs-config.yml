@@ -2,6 +2,7 @@ tls-cert-path:
 tls-key-path:
 addr: :39252
 backport-path: /etc/qrystal/cs-backport.yml
+db-path: /etc/qrystal/db
 tokens:
   - name: master
     hash: …
