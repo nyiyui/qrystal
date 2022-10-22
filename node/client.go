@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/nyiyui/qrystal/node/api"
@@ -112,31 +113,39 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 		peerStatus: map[string]SyncPeerRes{},
 	}
 	pns := make([]string, 0)
-	for pn := range cn.Peers {
-		if pn == cn.Me {
-			continue
-		}
-		if xch {
-			err := c.ensureClient(ctx, cnn, pn)
-			if err != nil {
-				res.peerStatus[pn] = SyncPeerRes{
-					err: err,
+	{
+		var pnsLock sync.Mutex
+		var wg sync.WaitGroup
+		for pn := range cn.Peers {
+			if xch {
+				if pn == cn.Me {
+					continue
 				}
-				continue
+				wg.Add(1)
+				go func(pn string) {
+					err := c.ensureClient(ctx, cnn, pn)
+					if err != nil {
+						res.peerStatus[pn] = SyncPeerRes{
+							err: err,
+						}
+						return
+					}
+					log.Printf("net %s peer %s syncing", cn.name, pn)
+					ps := c.xchPeer(ctx, cnn, pn)
+					log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
+					res.peerStatus[pn] = ps
+					if ps.err == nil && !ps.skip {
+						pnsLock.Lock()
+						defer pnsLock.Unlock()
+						pns = append(pns, pn)
+					}
+				}(pn)
 			}
-			log.Printf("net %s peer %s syncing", cn.name, pn)
-			ps := c.xchPeer(ctx, cnn, pn)
-			log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
-			res.peerStatus[pn] = ps
-			if ps.err == nil && !ps.skip {
-				pns = append(pns, pn)
-			}
-		} else {
-			peer := cn.Peers[pn]
-			// we should lock but this is just for logging
-			log.Printf("net %s peer %s noxch %#v", cn.name, pn, peer)
 		}
+		wg.Wait()
+		pnsLock.Lock()
 	}
+
 	if xch {
 		log.Printf("net %s peers %s advertising forwarding capability", cn.name, pns)
 		csI, err := c.getCSForNet(cnn)
