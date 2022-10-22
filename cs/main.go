@@ -217,7 +217,7 @@ func (s *CentralSource) notifyChange(ch change) {
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
 	ti, ok, err := s.tokens.getToken(q.CentralToken)
-	if err == nil {
+	if err != nil {
 		return nil, err
 	}
 	if !ok {
