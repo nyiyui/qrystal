@@ -195,7 +195,11 @@ func (s *CentralSource) notifyChange(ch change) {
 					peersToForward = append(peersToForward, peerName)
 				}
 			}
-			peer := s.cc.Networks[ch.net].Peers[ti.Name]
+			peer, ok := s.cc.Networks[ch.net].Peers[ti.Name]
+			if !ok {
+				util.S.Warnf("notifyChange net %s peer %s not found in cc", ch.net, ti.Name)
+				continue
+			}
 			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, ti.Name, peersToForward)
 			peersToForward = missingFromFirst(sliceToMap(peer.ForwardingPeers), sliceToMap(peersToForward))
 			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, ti.Name, peersToForward)
