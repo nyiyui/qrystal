@@ -31,9 +31,10 @@ type TmpConfig struct {
 }
 
 type NetworkConfig struct {
-	Name string   `yaml:"name"`
-	IPs  []string `yaml:"ips"`
-	Host string   `yaml:"host"`
+	Name    string   `yaml:"name"`
+	IPs     []string `yaml:"ips"`
+	Host    string   `yaml:"host"`
+	CanPush bool     `yaml:"can-push"`
 }
 
 var tcPath string
@@ -66,11 +67,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("dial: %s", err)
 	}
+	canPushNets := map[string]string{}
 	networks := map[string]string{}
 	for cnn, nc := range tc.Networks {
 		networks[cnn] = nc.Name
+		if nc.CanPush {
+			canPushNets[cnn] = nc.Name
+		}
 	}
 	cl := api.NewCentralSourceClient(conn)
+
 	_, err = cl.AddToken(context.Background(), &api.AddTokenQ{
 		CentralToken: cfg.CentralToken,
 		Overwrite:    tc.Overwrite,
@@ -78,6 +84,9 @@ func main() {
 		Name:         tc.Name,
 		Networks:     networks,
 		CanPull:      true,
+		CanPush: &api.CanPush{
+			Networks: canPushNets,
+		},
 	})
 	if err != nil {
 		log.Fatalf("add token: %s", err)
