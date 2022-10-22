@@ -211,12 +211,14 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	if ti.CanPush == nil {
 		return nil, errors.New("cannot push")
 	}
-	pattern, ok := ti.CanPush.Networks[q.Cnn]
-	if !ok {
-		return nil, fmt.Errorf("cannot push to net %s", q.Cnn)
-	}
-	if q.PeerName != pattern {
-		return nil, fmt.Errorf("cannot push to net %s peer %s", q.Cnn, q.PeerName)
+	if !ti.CanPush.Any {
+		pattern, ok := ti.CanPush.Networks[q.Cnn]
+		if !ok {
+			return nil, fmt.Errorf("cannot push to net %s", q.Cnn)
+		}
+		if q.PeerName != pattern {
+			return nil, fmt.Errorf("cannot push to net %s peer %s", q.Cnn, q.PeerName)
+		}
 	}
 
 	log.Printf("push %#v", q)

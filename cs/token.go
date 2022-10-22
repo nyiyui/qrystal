@@ -53,6 +53,7 @@ type CanAddTokens struct {
 }
 
 type CanPush struct {
+	Any      bool              `yaml:"any"`
 	Networks map[string]string `yaml:"networks"`
 }
 
