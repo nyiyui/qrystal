@@ -12,6 +12,7 @@ import (
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
+	"github.com/tidwall/buntdb"
 )
 
 const commitDelay = 1 * time.Second
@@ -29,13 +30,14 @@ type CentralSource struct {
 	backportPath string
 }
 
-func New(cc node.CentralConfig, backportPath string) *CentralSource {
+func New(cc node.CentralConfig, backportPath string, db *buntdb.DB) (*CentralSource, error) {
+	ts, err := newTokenStore(db)
 	return &CentralSource{
 		notifyChs:    map[string]chan change{},
 		cc:           cc,
-		tokens:       newTokenStore(),
+		tokens:       ts,
 		backportPath: backportPath,
-	}
+	}, err
 }
 
 type change struct {
@@ -54,7 +56,10 @@ func (s *CentralSource) Ping(ctx context.Context, ss *api.PingQS) (*api.PingQS, 
 }
 
 func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) error {
-	ti, ok := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return newTokenAuthError(q.CentralToken)
 	}
@@ -73,7 +78,10 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 			s.rmChangeNotify(q.CentralToken)
 		case ch := <-cnCh:
 			// token status could change while this is called
-			ti, ok := s.tokens.getToken(q.CentralToken)
+			ti, ok, err := s.tokens.getToken(q.CentralToken)
+			if err != nil {
+				return err
+			}
 			if !ok {
 				return newTokenAuthError(q.CentralToken)
 			}
@@ -171,7 +179,11 @@ func (s *CentralSource) notifyChange(ch change) {
 		if token == ch.except {
 			continue
 		}
-		ti, ok := s.tokens.getToken(token)
+		ti, ok, err := s.tokens.getToken(token)
+		if err != nil {
+			util.S.Warnf("notifyChange net %s peer %s token: %s", ch.net, ch.peerName, err)
+			continue
+		}
 		if !ok {
 			panic(fmt.Sprintf("getToken on token %s failed", token))
 		}
@@ -204,7 +216,10 @@ func (s *CentralSource) notifyChange(ch change) {
 }
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
-	ti, ok := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	if err == nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, newTokenAuthError(q.CentralToken)
 	}
@@ -274,7 +289,10 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 }
 
 func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.AddTokenS, error) {
-	ti, ok := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, newTokenAuthError(q.CentralToken)
 	}
@@ -286,11 +304,14 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	if n != len(hash) {
 		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
 	}
-	alreadyExists := s.tokens.AddToken(hash, TokenInfo{
+	alreadyExists, err := s.tokens.AddToken(hash, TokenInfo{
 		Name:    q.Name,
 		CanPull: q.CanPull,
 		CanPush: convCanPush(q.CanPush),
 	}, q.Overwrite)
+	if err != nil {
+		return nil, err
+	}
 	if alreadyExists {
 		return nil, errors.New("same hash already exists")
 	}
@@ -316,7 +337,10 @@ func contains(ss []string, s string) bool {
 }
 
 func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*api.CanForwardS, error) {
-	ti, ok := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, newTokenAuthError(q.CentralToken)
 	}

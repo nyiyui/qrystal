@@ -2,39 +2,75 @@ package cs
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
-	"sync"
+
+	"github.com/tidwall/buntdb"
 )
+
+const tokenPrefix = "token-"
 
 type sha256Sum = [sha256.Size]byte
 
 type tokenStore struct {
-	tokens     map[[sha256.Size]byte]TokenInfo
-	tokensLock sync.RWMutex
+	db *buntdb.DB
 }
 
-func newTokenStore() tokenStore {
+func newTokenStore(db *buntdb.DB) (tokenStore, error) {
+	err := db.CreateIndex("tokens", "token:*", buntdb.IndexString)
 	return tokenStore{
-		tokens: map[[sha256.Size]byte]TokenInfo{},
-	}
+		db: db,
+	}, err
 }
 
-func (s *tokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool) {
-	s.tokensLock.Lock()
-	defer s.tokensLock.Unlock()
-	_, ok := s.tokens[sum]
-	if ok && !overwrite {
-		return true
+func (s *tokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool, err error) {
+	encoded, err := json.Marshal(info)
+	if err != nil {
+		return
 	}
-	s.tokens[sum] = info
-	return false
+	key := tokenPrefix + hex.EncodeToString(sum[:])
+	err = s.db.Update(func(tx *buntdb.Tx) error {
+		_, err = tx.Get(key)
+		if err == nil && !overwrite {
+			alreadyExists = true
+			return nil
+		}
+		if err != buntdb.ErrNotFound {
+			return err
+		}
+		_, _, err = tx.Set(key, string(encoded), nil)
+		alreadyExists = false
+		return nil
+	})
+	return
 }
 
-func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool) {
+func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool, err error) {
 	sum := sha256.Sum256([]byte(token))
-	s.tokensLock.RLock()
-	defer s.tokensLock.RUnlock()
-	info, ok = s.tokens[sum]
+	key := tokenPrefix + hex.EncodeToString(sum[:])
+	var encoded string
+	err = s.db.View(func(tx *buntdb.Tx) error {
+		encoded, err = tx.Get(key)
+		return err
+	})
+	if err == buntdb.ErrNotFound {
+		ok = false
+		return
+	}
+	err = json.Unmarshal([]byte(encoded), &info)
+	ok = true
+	return
+}
+
+func (s *tokenStore) convertToMap() (m map[string]string, err error) {
+	m = map[string]string{}
+	err = s.db.View(func(tx *buntdb.Tx) error {
+		return tx.Ascend("tokens", func(key, val string) bool {
+			m[key] = val
+			return true
+		})
+	})
 	return
 }
 

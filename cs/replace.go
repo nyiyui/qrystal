@@ -8,8 +8,12 @@ func (s *CentralSource) ReplaceCC(cc *node.CentralConfig) {
 	s.cc = *cc
 }
 
-func (s *CentralSource) ReplaceTokens(tokens []Token) {
-	s.tokens.tokensLock.Lock()
-	defer s.tokens.tokensLock.Unlock()
-	s.tokens.tokens = convertTokens(tokens)
+func (s *CentralSource) AddTokens(ts []Token) error {
+	for _, t := range ts {
+		_, err := s.tokens.AddToken(t.Hash, t.Info, true)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

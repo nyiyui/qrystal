@@ -18,6 +18,7 @@ type Config struct {
 	CC           *node.CentralConfig `yaml:"central"`
 	Tokens       *TokensConfig       `yaml:"tokens"`
 	BackportPath string              `yaml:"backport-path"`
+	DBPath       string              `yaml:"db-path"`
 }
 
 type TokensConfig struct {
@@ -89,23 +90,24 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 type Backport struct {
-	CC     *node.CentralConfig             `yaml:"cc"`
-	Tokens map[[sha256.Size]byte]TokenInfo `yaml:"tokens"`
+	CC     *node.CentralConfig `yaml:"cc"`
+	Tokens map[string]string   `yaml:"tokens"`
 }
 
 func (s *CentralSource) backport() error {
 	s.backportLock.Lock()
 	defer s.backportLock.Unlock()
 	var encoded []byte
-	var err error
+	tokens, err := s.tokens.convertToMap()
+	if err != nil {
+		return nil
+	}
 	func() {
 		s.ccLock.RLock()
 		defer s.ccLock.RUnlock()
-		s.tokens.tokensLock.RLock()
-		defer s.tokens.tokensLock.RUnlock()
 		encoded, err = yaml.Marshal(Backport{
 			CC:     &s.cc,
-			Tokens: s.tokens.tokens,
+			Tokens: tokens,
 		})
 	}()
 	if err != nil {

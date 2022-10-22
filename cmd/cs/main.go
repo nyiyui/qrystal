@@ -8,6 +8,7 @@ import (
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
+	"github.com/tidwall/buntdb"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -36,8 +37,19 @@ func main() {
 	}
 	log.Printf("TLS creds read")
 
-	server := cs.New(*config.CC, config.BackportPath)
-	server.ReplaceTokens(config.Tokens.Raw)
+	db, err := buntdb.Open(config.DBPath)
+	if err != nil {
+		log.Fatalf("open db: %s", err)
+	}
+
+	server, err := cs.New(*config.CC, config.BackportPath, db)
+	if err != nil {
+		log.Fatalf("new: %s", err)
+	}
+	err = server.AddTokens(config.Tokens.Raw)
+	if err != nil {
+		log.Fatalf("add tokens: %s", err)
+	}
 	if config.BackportPath != "" && false {
 		err = server.ReadBackport()
 		if err != nil {
