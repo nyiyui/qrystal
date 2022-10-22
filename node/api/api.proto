@@ -90,6 +90,7 @@ message PushS {
     Ok ok = 1;
     string invalidData = 2;
     string overflow = 3;
+    string other = 4;
   }
 }
 

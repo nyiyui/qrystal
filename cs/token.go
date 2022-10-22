@@ -9,7 +9,7 @@ import (
 	"github.com/tidwall/buntdb"
 )
 
-const tokenPrefix = "token-"
+const tokenPrefix = "token:"
 
 type sha256Sum = [sha256.Size]byte
 

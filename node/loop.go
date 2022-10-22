@@ -91,7 +91,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	if n.azusa.enabled {
 		err = n.azusa.setup(n, csc, cl)
 		if err != nil {
-			fmt.Errorf("azusa: %w", err)
+			err = fmt.Errorf("azusa: %w", err)
 			return
 		}
 	}
@@ -100,7 +100,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 		CentralToken: csc.Token,
 	})
 	if err != nil {
-		fmt.Errorf("pull init: %w", err)
+		err = fmt.Errorf("pull init: %w", err)
 		return
 	}
 
