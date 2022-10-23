@@ -20,7 +20,7 @@ func main() {
 	flag.StringVar(&configPath, "config", "", "config file path")
 	flag.Parse()
 
-	util.L, _ = zap.NewProduction()
+	util.L, _ = zap.NewDevelopment()
 	defer util.L.Sync()
 	util.S = util.L.Sugar()
 

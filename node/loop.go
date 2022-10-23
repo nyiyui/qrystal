@@ -201,9 +201,11 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 
 func (n *Node) syncBackoff(ctx context.Context, xch bool) (*SyncRes, error) {
 	backoff := 1 * time.Second
+	tryNum := 1
 RetryLoop:
 	for {
 		// TODO: don't increase backoff if succees for a while
+		util.S.Errorf("sync starting: try num %d", tryNum)
 		res, err := n.Sync(ctx, xch)
 		if err != nil || res.allOK() {
 			return res, nil
@@ -220,6 +222,7 @@ RetryLoop:
 		)
 		time.Sleep(backoff)
 		backoff *= 2
+		tryNum++
 		if backoff > backoffTimeout {
 			break RetryLoop
 		}

@@ -95,7 +95,7 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 }
 
 func main() {
-	util.L, _ = zap.NewProduction()
+	util.L, _ = zap.NewDevelopment()
 	defer util.L.Sync()
 	util.S = util.L.Sugar()
 
