@@ -127,6 +127,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 				}
 				wg.Add(1)
 				go func(pn string) {
+					defer wg.Done()
 					err := c.ensureClient(ctx, cnn, pn)
 					if err != nil {
 						res.peerStatus[pn] = SyncPeerRes{
