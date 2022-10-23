@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"gopkg.in/yaml.v3"
 )
 
 type SyncRes struct {
@@ -90,6 +92,8 @@ func (c *Node) Sync(ctx context.Context, xch bool) (*SyncRes, error) {
 	}
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
+	ccy, _ := yaml.Marshal(c.cc)
+	util.S.Infof("cc: %s", ccy)
 	for cnn := range c.cc.Networks {
 		log.Printf("===SYNCING net %s", cnn)
 		netRes, err := c.syncNetwork(ctx, cnn, xch)

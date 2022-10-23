@@ -205,7 +205,7 @@ func (n *Node) syncBackoff(ctx context.Context, xch bool) (*SyncRes, error) {
 RetryLoop:
 	for {
 		// TODO: don't increase backoff if succees for a while
-		util.S.Errorf("sync starting: try num %d", tryNum)
+		util.S.Infof("sync starting: try num %d", tryNum)
 		res, err := n.Sync(ctx, xch)
 		if err != nil || res.allOK() {
 			return res, nil
