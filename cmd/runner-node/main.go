@@ -142,7 +142,7 @@ func main() {
 		}
 		ncscs[1+i] = *ncsc
 		if csc.Azusa != nil {
-			ncsc.Azusa = node.AzusaConfig{
+			ncsc.Azusa = &node.AzusaConfig{
 				Host:     csc.Azusa.Host,
 				Networks: csc.Azusa.Networks,
 			}
