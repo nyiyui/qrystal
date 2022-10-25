@@ -98,7 +98,7 @@ func (s *CentralSource) backport() error {
 	s.backportLock.Lock()
 	defer s.backportLock.Unlock()
 	var encoded []byte
-	tokens, err := s.tokens.convertToMap()
+	tokens, err := s.Tokens.convertToMap()
 	if err != nil {
 		return nil
 	}

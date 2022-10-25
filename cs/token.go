@@ -13,18 +13,18 @@ const tokenPrefix = "token:"
 
 type sha256Sum = [sha256.Size]byte
 
-type tokenStore struct {
+type TokenStore struct {
 	db *buntdb.DB
 }
 
-func newTokenStore(db *buntdb.DB) (tokenStore, error) {
+func newTokenStore(db *buntdb.DB) (TokenStore, error) {
 	err := db.CreateIndex("tokens", "token:*", buntdb.IndexString)
-	return tokenStore{
+	return TokenStore{
 		db: db,
 	}, err
 }
 
-func (s *tokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool, err error) {
+func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool, err error) {
 	encoded, err := json.Marshal(info)
 	if err != nil {
 		return
@@ -46,7 +46,22 @@ func (s *tokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (al
 	return
 }
 
-func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool, err error) {
+func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, err error) {
+	key := tokenPrefix + hashHex
+	var encoded string
+	err = s.db.View(func(tx *buntdb.Tx) error {
+		encoded, err = tx.Get(key)
+		return err
+	})
+	if err == buntdb.ErrNotFound {
+		ok = false
+		return
+	}
+	err = json.Unmarshal([]byte(encoded), &info)
+	ok = true
+	return
+}
+func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error) {
 	sum := sha256.Sum256([]byte(token))
 	key := tokenPrefix + hex.EncodeToString(sum[:])
 	var encoded string
@@ -63,7 +78,7 @@ func (s *tokenStore) getToken(token string) (info TokenInfo, ok bool, err error)
 	return
 }
 
-func (s *tokenStore) convertToMap() (m map[string]string, err error) {
+func (s *TokenStore) convertToMap() (m map[string]string, err error) {
 	m = map[string]string{}
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		return tx.Ascend("tokens", func(key, val string) bool {

@@ -23,7 +23,7 @@ type CentralSource struct {
 	notifyChsLock sync.RWMutex
 	cc            node.CentralConfig
 	ccLock        sync.RWMutex
-	tokens        tokenStore
+	Tokens        TokenStore
 	backportLock  sync.Mutex
 	// keep it simple (RWMutex might be more appropriate but we're not writing
 	// backports simultaneously (I hope))
@@ -35,7 +35,7 @@ func New(cc node.CentralConfig, backportPath string, db *buntdb.DB) (*CentralSou
 	return &CentralSource{
 		notifyChs:    map[string]chan change{},
 		cc:           cc,
-		tokens:       ts,
+		Tokens:       ts,
 		backportPath: backportPath,
 	}, err
 }
@@ -56,7 +56,7 @@ func (s *CentralSource) Ping(ctx context.Context, ss *api.PingQS) (*api.PingQS, 
 }
 
 func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) error {
-	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 			s.rmChangeNotify(q.CentralToken)
 		case ch := <-cnCh:
 			// token status could change while this is called
-			ti, ok, err := s.tokens.getToken(q.CentralToken)
+			ti, ok, err := s.Tokens.getToken(q.CentralToken)
 			if err != nil {
 				return err
 			}
@@ -179,7 +179,7 @@ func (s *CentralSource) notifyChange(ch change) {
 		if token == ch.except {
 			continue
 		}
-		ti, ok, err := s.tokens.getToken(token)
+		ti, ok, err := s.Tokens.getToken(token)
 		if err != nil {
 			util.S.Warnf("notifyChange net %s peer %s token: %s", ch.net, ch.peerName, err)
 			continue
@@ -220,7 +220,7 @@ func (s *CentralSource) notifyChange(ch change) {
 }
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
-	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return &api.PushS{S: &api.PushS_Other{Other: fmt.Sprint(err)}}, err
 	}
@@ -296,7 +296,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 }
 
 func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.AddTokenS, error) {
-	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +311,7 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	if n != len(hash) {
 		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
 	}
-	alreadyExists, err := s.tokens.AddToken(hash, TokenInfo{
+	alreadyExists, err := s.Tokens.AddToken(hash, TokenInfo{
 		Name:     q.Name,
 		Networks: q.Networks,
 		CanPull:  q.CanPull,
@@ -345,7 +345,7 @@ func contains(ss []string, s string) bool {
 }
 
 func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*api.CanForwardS, error) {
-	ti, ok, err := s.tokens.getToken(q.CentralToken)
+	ti, ok, err := s.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return nil, err
 	}

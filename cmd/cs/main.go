@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"log"
 	"net"
@@ -45,6 +48,26 @@ func main() {
 	server, err := cs.New(*config.CC, config.BackportPath, db)
 	if err != nil {
 		log.Fatalf("new: %s", err)
+	}
+	for _, tr := range config.Tokens.Raw {
+		already, ok, err := server.Tokens.GetTokenByHash(hex.EncodeToString(tr.Hash[:]))
+		if err != nil {
+			log.Fatalf("get token %x: %s", tr.Hash[:], err)
+		}
+		if !ok {
+			continue
+		}
+		info2, err := json.Marshal(tr.Info)
+		if err != nil {
+			log.Fatalf("marshal token2 %x: %s", tr.Hash[:], err)
+		}
+		already2, err := json.Marshal(already)
+		if err != nil {
+			log.Fatalf("marshal token2 %x: %s", tr.Hash[:], err)
+		}
+		if !bytes.Equal(info2, already2) {
+			util.S.Warnf("token %x diverges from db", tr.Hash[:])
+		}
 	}
 	err = server.AddTokens(config.Tokens.Raw)
 	if err != nil {
