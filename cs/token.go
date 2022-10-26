@@ -35,16 +35,21 @@ func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (er
 	key := tokenPrefix + hex.EncodeToString(sum[:])
 	err = s.db.Update(func(tx *buntdb.Tx) (err error) {
 		_, err = tx.Get(key)
-		switch {
-		case (err == nil) && overwrite,
-			err == buntdb.ErrNotFound:
-			_, _, err = tx.Set(key, string(encoded), nil)
-			return
-		case (err == nil) && !overwrite:
-			return errCannotOverwrite
+		switch err {
+		case buntdb.ErrNotFound:
+			goto Write
+		case nil:
+			if overwrite {
+				goto Write
+			} else {
+				return errCannotOverwrite
+			}
 		default:
 			return
 		}
+	Write:
+		_, _, err = tx.Set(key, string(encoded), nil)
+		return
 	})
 	return
 }
