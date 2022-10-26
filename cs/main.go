@@ -311,7 +311,7 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	if n != len(hash) {
 		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
 	}
-	alreadyExists, err := s.Tokens.AddToken(hash, TokenInfo{
+	err = s.Tokens.AddToken(hash, TokenInfo{
 		Name:     q.Name,
 		Networks: q.Networks,
 		CanPull:  q.CanPull,
@@ -319,9 +319,6 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	}, q.Overwrite)
 	if err != nil {
 		return nil, err
-	}
-	if alreadyExists {
-		return nil, errors.New("same hash already exists")
 	}
 	return &api.AddTokenS{}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/tidwall/buntdb"
@@ -24,24 +25,26 @@ func newTokenStore(db *buntdb.DB) (TokenStore, error) {
 	}, err
 }
 
-func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (alreadyExists bool, err error) {
+var errCannotOverwrite = errors.New("cannot overwrite")
+
+func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (err error) {
 	encoded, err := json.Marshal(info)
 	if err != nil {
 		return
 	}
 	key := tokenPrefix + hex.EncodeToString(sum[:])
-	err = s.db.Update(func(tx *buntdb.Tx) error {
+	err = s.db.Update(func(tx *buntdb.Tx) (err error) {
 		_, err = tx.Get(key)
-		if err == nil && !overwrite {
-			alreadyExists = true
-			return nil
+		switch {
+		case (err == nil) && overwrite,
+			err == buntdb.ErrNotFound:
+			_, _, err = tx.Set(key, string(encoded), nil)
+			return
+		case (err == nil) && !overwrite:
+			return errCannotOverwrite
+		default:
+			return
 		}
-		if err != buntdb.ErrNotFound {
-			return err
-		}
-		_, _, err = tx.Set(key, string(encoded), nil)
-		alreadyExists = false
-		return nil
 	})
 	return
 }

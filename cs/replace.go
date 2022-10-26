@@ -10,7 +10,7 @@ func (s *CentralSource) ReplaceCC(cc *node.CentralConfig) {
 
 func (s *CentralSource) AddTokens(ts []Token) error {
 	for _, t := range ts {
-		_, err := s.Tokens.AddToken(t.Hash, t.Info, true)
+		err := s.Tokens.AddToken(t.Hash, t.Info, true)
 		if err != nil {
 			return err
 		}

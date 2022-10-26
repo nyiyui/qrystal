@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 
@@ -44,30 +45,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("open db: %s", err)
 	}
-
 	server, err := cs.New(*config.CC, config.BackportPath, db)
 	if err != nil {
 		log.Fatalf("new: %s", err)
 	}
-	for _, tr := range config.Tokens.Raw {
-		already, ok, err := server.Tokens.GetTokenByHash(hex.EncodeToString(tr.Hash[:]))
-		if err != nil {
-			log.Fatalf("get token %x: %s", tr.Hash[:], err)
-		}
-		if !ok {
-			continue
-		}
-		info2, err := json.Marshal(tr.Info)
-		if err != nil {
-			log.Fatalf("marshal token2 %x: %s", tr.Hash[:], err)
-		}
-		already2, err := json.Marshal(already)
-		if err != nil {
-			log.Fatalf("marshal token2 %x: %s", tr.Hash[:], err)
-		}
-		if !bytes.Equal(info2, already2) {
-			util.S.Warnf("token %x diverges from db", tr.Hash[:])
-		}
+	err = warnDivergentTokens(config, server)
+	if err != nil {
+		log.Fatalf("warn divergent tokens: %s", err)
 	}
 	err = server.AddTokens(config.Tokens.Raw)
 	if err != nil {
@@ -91,4 +75,29 @@ func main() {
 	if err != nil {
 		log.Fatalf("serve: %s", err)
 	}
+}
+
+// warnDivergentTokens warns for any divergent tokens.
+func warnDivergentTokens(config *cs.Config, server *cs.CentralSource) error {
+	for _, tr := range config.Tokens.Raw {
+		already, ok, err := server.Tokens.GetTokenByHash(hex.EncodeToString(tr.Hash[:]))
+		if err != nil {
+			return fmt.Errorf("get token %x: %s", tr.Hash[:], err)
+		}
+		if !ok {
+			continue
+		}
+		info2, err := json.Marshal(tr.Info)
+		if err != nil {
+			return fmt.Errorf("marshal token2 %x: %s", tr.Hash[:], err)
+		}
+		already2, err := json.Marshal(already)
+		if err != nil {
+			return fmt.Errorf("marshal token2 %x: %s", tr.Hash[:], err)
+		}
+		if !bytes.Equal(info2, already2) {
+			util.S.Warnf("token %x diverges from db", tr.Hash[:])
+		}
+	}
+	return nil
 }
