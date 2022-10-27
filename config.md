@@ -3,65 +3,125 @@
 Each component (e.g. Node, CS, Azusa) can be configured independently so you
 can gradually implement more as necessary.
 
+## Central
+
+```yaml
+central:
+  networks:
+    # Each network's peers should be fully connected.
+    toaru: # must be an allowed WireGuard interface name (i.e. `[a-zA-Z0-9_=+.-]{1,15}`)
+      # Settings for all peers
+      keepalive: 30s # = Keepalive (see https://pkg.go.dev/time#ParseDuration )
+      listen-port: 58120 # = ListenPort
+      # Allowed IPs for the entire network.
+      ips:
+        - 10.123.0.1/16
+      # Peer name for this Node (if applicable). 
+      me: mikoto
+      peers:
+        mikoto:
+          # Address of Node available from all peers' WGs, if this Node runs a server.
+          host: mikoto.example.net:39251
+          
+          # IPs always added to AllowedIPs. Peers that this Node forwards should be added to forwarding-peers. Forwarding without CS may not work.
+          allowed-ips:
+            - 10.123.1.2/32
+          forwarding-peers: []
+          
+          # Public key of the Node (corresponds to private-key).
+          public-key: U_…
+          
+          # NOTE: can-forward is unused (i.e. is junk).
+```
+
 ## Node
 
 ```yaml
-# Private key generated using gen-keys
+# Private key generated using gen-keys.
 private-key: R_…
+
+# If this Node runs a server:
 server:
-  # TLS cert and key path. Make sure the files are readable by qrystal-node user.
+  # TLS cert and key path. Make sure the files are readable by `qrystal-node` user.
   tls-cert-path: /etc/qrystal/fullchain.pem
   tls-key-path: /etc/qrystal/privkey.pem
+  
   # Address to bind to
   addr: :39251
-# Central config (used if not provided by CS or before 1st CS pull); same as
-# central in CS
+
+# Central config (used if not provided by CS or before 1st CS pull).
 central:
-  …
-# CS config (if central is not configured)
+
+# CS config
 cs:
+  # TLS cert to use to connect.
+  tls-cert-path:
+  
+  # Networks to apply from this CS.
+  networks:
+  
+  # CS address.
   host: qrystal.example.net:39252
+  
+  # Token to pull/push.
   token: …
-# Azusa config (if you want this Node to dynamically add peers at startup)
+  
+  # Azusa config.
+  azusa:
+
+cs2: [] # CS config but multiple.
+
+# Azusa config (if you want this Node to dynamically add peers at startup to cs, not cs2).
 azusa:
   networks:
-    sites: my-dev-machine
+    toaru: kuroko
   # `host` field for peer. Leave blank for NAT-ed peers.
-  host:
+  host: kuroko.example.net:39251
 ```
 
 ## CS
 
 ```yaml
 addr: :39252
+# TLS settings.
+tls-cert-path:
+tls-key-path:
+
+# Path to backport to.
+backport-path: /etc/qrystal/cs-backport.yml
+
+# Database for (currently) tokens.
+db-path: /etc/qrystal/db
+
+# Tokens to add/overwrite to db on startup.
 tokens:
-  - name: my-dev-machine-azusa
+  - # Name for humans.
+    name: my-dev-machine-azusa
+  
+    # Token hash.
     hash: …
-    can-push: true
-    # Networks and the peer names the token can push to, and can become peers for.
+    
+    can-push:
+      # Can push to any  peer on any network.
+      any: true
+      # Networks and the peer names the token can be used to push to. Null to disallow pushing.
+      networks:
+        <cnn>: <pn>
+    
+    can-pull: true
+    # Networks and the peer names the token can pull for. Useless if `can-pull: false`.
     networks:
       sites: my-dev-machine
       sysadmin: my-dev-machine
+    
+    can-add-tokens:
+      # Whether the token can add tokens that can push (unrestricted).
+      can-push: true | false
+      # Whether the token can add tokens that can pull (unrestricted).
+      can-pull: true | false
+
+# Central configuration.
 central:
-  networks:
-    sites:
-      keepalive: 30s
-      listen-port: 58120
-      ips:
-        - 10.123.0.1/16
-      peers:
-    sysadmin:
-      keepalive: 30s
-      listen-port: 58121
-      ips:
-        - 10.123.1.1/16
-      peers:
-        my-dev-machine:
-          public-key: U_…
-          # IPs always added to AllowedIPs. AllowedIPs can also include IP
-          # ranges for forwarding.
-          allowed-ips:
-            - 10.123.1.2/32
 ```
 
 ## Example
