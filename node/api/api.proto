@@ -29,6 +29,10 @@ service CentralSource {
   rpc ping(PingQS) returns (PingQS);
 }
 
+service Kiriyama {
+  rpc getStatus(GetStatusQ) returns (stream GetStatusS);
+}
+
 message AuthSQ {
   oneof sq {
     AuthS s = 1;
@@ -160,3 +164,9 @@ message ForwardMetric {
 }
 
 message CanForwardS {}
+
+message GetStatusQ {}
+
+message GetStatusS {
+  map<int32, string> cs = 1;
+}

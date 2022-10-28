@@ -1,18 +1,22 @@
 src=.
+path=${shell pwd}
 
 build2:
 	mkdir -p build2
-	go build -o build2/runner-mio ${src}/cmd/runner-mio
-	go build -o build2/runner-node ${src}/cmd/runner-node
-	go build -o build2/runner ${src}/cmd/runner
-	go build -o build2/gen-keys ${src}/cmd/gen-keys
-	go build -o build2/cs ${src}/cmd/cs
+	cd ${src} && go build -o ${path}/build2/runner-mio ${src}/cmd/runner-mio
+	cd ${src} && go build -o ${path}/build2/runner-node ${src}/cmd/runner-node
+	cd ${src} && go build -o ${path}/build2/runner ${src}/cmd/runner
+	cd ${src} && go build -o ${path}/build2/gen-keys ${src}/cmd/gen-keys
+	cd ${src} && go build -o ${path}/build2/cs ${src}/cmd/cs
 
 cs-push:
-	go build -o cs-push ${src}/cmd/cs-push
+	cd ${src} go build -o ${path}/cs-push ${src}/cmd/cs-push
+
+tray:
+	cd ${src} go build -o ${path}/tray ${src}/cmd/tray
 
 install-cs-push: cs-push
-	install -m 755 -o root -g root ./cs-push ${pkdir}/usr/bin/qrystal-cs-push
+	install -m 755 -o root -g root $@ ${pkdir}/usr/bin/qrystal-cs-push
 
 uninstall-cs-push:
 	rm -f ${pkgdir}/usr/bin/qrystal-cs-push

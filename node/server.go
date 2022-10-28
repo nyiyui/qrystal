@@ -58,6 +58,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		azusa: new(azusa),
 		csCls: make([]api.CentralSourceClient, len(cfg.CS)),
 	}
+	node.Kiriyama = newKiriyama(node)
 	return node, nil
 }
 
@@ -77,6 +78,8 @@ type Node struct {
 
 	azusa *azusa
 	csCls []api.CentralSourceClient
+
+	Kiriyama *Kiriyama
 }
 
 var _ api.NodeServer = (*Node)(nil)

@@ -23,12 +23,13 @@ import (
 )
 
 type config struct {
-	PrivKey string             `yaml:"private-key"`
-	Server  *serverConfig      `yaml:"server"`
-	Central node.CentralConfig `yaml:"central"`
-	CS      *csConfig          `yaml:"cs"`
-	CS2     []csConfig         `yaml:"cs2"`
-	Azusa   *azusaConfig       `yaml:"azusa"`
+	PrivKey  string             `yaml:"private-key"`
+	Server   *serverConfig      `yaml:"server"`
+	Central  node.CentralConfig `yaml:"central"`
+	CS       *csConfig          `yaml:"cs"`
+	CS2      []csConfig         `yaml:"cs2"`
+	Azusa    *azusaConfig       `yaml:"azusa"`
+	Kiriyama string             `yaml:"kiriyama"`
 }
 
 type serverConfig struct {
@@ -191,6 +192,10 @@ func main() {
 			n.AzusaConfigure(c.Azusa.Networks, c.Azusa.Host)
 		}
 		go n.ListenCS()
+	}
+	if c.Kiriyama != "" {
+		n.Kiriyama.Addr = c.Kiriyama
+		go n.Kiriyama.Loop()
 	}
 	select {}
 }

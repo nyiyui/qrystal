@@ -15,6 +15,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pkg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Generic: Build
+        run: ./pkg-generic.sh
+      - name: Generic: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: pkg-generic
+          path: ./build.tar.zst
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +40,10 @@ jobs:
         with:
           source: ./
           destination: ./_site
+      - name: Generic: Copy
+        uses: actions/download-artifact@v3
+        with:
+          name: pkg-generic
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
 

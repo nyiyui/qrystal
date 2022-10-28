@@ -65,6 +65,7 @@ RetryLoop:
 			"err", err,
 			"backoff", backoff,
 		)
+		n.Kiriyama.SetCS(i, fmt.Sprintf("error; retry in %s", backoff))
 		time.Sleep(backoff)
 		backoff *= 2
 		if resetBackoff {

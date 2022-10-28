@@ -14,3 +14,5 @@ cs:
 azusa:
   networks:
     <some-network>: <peer-name>
+# TODO: secure socket
+# kiriyama: /run/qrystal-kiriyama/runner.sock
