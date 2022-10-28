@@ -11,6 +11,7 @@ mkdir /build
 cd /build
 make -f $prefix/Makefile src=/source pkgdir=/build build2 cs-push
 cp -r $prefix/config .
-cp $prefix/mio/dev-*.sh .
+mkdir ./mio
+cp $prefix/mio/dev-*.sh ./mio/
 cp $prefix/Makefile .
 ls -al /build
