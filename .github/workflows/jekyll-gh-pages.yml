@@ -45,6 +45,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: pkg-generic
+          path: ./_site/build-generic.tar.zst
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
 
