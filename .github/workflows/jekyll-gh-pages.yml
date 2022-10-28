@@ -40,7 +40,7 @@ jobs:
         with:
           source: ./
           destination: ./_site
-      - name: Generic: Copy
+      - name: Download Generic
         uses: actions/download-artifact@v3
         with:
           name: pkg-generic
