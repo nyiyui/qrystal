@@ -46,7 +46,7 @@ jobs:
         with:
           name: pkg-generic
       - name: Copy
-        run: cp ./build.tar.zst ./_site/build-generic.tar.zst
+        run: sudo cp ./build.tar.zst ./_site/build-generic.tar.zst
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
 
