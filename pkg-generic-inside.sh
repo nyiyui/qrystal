@@ -12,4 +12,5 @@ cd /build
 make -f $prefix/Makefile src=/source pkgdir=/build build2 cs-push
 cp -r $prefix/config .
 cp $prefix/mio/dev-*.sh .
+cp $prefix/Makefile .
 ls -al /build
