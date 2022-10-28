@@ -20,9 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Generic: Build
+      - name: Build
         run: ./pkg-generic.sh
-      - name: Generic: Upload
+      - name: Upload
         uses: actions/upload-artifact@v3
         with:
           name: pkg-generic
