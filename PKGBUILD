@@ -9,7 +9,7 @@ url='https://nyiyui.ca/qrystal'
 license=('GPL')
 depends=('wireguard-tools')
 makedepends=('go' 'base-devel' 'gtk3' 'libayatana-appindicator')
-checkdepends=('go')
+checkdepends=('go' 'base-devel' 'gtk3' 'libayatana-appindicator')
 noextract=('.')
 backup=(
 	'etc/qrystal/node-config.yml'
