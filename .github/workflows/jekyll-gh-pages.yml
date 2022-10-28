@@ -45,9 +45,8 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: pkg-generic
-          path: ~/build-generic.tar.zst
       - name: Copy
-        run: cp ~/build-generic.tar.zst ./_site/
+        run: cp ./build.tar.zst ./_site/build-generic.tar.zst
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
 
