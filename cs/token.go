@@ -63,6 +63,7 @@ func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, er
 	})
 	if err == buntdb.ErrNotFound {
 		ok = false
+		err = nil
 		return
 	}
 	err = json.Unmarshal([]byte(encoded), &info)
@@ -79,6 +80,7 @@ func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error)
 	})
 	if err == buntdb.ErrNotFound {
 		ok = false
+		err = nil
 		return
 	}
 	err = json.Unmarshal([]byte(encoded), &info)
