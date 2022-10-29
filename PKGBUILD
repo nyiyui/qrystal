@@ -8,8 +8,8 @@ arch=('x86_64')
 url='https://nyiyui.ca/qrystal'
 license=('GPL')
 depends=('wireguard-tools')
-makedepends=('go' 'base-devel' 'gtk3' 'libayatana-appindicator')
-checkdepends=('go' 'base-devel' 'gtk3' 'libayatana-appindicator')
+makedepends=('go' 'gtk3' 'libayatana-appindicator')
+checkdepends=('go' 'gtk3' 'libayatana-appindicator')
 noextract=('.')
 backup=(
 	'etc/qrystal/node-config.yml'
