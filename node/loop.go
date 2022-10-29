@@ -17,7 +17,7 @@ import (
 
 const backoffTimeout = 5 * time.Minute
 
-func (n *Node) setupCS(csc CSConfig) (api.CentralSourceClient, error) {
+func (n *Node) setupCS(i int, csc CSConfig) (api.CentralSourceClient, error) {
 	conn, err := grpc.Dial(csc.Host, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(csc.Creds))
 	if err != nil {
 		return nil, fmt.Errorf("connecting: %w", err)
@@ -27,6 +27,7 @@ func (n *Node) setupCS(csc CSConfig) (api.CentralSourceClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ping %s: %w", csc.Host, err)
 	}
+	n.Kiriyama.SetCS(i, "ピンOK")
 	return cl, nil
 }
 
@@ -51,6 +52,7 @@ func (n *Node) ListenCS() {
 
 func (n *Node) listenCS(i int) error {
 	backoff := 1 * time.Second
+	n.Kiriyama.SetCS(i, "初期")
 RetryLoop:
 	for {
 		resetBackoff, err := n.listenCSOnce(i)
@@ -65,7 +67,7 @@ RetryLoop:
 			"err", err,
 			"backoff", backoff,
 		)
-		n.Kiriyama.SetCS(i, fmt.Sprintf("error; retry in %s", backoff))
+		n.Kiriyama.SetCS(i, fmt.Sprintf("%sで再試行", backoff))
 		time.Sleep(backoff)
 		backoff *= 2
 		if resetBackoff {
@@ -82,7 +84,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	csc := n.cs[i]
 
 	// Setup
-	cl, err := n.setupCS(csc)
+	cl, err := n.setupCS(i, csc)
 	if err != nil {
 		return
 	}
@@ -125,6 +127,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				err = fmt.Errorf("pull recv: %w", err)
 				return
 			}
+			n.Kiriyama.SetCS(i, "引き")
 			util.S.Infof("次を受信: %s", s)
 			var cc *CentralConfig
 			cc, err = newCCFromAPI(s.Cc)
@@ -173,6 +176,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				return
 			}
 			if s.ForwardingOnly {
+				n.Kiriyama.SetCS(i, "同期中（フォワード）")
 				log.Printf("===フォワードだけなので同期しません。")
 				var res *SyncRes
 				res, err = n.syncBackoff(context.Background(), false)
@@ -183,7 +187,9 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
 				log.Printf("===フォワードだけ：\n%s", res)
+				n.Kiriyama.SetCS(i, "同期OK（フォワード）")
 			} else {
+				n.Kiriyama.SetCS(i, "同期中（新規）")
 				log.Printf("===新たなCCで同期します。")
 				var res *SyncRes
 				res, err = n.syncBackoff(context.Background(), true)
@@ -194,6 +200,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
 				log.Printf("===新たなCCで同期：\n%s", res)
+				n.Kiriyama.SetCS(i, "同期OK（新規）")
 			}
 			resetBackoff = true
 		}

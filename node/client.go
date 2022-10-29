@@ -128,6 +128,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 				wg.Add(1)
 				go func(pn string) {
 					defer wg.Done()
+					c.Kiriyama.SetPeer(cn.name, pn, "接続中")
 					err := c.ensureClient(ctx, cnn, pn)
 					if err != nil {
 						res.peerStatus[pn] = SyncPeerRes{
@@ -135,8 +136,10 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 						}
 						return
 					}
+					c.Kiriyama.SetPeer(cn.name, pn, "交換中")
 					log.Printf("net %s peer %s syncing", cn.name, pn)
 					ps := c.xchPeer(ctx, cnn, pn)
+					c.Kiriyama.SetPeer(cn.name, pn, "交換OK")
 					log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 					res.peerStatus[pn] = ps
 					if ps.err == nil && !ps.skip {

@@ -9,8 +9,8 @@ import (
 
 func kiriyamaSetup() (lis net.Listener, ok bool) {
 	err := os.Remove(kiriyamaAddr)
-	if err != nil {
-		util.S.Warnf("kiriyama cleanup: %s", err)
+	if err != nil && !os.IsNotExist(err) {
+		util.S.Errorf("kiriyama cleanup: %s", err)
 		return nil, false
 	}
 	util.S.Infof("kiriyama cleanup ok")
@@ -19,9 +19,14 @@ func kiriyamaSetup() (lis net.Listener, ok bool) {
 		util.S.Errorf("kiriyama listen: %s", err)
 		return nil, false
 	}
-	os.Chmod(kiriyamaAddr, 0o770)
+	err = os.Chmod(kiriyamaAddr, 0o770)
+	if err != nil {
+		util.S.Errorf("kiriyama sock chmod: %s", err)
+		return nil, false
+	}
+	util.S.Info("kiriyama setup ok")
 	// os.Chown(kiriyamaAddr)
-	return nil, false
+	return lis, true
 }
 
-const kiriyamaAddr = "/run/qrystal-kiriyama/runner.sock"
+const kiriyamaAddr = "/tmp/qrystal-kiriyama-runner.sock"

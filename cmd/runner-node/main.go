@@ -62,6 +62,7 @@ func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type csConfig struct {
+	Comment     string       `yaml:"comment"`
 	TLSCertPath string       `yaml:"tls-cert-path"`
 	AllowedNets []string     `yaml:"networks"`
 	Host        string       `yaml:"host"`
@@ -88,10 +89,12 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		}
 	}
 	return &node.CSConfig{
+		Comment:         cfg.Comment,
 		Creds:           creds,
 		Host:            cfg.Host,
 		Token:           cfg.Token,
 		NetworksAllowed: netsAllowed,
+		//Azusa:cfg.Azusa, TODO: azusa
 	}, err
 }
 

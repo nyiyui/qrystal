@@ -168,5 +168,11 @@ message CanForwardS {}
 message GetStatusQ {}
 
 message GetStatusS {
-  map<int32, string> cs = 1;
+  map<int32, CSStatus> cs = 1;
+  map<string, string> peer = 2;
+}
+
+message CSStatus {
+  string name = 1;
+  string status = 2;
 }
