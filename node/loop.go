@@ -53,7 +53,6 @@ func (n *Node) ListenCS() {
 func (n *Node) listenCS(i int) error {
 	backoff := 1 * time.Second
 	n.Kiriyama.SetCS(i, "初期")
-RetryLoop:
 	for {
 		resetBackoff, err := n.listenCSOnce(i)
 		if err == nil {
@@ -69,15 +68,13 @@ RetryLoop:
 		)
 		n.Kiriyama.SetCS(i, fmt.Sprintf("%sで再試行", backoff))
 		time.Sleep(backoff)
-		backoff *= 2
+		if backoff <= backoffTimeout {
+			backoff *= 2
+		}
 		if resetBackoff {
 			backoff = 1 * time.Second
 		}
-		if backoff > backoffTimeout {
-			break RetryLoop
-		}
 	}
-	return errors.New("backoff exceeded")
 }
 
 func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
@@ -210,7 +207,6 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 func (n *Node) syncBackoff(ctx context.Context, xch bool) (*SyncRes, error) {
 	backoff := 1 * time.Second
 	tryNum := 1
-RetryLoop:
 	for {
 		// TODO: don't increase backoff if succees for a while
 		util.S.Infof("sync starting: try num %d", tryNum)
@@ -229,13 +225,11 @@ RetryLoop:
 			"backoff", backoff,
 		)
 		time.Sleep(backoff)
-		backoff *= 2
-		tryNum++
-		if backoff > backoffTimeout {
-			break RetryLoop
+		if backoff <= backoffTimeout {
+			backoff *= 2
 		}
+		tryNum++
 	}
-	return nil, errors.New("backoff exceeded")
 }
 
 func (c *Node) removeAllDevices() error {
