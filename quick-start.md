@@ -4,7 +4,7 @@ This assumes a systemd-based Linux installation.
 
 ## TLS
 
-Use [minica](https://github.com/jsha/minica) to make TLS configuration:
+Use [minica](https://github.com/jsha/minica) to make the TLS configuration:
 
 ```
 $ minica -domains general.internal.example.net
