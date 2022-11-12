@@ -24,6 +24,11 @@ PostDown=$post_down
 $after
 EOF
 
+# TODO: fix this bodge; devAdd is being called even though the device exists
+#       (but error of not exist for querying using wgctrl); could be race
+#       condition as it disappears after a few tries
+wg-quick down "$name" || echo 'not already running'
+
 log=$(mktemp)
 wg-quick up "$name" 2> $log || 1>&2 cat $log
 rm $log
