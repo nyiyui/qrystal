@@ -281,6 +281,9 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 			log.Printf("LOOP net %s peer %s ForwardingPeers2 %s", cnn2, pn2, peer2.ForwardingPeers)
 			peer.ForwardingPeers = []string{}
 			for _, forwardingPeer := range peer2.ForwardingPeers {
+				if forwardingPeer == cn.Me {
+					continue
+				}
 				_, ok := forwardingPeers[forwardingPeer]
 				if !ok {
 					peer.ForwardingPeers = append(peer.ForwardingPeers, forwardingPeer)
