@@ -2,7 +2,6 @@ package node
 
 import (
 	"fmt"
-	"log"
 	"net/rpc"
 
 	"github.com/nyiyui/qrystal/mio"
@@ -29,7 +28,6 @@ func newMio(port uint16, token []byte) (*mioHandle, error) {
 // Note: q.Name will have "qrystal-" prepended for the WireGuard name.
 func (h *mioHandle) ConfigureDevice(q mio.ConfigureDeviceQ) (err error) {
 	var errString string
-	log.Printf("%#v", q)
 	q.Token = h.token
 	err = h.client.Call("Mio.ConfigureDevice", q, &errString)
 	if err != nil {
@@ -43,7 +41,6 @@ func (h *mioHandle) ConfigureDevice(q mio.ConfigureDeviceQ) (err error) {
 
 func (h *mioHandle) RemoveDevice(q mio.RemoveDeviceQ) (err error) {
 	var errString string
-	log.Printf("%#v", q)
 	q.Token = h.token
 	err = h.client.Call("Mio.RemoveDevice", q, &errString)
 	if err != nil {
@@ -57,7 +54,6 @@ func (h *mioHandle) RemoveDevice(q mio.RemoveDeviceQ) (err error) {
 
 func (h *mioHandle) Forwarding(q mio.ForwardingQ) (err error) {
 	var errString string
-	log.Printf("%#v", q)
 	q.Token = h.token
 	err = h.client.Call("Mio.Forwarding", q, &errString)
 	if err != nil {
