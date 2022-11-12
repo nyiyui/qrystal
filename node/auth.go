@@ -4,7 +4,6 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/nyiyui/qrystal/node/api"
 )
@@ -56,9 +55,6 @@ func (s *authState) solveChall() error {
 		copy(signThis, sq1.Chall)
 		copy(signThis[32:], added)
 		challResp = ed25519.Sign(s.coordPrivKey, signThis)
-		log.Printf("my pubkey: %x", s.coordPrivKey.Public())
-		log.Printf("signee: %x", signThis)
-		log.Printf("signature: %x", challResp)
 	}
 
 	sq2 := api.AuthS{
@@ -98,9 +94,6 @@ func (s *authState) verifyChall(cnn, yourName string) error {
 	signed := make([]byte, 64)
 	copy(signed, chall)
 	copy(signed[32:], sq4.ChallAdded)
-	log.Printf("your pubkey: %x", s.you.PublicKey)
-	log.Printf("signee: %x", signed)
-	log.Printf("signature: %x", sq4.ChallResp)
 	ok := ed25519.Verify(ed25519.PublicKey(s.you.PublicKey), signed, sq4.ChallResp)
 	if !ok {
 		return errors.New("signature verification failed")
