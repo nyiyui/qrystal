@@ -40,8 +40,8 @@ install: build2
 	mkdir -p "${pkgdir}/opt/qrystal"
 	install -o root -g root -m 500 \
 		build2/runner-mio \
-		${src}/mio/dev-add.sh \
-		${src}/mio/dev-remove.sh \
+		"${src}/mio/dev-do.sh" \
+		"${src}/mio/dev-remove.sh" \
 	  "${pkgdir}/opt/qrystal/"
 	install -o root -g root -m 555 \
 		build2/runner-node \

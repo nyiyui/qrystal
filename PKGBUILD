@@ -53,7 +53,7 @@ package() {
 	mkdir -p "$pkgdir/opt/qrystal"
 	cp build2/runner-mio "$pkgdir/opt/qrystal/"
 	cp build2/runner-node "$pkgdir/opt/qrystal/"
-	cp ../mio/dev-add.sh "$pkgdir/opt/qrystal/"
+	cp ../mio/dev-do.sh "$pkgdir/opt/qrystal/"
 	cp ../mio/dev-remove.sh "$pkgdir/opt/qrystal/"
 	mkdir -p "$pkgdir/etc/qrystal"
 	cp \

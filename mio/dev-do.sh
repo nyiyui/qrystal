@@ -8,6 +8,7 @@ address="$3"
 post_up="$4"
 post_down="$5"
 after="$6"
+op="$7"
 
 echo after "$after"
 
@@ -26,4 +27,10 @@ PostDown=$post_down
 $after
 EOF
 
-wg-quick up "$name"
+echo "op is $op"
+
+if [[ "$op" == "add" ]]; then
+	wg-quick up "$name"
+else
+	wg syncconf "$name" <(wg-quick strip "$name")
+fi

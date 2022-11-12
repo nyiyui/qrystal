@@ -153,26 +153,30 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	_, err := sm.client.Device(q.Name)
 	if errors.Is(err, os.ErrNotExist) {
 		log.Printf("デバイスを追加：%s\n%s", q.Name, wgConfigToString(q.Config))
+		err = devDo(q.Name, devConfig{
+			Address:    q.Address,
+			PrivateKey: q.Config.PrivateKey,
+			Peers:      q.Config.Peers,
+		}, opAdd)
+		if err != nil {
+			*r = fmt.Sprintf("devAdd: %s", err)
+			return nil
+		}
 	} else if err != nil {
 		*r = fmt.Sprintf("wg dev: %s", err)
 		return nil
 	} else {
-		err = devRemove(q.Name)
+		log.Printf("DEV_SYNC %#v", q.Config.Peers)
+		err = devDo(q.Name, devConfig{
+			Address:    q.Address,
+			PrivateKey: q.Config.PrivateKey,
+			Peers:      q.Config.Peers,
+		}, opSync)
 		if err != nil {
-			*r = fmt.Sprintf("devRemove2: %s", err)
+			*r = fmt.Sprintf("devSync: %s", err)
 			return nil
 		}
 		log.Printf("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
-	}
-	log.Printf("DEV_ADD %#v", q.Config.Peers)
-	err = devAdd(q.Name, devConfig{
-		Address:    q.Address,
-		PrivateKey: q.Config.PrivateKey,
-		Peers:      q.Config.Peers,
-	})
-	if err != nil {
-		*r = fmt.Sprintf("devAdd: %s", err)
-		return nil
 	}
 	err = sm.client.ConfigureDevice(q.Name, *q.Config)
 	if err != nil {
