@@ -10,12 +10,10 @@ import (
 )
 
 func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
-	log.Print("preconfig")
 	config, err := s.convertNetwork(cn)
 	if err != nil {
 		return fmt.Errorf("convert: %w", err)
 	}
-	log.Print("postconfig")
 	me, ok := cn.Peers[cn.Me]
 	if !ok {
 		return fmt.Errorf("peer %s not found", cn.Me)
@@ -24,7 +22,6 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 		listenPort := cn.ListenPort
 		config.ListenPort = &listenPort
 	}
-	log.Print("preconfigdevice")
 	q := mio.ConfigureDeviceQ{
 		Name:    cn.name,
 		Config:  config,
@@ -55,10 +52,8 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 }
 
 func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err error) {
-	log.Print("postconfig lock", len(cn.Peers))
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn, peer := range cn.Peers {
-		log.Printf("peer %s config", pn)
 		config, accessible, err := s.convertPeer(cn, peer)
 		if err != nil {
 			return nil, fmt.Errorf("peer %s: %w", pn, err)
@@ -79,7 +74,6 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 	peer.lock.RLock()
 	log.Printf("LOCK net %s peer %s", cn.name, peer.name)
 	defer peer.lock.RUnlock()
-	log.Printf("convertPeer postlock")
 	if !peer.accessible {
 		return nil, false, nil
 	}

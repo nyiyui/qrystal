@@ -166,7 +166,6 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		*r = fmt.Sprintf("wg dev: %s", err)
 		return nil
 	} else {
-		log.Printf("DEV_SYNC %#v", q.Config.Peers)
 		err = devDo(q.Name, devConfig{
 			Address:    q.Address,
 			PrivateKey: q.Config.PrivateKey,
