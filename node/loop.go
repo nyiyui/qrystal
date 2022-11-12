@@ -13,6 +13,7 @@ import (
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 )
 
 const backoffTimeout = 5 * time.Minute
@@ -133,9 +134,8 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				return
 			}
 			util.S.Infof("===新たなCCを受信: %#v", cc)
-			for cnn, cn := range cc.Networks {
-				log.Printf("net %s: %#v", cnn, cn)
-			}
+			ccy, _ := yaml.Marshal(cc)
+			util.S.Infof("cc: %s", ccy)
 
 			// NetworksAllowed
 			cc2 := map[string]*CentralNetwork{}
@@ -143,7 +143,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				if csc.netAllowed(cnn) {
 					cc2[cnn] = cn
 				} else {
-					log.Printf("net not allowed; ignoring: %s", cnn)
+					util.S.Warnf("net not allowed; ignoring: %s", cnn)
 				}
 			}
 			cc.Networks = cc2
@@ -174,7 +174,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			}
 			if s.ForwardingOnly {
 				n.Kiriyama.SetCS(i, "同期中（フォワード）")
-				log.Printf("===フォワードだけなので同期しません。")
+				util.S.Infof("===フォワードだけなので同期しません。")
 				var res *SyncRes
 				res, err = n.syncBackoff(context.Background(), false)
 				if err != nil {
@@ -183,11 +183,11 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				}
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-				log.Printf("===フォワードだけ：\n%s", res)
+				util.S.Infof("===フォワードだけ：\n%s", res)
 				n.Kiriyama.SetCS(i, "同期OK（フォワード）")
 			} else {
 				n.Kiriyama.SetCS(i, "同期中（新規）")
-				log.Printf("===新たなCCで同期します。")
+				util.S.Infof("===新たなCCで同期します。")
 				var res *SyncRes
 				res, err = n.syncBackoff(context.Background(), true)
 				if err != nil {
@@ -196,7 +196,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				}
 				// TODO: check res
 				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-				log.Printf("===新たなCCで同期：\n%s", res)
+				util.S.Infof("===新たなCCで同期：\n%s", res)
 				n.Kiriyama.SetCS(i, "同期OK（新規）")
 			}
 			resetBackoff = true
@@ -274,8 +274,8 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 			peer.name = pn2
 			peer.Host = peer2.Host
 			peer.AllowedIPs = peer2.AllowedIPs
-			log.Printf("LOOP net %s peer %s ForwardingPeers1 %s", cnn2, pn2, peer.ForwardingPeers)
-			log.Printf("LOOP net %s peer %s ForwardingPeers2 %s", cnn2, pn2, peer2.ForwardingPeers)
+			util.S.Debugf("LOOP net %s peer %s ForwardingPeers1 %s", cnn2, pn2, peer.ForwardingPeers)
+			util.S.Debugf("LOOP net %s peer %s ForwardingPeers2 %s", cnn2, pn2, peer2.ForwardingPeers)
 			peer.ForwardingPeers = []string{}
 			for _, forwardingPeer := range peer2.ForwardingPeers {
 				if forwardingPeer == cn.Me {
