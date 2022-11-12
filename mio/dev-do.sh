@@ -25,8 +25,6 @@ PostDown=$post_down
 $after
 EOF
 
-1>&2 echo "$op-ing $name"
-
 if [[ "$op" == "add" ]]; then
 	wg-quick up "$name"
 else

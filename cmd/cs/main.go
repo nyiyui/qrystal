@@ -14,7 +14,6 @@ import (
 	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -25,9 +24,7 @@ func main() {
 	flag.StringVar(&configPath, "config", "", "config file path")
 	flag.Parse()
 
-	util.L, _ = zap.NewDevelopment()
-	defer util.L.Sync()
-	util.S = util.L.Sugar()
+	util.SetupLog()
 
 	util.ShowCurrent()
 	profile.Profile()

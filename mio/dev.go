@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -65,7 +66,9 @@ func devDo(name string, cfg devConfig, op opType) error {
 	if err != nil {
 		return &scriptError{err: errBuf.Bytes(), wrapped: err}
 	}
-	log.Printf("dev-do %s err:\n%s", name, errBuf)
+	if errBuf.Len() != 0 {
+		util.S.Warnf("dev-do %s err:\n%s", name, errBuf)
+	}
 	return nil
 }
 

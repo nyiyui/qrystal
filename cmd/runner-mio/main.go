@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	util.SetupLog()
 	log.SetPrefix("mio:  ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	util.ShowCurrent()
