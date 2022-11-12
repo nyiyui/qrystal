@@ -126,7 +126,6 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				return
 			}
 			n.Kiriyama.SetCS(i, "引き")
-			util.S.Infof("次を受信: %s", s)
 			var cc *CentralConfig
 			cc, err = newCCFromAPI(s.Cc)
 			if err != nil {
