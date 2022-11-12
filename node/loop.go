@@ -247,13 +247,11 @@ func (c *Node) removeAllDevices() error {
 // applyCC applies cc2 to n.
 // ccLock is locked by the caller
 func (n *Node) applyCC(cc2 *CentralConfig) {
-	util.S.Infof("applying CC: %#v", cc2)
 	// NOTE: shouldn't have to lock any more since ccLock is supposed to override all inner locks
 	if n.cc.Networks == nil {
 		n.cc.Networks = map[string]*CentralNetwork{}
 	}
 	for cnn2, cn2 := range cc2.Networks {
-		util.S.Infof("applying CN: %#v", cn2)
 		cn, ok := n.cc.Networks[cnn2]
 		if !ok {
 			// new cn
@@ -267,7 +265,6 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 			cn.Peers = map[string]*CentralPeer{}
 		}
 		for pn2, peer2 := range cn2.Peers {
-			util.S.Infof("applying PEER: %#v", peer2)
 			peer, ok := cn.Peers[pn2]
 			if !ok {
 				// new peer
