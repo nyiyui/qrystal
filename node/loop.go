@@ -173,7 +173,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				n.Kiriyama.SetCS(i, "同期中（フォワード）")
 				util.S.Infof("===フォワードだけなので同期しません。")
 				var res *SyncRes
-				res, err = n.syncBackoff(context.Background(), false)
+				res, err = n.syncBackoff(context.Background(), false, s.ChangedCNs)
 				if err != nil {
 					err = fmt.Errorf("sync: %w", err)
 					return
@@ -186,7 +186,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				n.Kiriyama.SetCS(i, "同期中（新規）")
 				util.S.Infof("===新たなCCで同期します。")
 				var res *SyncRes
-				res, err = n.syncBackoff(context.Background(), true)
+				res, err = n.syncBackoff(context.Background(), true, s.ChangedCNs)
 				if err != nil {
 					err = fmt.Errorf("sync: %w", err)
 					return
@@ -201,13 +201,13 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	}
 }
 
-func (n *Node) syncBackoff(ctx context.Context, xch bool) (*SyncRes, error) {
+func (n *Node) syncBackoff(ctx context.Context, xch bool, changedCNs []string) (*SyncRes, error) {
 	backoff := 1 * time.Second
 	tryNum := 1
 	for {
 		// TODO: don't increase backoff if succees for a while
 		util.S.Infof("sync starting: try num %d", tryNum)
-		res, err := n.Sync(ctx, xch)
+		res, err := n.Sync(ctx, xch, changedCNs)
 		if err != nil || res.allOK() {
 			return res, nil
 		}

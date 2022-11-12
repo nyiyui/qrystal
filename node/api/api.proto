@@ -77,6 +77,7 @@ message PullS {
   CentralConfig cc = 1;
   ForwardPreQ fc = 2;
   bool forwardingOnly = 3;
+  repeated string changedCNs = 5; // TODO: stop these bodges (:
   string reason = 4;
   //TODO: eventually migrate to oneof
 }

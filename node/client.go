@@ -85,13 +85,22 @@ func (r *SyncPeerRes) String() string {
 	return b.String()
 }
 
-func (c *Node) Sync(ctx context.Context, xch bool) (*SyncRes, error) {
+func (c *Node) Sync(ctx context.Context, xch bool, changedCNs []string) (*SyncRes, error) {
 	res := SyncRes{
 		netStatus: map[string]SyncNetRes{},
 	}
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
-	for cnn := range c.cc.Networks {
+	var cnns []string
+	if changedCNs == nil {
+		cnns = make([]string, 0, len(c.cc.Networks))
+		for cnn := range c.cc.Networks {
+			cnns = append(cnns, cnn)
+		}
+	} else {
+		cnns = changedCNs
+	}
+	for _, cnn := range cnns {
 		netRes, err := c.syncNetwork(ctx, cnn, xch)
 		if netRes == nil {
 			netRes = &SyncNetRes{}
