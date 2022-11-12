@@ -126,21 +126,17 @@ func (s *Node) Auth(conn api.Node_AuthServer) error {
 	}
 	err := state.solveChall()
 	if err != nil {
-		log.Printf("solve chall failed: %s", err)
 		return fmt.Errorf("solve chall: %w", err)
 	}
 	err = state.verifyChall(state.cn.name, state.you.name)
 	if err != nil {
-		log.Printf("verify chall failed: %s", err)
 		return fmt.Errorf("verify chall: %w", err)
 	}
-	log.Printf("net %s peer %s: generating token", state.cn.name, state.you.name)
+	util.S.Debugf("net %s peer %s: generating token", state.cn.name, state.you.name)
 	err = func() error {
 		state.cn.lock.Lock()
 		defer state.cn.lock.Unlock()
 		token, err := s.addRandomToken(state.cn, state.you.name)
-		log.Printf("you: %#v", state.you)
-		log.Printf("cn: %#v", state.cn)
 		if err != nil {
 			return fmt.Errorf("generating token failed: %w", err)
 		}
@@ -167,12 +163,12 @@ func (s *Node) readToken(token []byte) (sc serverClient, ok bool) {
 func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	s.ccLock.RLock()
 	defer s.ccLock.RUnlock()
-	log.Printf("==XCH %#v", q)
 	sc, ok := s.readToken(q.Token)
 	if !ok {
 		return nil, errors.New("unknown token")
 	}
 	cnn := sc.cnn
+	s.Kiriyama.SetPeer(cnn, sc.name, "交換中")
 	cn, ok := s.cc.Networks[cnn]
 	if !ok {
 		return nil, errors.New("unknown network")
@@ -219,9 +215,10 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	// TODO: consider running this in a goroutine or something
 	err = s.configNetwork(cn)
 	if err != nil {
-		log.Printf("configuration of net %s failed (iniiated by peer %s):\n%s", cn.name, you.name, err)
+		util.S.Errorf("configuration of net %s failed (iniiated by peer %s):\n%s", cn.name, you.name, err)
 		return nil, errors.New("configuration failed")
 	}
+	s.Kiriyama.SetPeer(cnn, sc.name, "交換OK")
 
 	return &api.XchS{
 		PubKey: myPubKey[:],

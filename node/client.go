@@ -92,7 +92,6 @@ func (c *Node) Sync(ctx context.Context, xch bool) (*SyncRes, error) {
 	c.ccLock.RLock()
 	defer c.ccLock.RUnlock()
 	for cnn := range c.cc.Networks {
-		log.Printf("===SYNCING net %s", cnn)
 		netRes, err := c.syncNetwork(ctx, cnn, xch)
 		if netRes == nil {
 			netRes = &SyncNetRes{}
@@ -134,10 +133,8 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 						return
 					}
 					c.Kiriyama.SetPeer(cn.name, pn, "交換中")
-					log.Printf("net %s peer %s syncing", cn.name, pn)
 					ps := c.xchPeer(ctx, cnn, pn)
 					c.Kiriyama.SetPeer(cn.name, pn, "交換OK")
-					log.Printf("net %s peer %s synced: %s", cn.name, pn, &ps)
 					res.peerStatus[pn] = ps
 					if ps.err == nil && !ps.skip {
 						pnsLock.Lock()
@@ -152,7 +149,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 	}
 
 	if xch {
-		log.Printf("net %s peers %s advertising forwarding capability", cn.name, pns)
+		util.S.Debugf("net %s peers %s advertising forwarding capability", cn.name, pns)
 		csI, err := c.getCSForNet(cnn)
 		if err != nil {
 			return nil, fmt.Errorf("getCSForNet: %w", err)

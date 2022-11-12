@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/ed25519"
 	"fmt"
-	"log"
 
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 )
 
 type AzusaConfig struct {
@@ -35,9 +35,8 @@ func (n *Node) AzusaConfigure(networks map[string]string, host string) {
 }
 
 func (a *azusa) setup(n *Node, csc CSConfig, cl api.CentralSourceClient) error {
-	log.Print("azusa: locking ccLock")
 	for cnn, peerName := range a.networks {
-		log.Printf("azusa: net %s peer %s: pushing", cnn, peerName)
+		util.S.Debugf("azusa: net %s peer %s: pushing", cnn, peerName)
 		pubKey := n.coordPrivKey.Public().(ed25519.PublicKey)
 		q := api.PushQ{
 			CentralToken: csc.Token,
@@ -61,7 +60,7 @@ func (a *azusa) setup(n *Node, csc CSConfig, cl api.CentralSourceClient) error {
 		default:
 			panic(fmt.Sprintf("%#v", s))
 		}
-		log.Printf("azusa: net %s peer %s: pushed", cnn, peerName)
+		util.S.Infof("azusa: net %s peer %s: pushed", cnn, peerName)
 	}
 	return nil
 }

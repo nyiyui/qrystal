@@ -6,7 +6,6 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/nyiyui/qrystal/mio"
@@ -47,7 +46,7 @@ func (n *Node) ListenCS() {
 	select {
 	case err := <-errCh:
 		csc := n.cs[err.i]
-		log.Printf("cs %d (%s at %s) error: %s", err.i, csc.Comment, csc.Host, err.err)
+		util.S.Errorf("cs %d (%s at %s) error: %s", err.i, csc.Comment, csc.Host, err.err)
 	}
 }
 

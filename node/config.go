@@ -2,10 +2,10 @@ package node
 
 import (
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/nyiyui/qrystal/mio"
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -97,7 +97,7 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 
 	allowedIPs := make([]IPNet2, len(peer.AllowedIPs))
 	copy(allowedIPs, peer.AllowedIPs)
-	log.Printf("conv net %s peer %s forwards for %s", cn.name, peer.name, peer.ForwardingPeers)
+	util.S.Infof("conv net %s peer %s forwards for %s", cn.name, peer.name, peer.ForwardingPeers)
 	for _, forwardingPeerName := range peer.ForwardingPeers {
 		forwardingPeer := cn.Peers[forwardingPeerName]
 		allowedIPs = append(allowedIPs, forwardingPeer.AllowedIPs...)
