@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -179,7 +180,6 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 		peer.lock.RLock()
 		log.Printf("LOCK net %s peer %s", cnn, pn)
 		defer peer.lock.RUnlock()
-		log.Printf("net %s peer %s: %#v", cnn, pn, peer)
 		if peer.Host == "" {
 			return true
 		}
@@ -189,29 +189,29 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 		return SyncPeerRes{skip: skip}
 	}
 
-	log.Printf("net %s peer %s: ensuring client", cnn, pn)
+	util.S.Debugf("net %s peer %s: ensuring client", cnn, pn)
 	err := c.ensureClient(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ensure client: %w", err)}
 	}
-	log.Printf("net %s peer %s: pinging", cnn, pn)
+	util.S.Debugf("net %s peer %s: pinging", cnn, pn)
 	err = c.ping(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("ping: %w", err)}
 	}
-	log.Printf("net %s peer %s: pinged", cnn, pn)
-	log.Printf("net %s peer %s: authenticating", cnn, pn)
+	util.S.Debugf("net %s peer %s: pinged", cnn, pn)
+	util.S.Debugf("net %s peer %s: authenticating", cnn, pn)
 	err = c.auth(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("auth: %w", err)}
 	}
-	log.Printf("net %s peer %s: authed", cnn, pn)
-	log.Printf("net %s peer %s: exchanging", cnn, pn)
+	util.S.Debugf("net %s peer %s: authed", cnn, pn)
+	util.S.Debugf("net %s peer %s: exchanging", cnn, pn)
 	err = c.xch(ctx, cnn, pn)
 	if err != nil {
 		return SyncPeerRes{err: fmt.Errorf("xch: %w", err)}
 	}
-	log.Printf("net %s peer %s: xched", cnn, pn)
+	util.S.Debugf("net %s peer %s: xched", cnn, pn)
 	return SyncPeerRes{}
 }
 
@@ -247,7 +247,7 @@ func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
 		return fmt.Errorf("solve chall: %w", err)
 	}
 
-	log.Printf("net %s peer %s: waiting for token", cnn, pn)
+	util.S.Debugf("net %s peer %s: waiting for token", cnn, pn)
 	sq, err := conn.Recv()
 	if err != nil {
 		return err
