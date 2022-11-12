@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eux
+set -eu
 
 name="$1"
 private_key="$2"
@@ -9,8 +9,6 @@ post_up="$4"
 post_down="$5"
 after="$6"
 op="$7"
-
-echo after "$after"
 
 umask 077
 cat > "/etc/wireguard/$name.conf" << EOF
@@ -27,7 +25,7 @@ PostDown=$post_down
 $after
 EOF
 
-echo "op is $op"
+1>&2 echo "$op-ing $name"
 
 if [[ "$op" == "add" ]]; then
 	wg-quick up "$name"
