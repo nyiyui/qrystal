@@ -133,9 +133,8 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				err = fmt.Errorf("conv: %w", err)
 				return
 			}
-			util.S.Infof("===新たなCCを受信: %#v", cc)
 			ccy, _ := yaml.Marshal(cc)
-			util.S.Infof("cc: %s", ccy)
+			util.S.Infof("新たなCCを受信: %s", ccy)
 
 			// NetworksAllowed
 			cc2 := map[string]*CentralNetwork{}
