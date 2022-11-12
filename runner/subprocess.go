@@ -5,6 +5,7 @@ package runner
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"syscall"
@@ -30,5 +31,6 @@ func newSubprocess(cfg config.Subprocess) (*exec.Cmd, error) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Credential: cred,
 	}
+	cmd.Env = os.Environ()
 	return cmd, nil
 }
