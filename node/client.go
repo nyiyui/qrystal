@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -223,17 +222,14 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
 	c.serversLock.Lock()
 	defer c.serversLock.Unlock()
-	log.Print("servers", c.servers)
 	cs, ok := c.servers[networkPeerPair{cnn, pn}]
 	if !ok {
 		return errors.New("corresponding clientServer not found")
 	}
-	log.Print("preauth")
 	conn, err := cs.cl.Auth(ctx)
 	if err != nil {
 		return fmt.Errorf("connecting: %w", err)
 	}
-	log.Print("postinitauth")
 	cn := c.cc.Networks[cnn]
 	state := authState{
 		coordPrivKey: c.coordPrivKey,
@@ -242,7 +238,6 @@ func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
 		cn:           cn,
 		you:          cn.Peers[pn],
 	}
-	log.Print("preauthboth")
 	err = state.verifyChall(cnn, pn)
 	if err != nil {
 		return fmt.Errorf("verify chall: %w", err)
@@ -296,7 +291,6 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	}
 	peer.pubKey = &yourPubKey
 	peer.psk = &psk
-	log.Println("SET1 PSK", peer, "same", psk)
 	peer.latestSync = time.Now()
 	peer.accessible = true
 	return nil
