@@ -61,9 +61,8 @@ func (i *IPNet2) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	_, ipNet, err := net.ParseCIDR(raw)
-	i.IPNet = *ipNet
-	return nil
+	i.IPNet, err = util.ParseCIDR(raw)
+	return err
 }
 
 func (i IPNet2) MarshalYAML() (interface{}, error) {

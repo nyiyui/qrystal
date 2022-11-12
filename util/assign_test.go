@@ -7,11 +7,11 @@ import (
 )
 
 func mustCIDR(s string) net.IPNet {
-	_, cidr, err := net.ParseCIDR(s)
+	cidr, err := ParseCIDR(s)
 	if err != nil {
 		panic(err)
 	}
-	return *cidr
+	return cidr
 }
 
 func TestAssignAddress(t *testing.T) {
@@ -41,6 +41,19 @@ func TestAssignAddress(t *testing.T) {
 		_, err := AssignAddress(&cidr, used)
 		if !errors.Is(err, AddressOverflow) {
 			t.Fatalf("unexpected error %s, wanted %s", err, AddressOverflow)
+		}
+	})
+	t.Run("mcpt", func(t *testing.T) {
+		cidr := mustCIDR("10.73.0.1/16")
+		used := []net.IPNet{
+			mustCIDR("10.73.0.1/32"),
+		}
+		ip, err := AssignAddress(&cidr, used)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !ip.Equal(net.IPv4(10, 73, 0, 2)) {
+			t.Fatalf("unexpected IP %s, wanted 10.73.0.2", ip)
 		}
 	})
 }

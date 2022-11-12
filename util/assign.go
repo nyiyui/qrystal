@@ -2,9 +2,19 @@ package util
 
 import (
 	"errors"
+	"log"
 	"math/big"
 	"net"
 )
+
+func ParseCIDR(s string) (net.IPNet, error) {
+	ip, cidr, err := net.ParseCIDR(s)
+	if err != nil {
+		return net.IPNet{}, err
+	}
+	cidr.IP = ip
+	return *cidr, nil
+}
 
 var AddressOverflow = errors.New("overflowed network")
 
@@ -24,6 +34,7 @@ func AssignAddress(ipNet *net.IPNet, usedIPs []net.IPNet) (ip net.IP, err error)
 	cand := ipNet.IP
 NextIP:
 	for {
+		log.Print(cand)
 		if !ipNet.Contains(cand) {
 			return nil, AddressOverflow
 		}

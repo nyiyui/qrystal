@@ -139,13 +139,11 @@ func FromIPNets(nets []net.IPNet) (dest []*api.IPNet) {
 
 func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	dest = make([]net.IPNet, len(nets))
-	var n2 *net.IPNet
 	for i, n := range nets {
-		_, n2, err = net.ParseCIDR(n.Cidr)
+		dest[i], err = util.ParseCIDR(n.Cidr)
 		if err != nil {
 			return nil, err
 		}
-		dest[i] = *n2
 	}
 	return
 }

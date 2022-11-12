@@ -50,13 +50,13 @@ func newCNFromAPI(cnn string, cn *api.CentralNetwork) (cn2 *CentralNetwork, err 
 
 func FromAPIToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	dest = make([]net.IPNet, len(nets))
-	var n2 *net.IPNet
+	var n2 net.IPNet
 	for i, n := range nets {
-		_, n2, err = net.ParseCIDR(n.Cidr)
+		n2, err = util.ParseCIDR(n.Cidr)
 		if err != nil {
 			return nil, err
 		}
-		dest[i] = *n2
+		dest[i] = n2
 	}
 	return
 }

@@ -94,11 +94,10 @@ func main() {
 	for cnn, nc := range tc.Networks {
 		allowedIPs := make([]net.IPNet, len(nc.IPs))
 		for i, raw := range nc.IPs {
-			_, allowedIP, err := net.ParseCIDR(raw)
+			allowedIPs[i], err = util.ParseCIDR(raw)
 			if err != nil {
 				log.Fatalf("parse ip %d: %s", i, err)
 			}
-			allowedIPs[i] = *allowedIP
 		}
 
 		_, err := cl.Push(context.Background(), &api.PushQ{
