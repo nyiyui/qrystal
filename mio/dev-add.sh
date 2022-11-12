@@ -24,4 +24,6 @@ PostDown=$post_down
 $after
 EOF
 
-wg-quick up "$name"
+log=$(mktemp)
+wg-quick up "$name" 2> $log || 1>&2 cat $log
+rm $log

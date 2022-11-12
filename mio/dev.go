@@ -63,7 +63,9 @@ func devRemove(name string) error {
 	if err != nil {
 		return &scriptError{err: errBuf.Bytes(), wrapped: err}
 	}
-	log.Printf("dev-remove %s err:\n%s", name, errBuf)
+	if errBuf.Len() != 0 {
+		log.Printf("dev-remove %s err:\n%s", name, errBuf)
+	}
 	return nil
 }
 
