@@ -8,7 +8,6 @@ address="$3"
 post_up="$4"
 post_down="$5"
 after="$6"
-op="$7"
 
 umask 077
 cat > "/etc/wireguard/$name.conf" << EOF
@@ -25,8 +24,4 @@ PostDown=$post_down
 $after
 EOF
 
-if [[ "$op" == "add" ]]; then
-	wg-quick up "$name"
-else
-	wg syncconf "$name" <(wg-quick strip "$name")
-fi
+wg-quick up "$name"

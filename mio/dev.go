@@ -32,24 +32,7 @@ func (s *scriptError) Error() string {
 	return b.String()
 }
 
-type opType uint8
-
-const (
-	opAdd opType = iota
-	opSync
-)
-
-func (o opType) String() string {
-	switch o {
-	case opAdd:
-		return "add"
-	case opSync:
-		return "sync"
-	}
-	return "invalid"
-}
-
-func devDo(name string, cfg devConfig, op opType) error {
+func devAdd(name string, cfg devConfig) error {
 	privateKey := cfg.PrivateKey.String()
 	addresses := make([]string, len(cfg.Address))
 	for i := range cfg.Address {
@@ -60,14 +43,14 @@ func devDo(name string, cfg devConfig, op opType) error {
 
 	address := strings.Join(addresses, ", ")
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command("/bin/bash", "./dev-do.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after, op.String())
+	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after)
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
 		return &scriptError{err: errBuf.Bytes(), wrapped: err}
 	}
 	if errBuf.Len() != 0 {
-		util.S.Warnf("dev-do %s err:\n%s", name, errBuf)
+		util.S.Warnf("dev-add %s err:\n%s", name, errBuf)
 	}
 	return nil
 }
