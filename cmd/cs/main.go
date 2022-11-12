@@ -11,6 +11,7 @@ import (
 
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
 	"go.uber.org/zap"
@@ -29,6 +30,7 @@ func main() {
 	util.S = util.L.Sugar()
 
 	util.ShowCurrent()
+	profile.Profile()
 
 	config, err := cs.LoadConfig(configPath)
 	if err != nil {
