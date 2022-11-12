@@ -99,14 +99,20 @@ func (c *Node) Sync(ctx context.Context, xch bool, changedCNs []string) (*SyncRe
 	} else {
 		cnns = changedCNs
 	}
+	var wg sync.WaitGroup
 	for _, cnn := range cnns {
-		netRes, err := c.syncNetwork(ctx, cnn, xch)
-		if netRes == nil {
-			netRes = &SyncNetRes{}
-		}
-		netRes.err = err
-		res.netStatus[cnn] = *netRes
+		wg.Add(1)
+		go func(cnn string) {
+			defer wg.Done()
+			netRes, err := c.syncNetwork(ctx, cnn, xch)
+			if netRes == nil {
+				netRes = &SyncNetRes{}
+			}
+			netRes.err = err
+			res.netStatus[cnn] = *netRes
+		}(cnn)
 	}
+	wg.Wait()
 	return &res, nil
 }
 
