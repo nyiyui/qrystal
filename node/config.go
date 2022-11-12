@@ -72,7 +72,6 @@ func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err e
 
 func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtypes.PeerConfig, accessible bool, err error) {
 	peer.lock.RLock()
-	log.Printf("LOCK net %s peer %s", cn.name, peer.name)
 	defer peer.lock.RUnlock()
 	if !peer.accessible {
 		return nil, false, nil

@@ -178,7 +178,6 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	skip := func() bool {
 		peer := cn.Peers[pn]
 		peer.lock.RLock()
-		log.Printf("LOCK net %s peer %s", cnn, pn)
 		defer peer.lock.RUnlock()
 		if peer.Host == "" {
 			return true
@@ -267,7 +266,6 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 		return errors.New("attempted to sync too recently")
 	}
 	peer.lock.Lock()
-	log.Printf("LOCK net %s peer %s", cnn, pn)
 	defer peer.lock.Unlock()
 	cs := c.servers[networkPeerPair{cnn, pn}]
 	pubKey := c.cc.Networks[cnn].myPrivKey.PublicKey()

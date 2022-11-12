@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -188,7 +189,6 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	var myPubKey wgtypes.Key
 	err = func() error {
 		you.lock.Lock()
-		log.Printf("LOCKYOU net %s peer %s", cnn, sc.name)
 		defer you.lock.Unlock()
 		yourPubKey, err := wgtypes.NewKey(q.PubKey)
 		if err != nil {
@@ -200,9 +200,8 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 			return errors.New("invalid psk")
 		}
 		you.psk = &yourPSK
-		log.Println("SET2 PSK:", you, yourPSK)
 
-		log.Printf("net %s peer %s: generating", cnn, you.name)
+		util.S.Debugf("net %s peer %s: generating", cnn, you.name)
 		err = ensureWGPrivKey(cn)
 		if err != nil {
 			return errors.New("private key generation failed")
@@ -216,7 +215,7 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 		return nil, err
 	}
 
-	log.Printf("net %s peer %s: configuring network", cnn, you.name)
+	util.S.Debugf("net %s peer %s: configuring network", cnn, you.name)
 	// TODO: consider running this in a goroutine or something
 	err = s.configNetwork(cn)
 	if err != nil {
