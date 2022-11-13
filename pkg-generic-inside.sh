@@ -16,5 +16,6 @@ cp -r $prefix/config .
 mkdir ./mio
 cp $prefix/mio/dev-*.sh ./mio/
 cp $prefix/Makefile .
+cp $prefix/README.md .
 echo $current > ./BUILD_COMMIT
 ls -al /build

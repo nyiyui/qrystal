@@ -8,3 +8,12 @@
 [On Github.com](https://github.com/nyiyui/qrystal)
 
 Qrystal sets up several WireGuard tunnels between servers. In addition, it provides centralised configuration management.
+
+## Installation from Generic Archive
+
+```
+# make pre_install # if Qrystal services are already running
+# make src=. install
+# systemctl start qrystal-runner # for Node
+# systemctl start qrystal-cs # for CS
+```
