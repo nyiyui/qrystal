@@ -7,6 +7,7 @@ After=network.target network-online.target
 Type=simple
 ExecStart=qrystal-runner -config /etc/qrystal/runner-config.yml
 WorkingDirectory=/opt/qrystal
+Environment=QRYSTAL_PROFILE_PATH=/tmp/qrystal-profile.pprof
 
 [Install]
 WantedBy=multi-user.target

@@ -7,6 +7,7 @@ After=network.target network-online.target
 Type=simple
 ExecStart=qrystal-cs -config /etc/qrystal/cs-config.yml
 User=qrystal-cs
+Environment=QRYSTAL_PROFILE_PATH=/tmp/qrystal-profile.pprof
 
 [Install]
 WantedBy=multi-user.target
