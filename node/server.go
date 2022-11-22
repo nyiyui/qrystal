@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -16,7 +17,7 @@ import (
 
 type NodeConfig struct {
 	PrivKey  ed25519.PrivateKey
-	CC       CentralConfig
+	CC       central.Config
 	MioPort  uint16
 	MioToken []byte
 	CS       []CSConfig
@@ -24,9 +25,9 @@ type NodeConfig struct {
 
 func NewNode(cfg NodeConfig) (*Node, error) {
 	for cnn, cn := range cfg.CC.Networks {
-		cn.name = cnn
+		cn.Name = cnn
 		for pn, peer := range cn.Peers {
-			peer.name = pn
+			peer.Name = pn
 			if pn == cn.Me {
 				// check pub/priv key pair
 				privKey := cfg.PrivKey
@@ -66,7 +67,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 type Node struct {
 	api.UnimplementedNodeServer
 	ccLock       sync.RWMutex
-	cc           CentralConfig
+	cc           central.Config
 	coordPrivKey ed25519.PrivateKey
 	cs           []CSConfig
 	csNets       map[string]int
@@ -98,7 +99,7 @@ type serverClient struct {
 // NOTES: Authn/z
 //     last AuthS provides random token by server for client to use in authn/zed calls
 
-func (s *Node) addRandomToken(cn *CentralNetwork, clientName string) (token []byte, err error) {
+func (s *Node) addRandomToken(cn *central.Network, clientName string) (token []byte, err error) {
 	token, err = readRand(65)
 	if err != nil {
 		return nil, err
@@ -111,7 +112,7 @@ func (s *Node) addRandomToken(cn *CentralNetwork, clientName string) (token []by
 	defer s.state.lock.Unlock()
 	s.state.tokenSecrets[string(token)] = serverClient{
 		name: clientName,
-		cnn:  cn.name,
+		cnn:  cn.Name,
 	}
 	return token, nil
 }
@@ -128,15 +129,15 @@ func (s *Node) Auth(conn api.Node_AuthServer) error {
 	if err != nil {
 		return fmt.Errorf("solve chall: %w", err)
 	}
-	err = state.verifyChall(state.cn.name, state.you.name)
+	err = state.verifyChall(state.cn.Name, state.you.Name)
 	if err != nil {
 		return fmt.Errorf("verify chall: %w", err)
 	}
-	util.S.Debugf("net %s peer %s: generating token", state.cn.name, state.you.name)
+	util.S.Debugf("net %s peer %s: generating token", state.cn.Name, state.you.Name)
 	err = func() error {
-		state.cn.lock.Lock()
-		defer state.cn.lock.Unlock()
-		token, err := s.addRandomToken(state.cn, state.you.name)
+		state.cn.Lock.Lock()
+		defer state.cn.Lock.Unlock()
+		token, err := s.addRandomToken(state.cn, state.you.Name)
 		if err != nil {
 			return fmt.Errorf("generating token failed: %w", err)
 		}
@@ -174,48 +175,48 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 		return nil, errors.New("unknown network")
 	}
 
-	var you *CentralPeer
+	var you *central.Peer
 	you = cn.Peers[sc.name]
-	you.lsaLock.Lock()
-	defer you.lsaLock.Unlock()
-	if time.Since(you.lsa) < 1*time.Second {
+	you.LSALock.Lock()
+	defer you.LSALock.Unlock()
+	if time.Since(you.LSA) < 1*time.Second {
 		return nil, errors.New("attempted to sync too recently")
 	}
 
 	var myPubKey wgtypes.Key
 	err = func() error {
-		you.lock.Lock()
-		defer you.lock.Unlock()
+		you.Lock.Lock()
+		defer you.Lock.Unlock()
 		yourPubKey, err := wgtypes.NewKey(q.PubKey)
 		if err != nil {
 			return errors.New("invalid public key")
 		}
-		you.pubKey = &yourPubKey
+		you.PubKey = &yourPubKey
 		yourPSK, err := wgtypes.NewKey(q.Psk)
 		if err != nil {
 			return errors.New("invalid psk")
 		}
-		you.psk = &yourPSK
+		you.PSK = &yourPSK
 
-		util.S.Debugf("net %s peer %s: generating", cnn, you.name)
+		util.S.Debugf("net %s peer %s: generating", cnn, you.Name)
 		err = ensureWGPrivKey(cn)
 		if err != nil {
 			return errors.New("private key generation failed")
 		}
-		myPubKey = cn.myPrivKey.PublicKey()
+		myPubKey = cn.MyPrivKey.PublicKey()
 
-		you.accessible = true
+		you.Accessible = true
 		return nil
 	}()
 	if err != nil {
 		return nil, err
 	}
 
-	util.S.Debugf("net %s peer %s: configuring network", cnn, you.name)
+	util.S.Debugf("net %s peer %s: configuring network", cnn, you.Name)
 	// TODO: consider running this in a goroutine or something
 	err = s.configNetwork(cn)
 	if err != nil {
-		util.S.Errorf("configuration of net %s failed (iniiated by peer %s):\n%s", cn.name, you.name, err)
+		util.S.Errorf("configuration of net %s failed (iniiated by peer %s):\n%s", cn.Name, you.Name, err)
 		return nil, errors.New("configuration failed")
 	}
 	s.Kiriyama.SetPeer(cnn, sc.name, "交換OK")

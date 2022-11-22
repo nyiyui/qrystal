@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
+func (s *Node) configNetwork(cn *central.Network) (err error) {
 	config, err := s.convertNetwork(cn)
 	if err != nil {
 		return fmt.Errorf("convert: %w", err)
@@ -23,19 +24,19 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 		config.ListenPort = &listenPort
 	}
 	q := mio.ConfigureDeviceQ{
-		Name:    cn.name,
+		Name:    cn.Name,
 		Config:  config,
-		Address: ToIPNets(me.AllowedIPs),
+		Address: central.ToIPNets(me.AllowedIPs),
 	}
-	if s.forwardingRequired(cn.name) {
+	if s.forwardingRequired(cn.Name) {
 		// TODO: figure out how to run sysctl
 		// TODO: how to agree between all peers to select one forwarder? or one forwarder for a specific peer, another forwarder for another peer, and so on?
 		outbound, err := getOutbound()
 		if err != nil {
 			return fmt.Errorf("getOutbound: %w", err)
 		}
-		q.PostUp = makePostUp(cn.name, outbound)
-		q.PostDown = makePostDown(cn.name, outbound)
+		q.PostUp = makePostUp(cn.Name, outbound)
+		q.PostDown = makePostDown(cn.Name, outbound)
 		err = s.mio.Forwarding(mio.ForwardingQ{
 			Type:   mio.ForwardingTypeIPv4,
 			Enable: true,
@@ -51,7 +52,7 @@ func (s *Node) configNetwork(cn *CentralNetwork) (err error) {
 	return nil
 }
 
-func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err error) {
+func (s *Node) convertNetwork(cn *central.Network) (config *wgtypes.Config, err error) {
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn, peer := range cn.Peers {
 		config, accessible, err := s.convertPeer(cn, peer)
@@ -63,24 +64,24 @@ func (s *Node) convertNetwork(cn *CentralNetwork) (config *wgtypes.Config, err e
 		}
 	}
 	config = &wgtypes.Config{
-		PrivateKey:   cn.myPrivKey,
+		PrivateKey:   cn.MyPrivKey,
 		ReplacePeers: true,
 		Peers:        configs,
 	}
 	return config, nil
 }
 
-func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtypes.PeerConfig, accessible bool, err error) {
-	peer.lock.RLock()
-	defer peer.lock.RUnlock()
-	if !peer.accessible {
+func (s *Node) convertPeer(cn *central.Network, peer *central.Peer) (config *wgtypes.PeerConfig, accessible bool, err error) {
+	peer.Lock.RLock()
+	defer peer.Lock.RUnlock()
+	if !peer.Accessible {
 		return nil, false, nil
 	}
 	var host *net.UDPAddr
 	if peer.Host != "" {
 		hostOnly, _, err := net.SplitHostPort(peer.Host)
 		if err != nil {
-			return nil, false, fmt.Errorf("peer %s: splitting failed", peer.name)
+			return nil, false, fmt.Errorf("peer %s: splitting failed", peer.Name)
 		}
 		toResolve := fmt.Sprintf("%s:%d", hostOnly, cn.ListenPort)
 		host, err = net.ResolveUDPAddr("udp", toResolve)
@@ -89,29 +90,28 @@ func (s *Node) convertPeer(cn *CentralNetwork, peer *CentralPeer) (config *wgtyp
 		}
 	}
 
-	if peer.pubKey == nil {
+	if peer.PubKey == nil {
 		panic(fmt.Sprintf("net %#v peer %#v pubKey is nil", cn, peer))
 	}
 
 	keepalive := cn.Keepalive
 
-	allowedIPs := make([]IPNet2, len(peer.AllowedIPs))
+	allowedIPs := make([]central.IPNet, len(peer.AllowedIPs))
 	copy(allowedIPs, peer.AllowedIPs)
-	util.S.Infof("conv net %s peer %s forwards for %s", cn.name, peer.name, peer.ForwardingPeers)
+	util.S.Infof("conv net %s peer %s forwards for %s", cn.Name, peer.Name, peer.ForwardingPeers)
 	for _, forwardingPeerName := range peer.ForwardingPeers {
 		forwardingPeer := cn.Peers[forwardingPeerName]
 		allowedIPs = append(allowedIPs, forwardingPeer.AllowedIPs...)
 	}
 
 	return &wgtypes.PeerConfig{
-		PublicKey:                   *peer.pubKey,
+		PublicKey:                   *peer.PubKey,
 		Remove:                      false,
 		UpdateOnly:                  false,
-		PresharedKey:                peer.psk,
+		PresharedKey:                peer.PSK,
 		Endpoint:                    host,
 		PersistentKeepaliveInterval: &keepalive,
 		ReplaceAllowedIPs:           true,
-		AllowedIPs:                  ToIPNets(allowedIPs),
+		AllowedIPs:                  central.ToIPNets(allowedIPs),
 	}, true, nil
-
 }

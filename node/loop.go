@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
@@ -125,7 +126,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				return
 			}
 			n.Kiriyama.SetCS(i, "引き")
-			var cc *CentralConfig
+			var cc *central.Config
 			cc, err = newCCFromAPI(s.Cc)
 			if err != nil {
 				err = fmt.Errorf("conv: %w", err)
@@ -135,7 +136,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			util.S.Infof("新たなCCを受信: %s", ccy)
 
 			// NetworksAllowed
-			cc2 := map[string]*CentralNetwork{}
+			cc2 := map[string]*central.Network{}
 			for cnn, cn := range cc.Networks {
 				if csc.netAllowed(cnn) {
 					cc2[cnn] = cn
@@ -243,23 +244,23 @@ func (c *Node) removeAllDevices() error {
 
 // applyCC applies cc2 to n.
 // ccLock is locked by the caller
-func (n *Node) applyCC(cc2 *CentralConfig) {
+func (n *Node) applyCC(cc2 *central.Config) {
 	// NOTE: shouldn't have to lock any more since ccLock is supposed to override all inner locks
 	if n.cc.Networks == nil {
-		n.cc.Networks = map[string]*CentralNetwork{}
+		n.cc.Networks = map[string]*central.Network{}
 	}
 	for cnn2, cn2 := range cc2.Networks {
 		cn, ok := n.cc.Networks[cnn2]
 		if !ok {
 			// new cn
-			n.cc.Networks[cnn2] = &CentralNetwork{}
+			n.cc.Networks[cnn2] = &central.Network{}
 			cn = n.cc.Networks[cnn2]
 		}
-		cn.name = cnn2
+		cn.Name = cnn2
 		cn.IPs = cn2.IPs
 		forwardingPeers := map[string]struct{}{}
 		if cn.Peers == nil {
-			cn.Peers = map[string]*CentralPeer{}
+			cn.Peers = map[string]*central.Peer{}
 		}
 		for pn2, peer2 := range cn2.Peers {
 			peer, ok := cn.Peers[pn2]
@@ -268,7 +269,7 @@ func (n *Node) applyCC(cc2 *CentralConfig) {
 				cn.Peers[pn2] = peer2
 				continue
 			}
-			peer.name = pn2
+			peer.Name = pn2
 			peer.Host = peer2.Host
 			peer.AllowedIPs = peer2.AllowedIPs
 			util.S.Debugf("LOOP net %s peer %s ForwardingPeers1 %s", cnn2, pn2, peer.ForwardingPeers)

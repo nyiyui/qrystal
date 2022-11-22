@@ -138,7 +138,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 				wg.Add(1)
 				go func(pn string) {
 					defer wg.Done()
-					c.Kiriyama.SetPeer(cn.name, pn, "接続中")
+					c.Kiriyama.SetPeer(cn.Name, pn, "接続中")
 					err := c.ensureClient(ctx, cnn, pn)
 					if err != nil {
 						res.peerStatus[pn] = SyncPeerRes{
@@ -146,9 +146,9 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 						}
 						return
 					}
-					c.Kiriyama.SetPeer(cn.name, pn, "交換中")
+					c.Kiriyama.SetPeer(cn.Name, pn, "交換中")
 					ps := c.xchPeer(ctx, cnn, pn)
-					c.Kiriyama.SetPeer(cn.name, pn, "交換OK")
+					c.Kiriyama.SetPeer(cn.Name, pn, "交換OK")
 					res.peerStatus[pn] = ps
 					if ps.err == nil && !ps.skip {
 						pnsLock.Lock()
@@ -163,7 +163,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 	}
 
 	if xch {
-		util.S.Debugf("net %s peers %s advertising forwarding capability", cn.name, pns)
+		util.S.Debugf("net %s peers %s advertising forwarding capability", cn.Name, pns)
 		csI, err := c.getCSForNet(cnn)
 		if err != nil {
 			return nil, fmt.Errorf("getCSForNet: %w", err)
@@ -188,8 +188,8 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	cn := c.cc.Networks[cnn]
 	skip := func() bool {
 		peer := cn.Peers[pn]
-		peer.lock.RLock()
-		defer peer.lock.RUnlock()
+		peer.Lock.RLock()
+		defer peer.Lock.RUnlock()
 		if peer.Host == "" {
 			return true
 		}
@@ -267,15 +267,15 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	cn := c.cc.Networks[cnn]
 	peer := cn.Peers[pn]
 	// TODO: dont xch if locked?
-	peer.lsaLock.Lock()
-	defer peer.lsaLock.Unlock()
-	if time.Since(peer.lsa) < 1*time.Second {
+	peer.LSALock.Lock()
+	defer peer.LSALock.Unlock()
+	if time.Since(peer.LSA) < 1*time.Second {
 		return errors.New("attempted to sync too recently")
 	}
-	peer.lock.Lock()
-	defer peer.lock.Unlock()
+	peer.Lock.Lock()
+	defer peer.Lock.Unlock()
 	cs := c.servers[networkPeerPair{cnn, pn}]
-	pubKey := c.cc.Networks[cnn].myPrivKey.PublicKey()
+	pubKey := c.cc.Networks[cnn].MyPrivKey.PublicKey()
 	psk, err := wgtypes.GenerateKey()
 	if err != nil {
 		return errors.New("PSK generation failed")
@@ -295,10 +295,10 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	if err != nil {
 		return errors.New("invalid public key")
 	}
-	peer.pubKey = &yourPubKey
-	peer.psk = &psk
-	peer.latestSync = time.Now()
-	peer.accessible = true
+	peer.PubKey = &yourPubKey
+	peer.PSK = &psk
+	peer.LatestSync = time.Now()
+	peer.Accessible = true
 	return nil
 }
 

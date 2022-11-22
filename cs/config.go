@@ -6,19 +6,19 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/util"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Addr         string              `yaml:"addr"`
-	TLSCertPath  string              `yaml:"tls-cert-path"`
-	TLSKeyPath   string              `yaml:"tls-key-path"`
-	CC           *node.CentralConfig `yaml:"central"`
-	Tokens       *TokensConfig       `yaml:"tokens"`
-	BackportPath string              `yaml:"backport-path"`
-	DBPath       string              `yaml:"db-path"`
+	Addr         string          `yaml:"addr"`
+	TLSCertPath  string          `yaml:"tls-cert-path"`
+	TLSKeyPath   string          `yaml:"tls-key-path"`
+	CC           *central.Config `yaml:"central"`
+	Tokens       *TokensConfig   `yaml:"tokens"`
+	BackportPath string          `yaml:"backport-path"`
+	DBPath       string          `yaml:"db-path"`
 }
 
 type TokensConfig struct {
@@ -90,8 +90,8 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 type Backport struct {
-	CC     *node.CentralConfig `yaml:"cc"`
-	Tokens map[string]string   `yaml:"tokens"`
+	CC     *central.Config   `yaml:"cc"`
+	Tokens map[string]string `yaml:"tokens"`
 }
 
 func (s *CentralSource) backport() error {

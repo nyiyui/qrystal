@@ -4,7 +4,7 @@ import (
 	"crypto/ed25519"
 	"fmt"
 
-	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -24,7 +24,7 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 		for pn, peer := range cn.Peers {
 			peers[pn] = &api.CentralPeer{
 				Host:            peer.Host,
-				AllowedIPs:      FromIPNets(node.ToIPNets(peer.AllowedIPs)),
+				AllowedIPs:      FromIPNets(central.ToIPNets(peer.AllowedIPs)),
 				ForwardingPeers: peer.ForwardingPeers,
 				PublicKey: &api.PublicKey{
 					Raw: []byte(peer.PublicKey),
@@ -32,7 +32,7 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 			}
 		}
 		networks[cnn] = &api.CentralNetwork{
-			Ips:        FromIPNets(node.ToIPNets(cn.IPs)),
+			Ips:        FromIPNets(central.ToIPNets(cn.IPs)),
 			Me:         me,
 			Keepalive:  durationpb.New(cn.Keepalive),
 			ListenPort: int32(cn.ListenPort),
@@ -44,7 +44,7 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 	}, nil
 }
 
-func convertPeer(peer *api.CentralPeer) (*node.CentralPeer, error) {
+func convertPeer(peer *api.CentralPeer) (*central.Peer, error) {
 	allowedIPs, err := ToIPNets(peer.AllowedIPs)
 	if err != nil {
 		return nil, fmt.Errorf("AllowedIPs: %w", err)
@@ -52,9 +52,9 @@ func convertPeer(peer *api.CentralPeer) (*node.CentralPeer, error) {
 	if l := len(peer.PublicKey.Raw); l != ed25519.PublicKeySize {
 		return nil, fmt.Errorf("PublicKey: invalid size %d b", l)
 	}
-	return &node.CentralPeer{
+	return &central.Peer{
 		Host:       peer.Host,
-		AllowedIPs: node.FromIPNets(allowedIPs),
+		AllowedIPs: central.FromIPNets(allowedIPs),
 		PublicKey:  util.Ed25519PublicKey(peer.PublicKey.Raw),
 	}, nil
 }

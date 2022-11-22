@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"github.com/nyiyui/qrystal/central"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -16,15 +17,15 @@ func readRand(length int) ([]byte, error) {
 	return b, nil
 }
 
-func ensureWGPrivKey(cn *CentralNetwork) error {
-	if cn.myPrivKey != nil {
+func ensureWGPrivKey(cn *central.Network) error {
+	if cn.MyPrivKey != nil {
 		return nil
 	}
 	myWGPrivKey, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
 		return fmt.Errorf("gen privkey: %w", err)
 	}
-	cn.myPrivKey = &myWGPrivKey
+	cn.MyPrivKey = &myWGPrivKey
 	return nil
 }
 
@@ -33,7 +34,7 @@ type networkPeerPair struct {
 	peer    string
 }
 
-func (n *Node) ReplaceCC(cc2 *CentralConfig) {
+func (n *Node) ReplaceCC(cc2 *central.Config) {
 	n.ccLock.Lock()
 	defer n.ccLock.Unlock()
 	n.cc = *cc2

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
 )
 
@@ -16,12 +17,12 @@ type authConn interface {
 type authState struct {
 	coordPrivKey ed25519.PrivateKey
 	conn         authConn
-	cc           CentralConfig
+	cc           central.Config
 
 	// the following are dynamically set by authYours
 
-	cn  *CentralNetwork
-	you *CentralPeer
+	cn  *central.Network
+	you *central.Peer
 }
 
 func (s *authState) solveChall() error {

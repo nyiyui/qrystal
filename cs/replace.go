@@ -1,8 +1,8 @@
 package cs
 
-import "github.com/nyiyui/qrystal/node"
+import "github.com/nyiyui/qrystal/central"
 
-func (s *CentralSource) ReplaceCC(cc *node.CentralConfig) {
+func (s *CentralSource) ReplaceCC(cc *central.Config) {
 	s.ccLock.Lock()
 	defer s.ccLock.Unlock()
 	s.cc = *cc

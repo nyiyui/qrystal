@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/profile"
@@ -23,13 +24,13 @@ import (
 )
 
 type config struct {
-	PrivKey  string             `yaml:"private-key"`
-	Server   *serverConfig      `yaml:"server"`
-	Central  node.CentralConfig `yaml:"central"`
-	CS       *csConfig          `yaml:"cs"`
-	CS2      []csConfig         `yaml:"cs2"`
-	Azusa    *azusaConfig       `yaml:"azusa"`
-	Kiriyama string             `yaml:"kiriyama"`
+	PrivKey  string         `yaml:"private-key"`
+	Server   *serverConfig  `yaml:"server"`
+	Central  central.Config `yaml:"central"`
+	CS       *csConfig      `yaml:"cs"`
+	CS2      []csConfig     `yaml:"cs2"`
+	Azusa    *azusaConfig   `yaml:"azusa"`
+	Kiriyama string         `yaml:"kiriyama"`
 }
 
 type serverConfig struct {

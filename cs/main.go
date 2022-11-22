@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nyiyui/qrystal/node"
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
@@ -21,7 +21,7 @@ type CentralSource struct {
 	api.UnimplementedCentralSourceServer
 	notifyChs     map[string]chan change
 	notifyChsLock sync.RWMutex
-	cc            node.CentralConfig
+	cc            central.Config
 	ccLock        sync.RWMutex
 	Tokens        TokenStore
 	backportLock  sync.Mutex
@@ -30,7 +30,7 @@ type CentralSource struct {
 	backportPath string
 }
 
-func New(cc node.CentralConfig, backportPath string, db *buntdb.DB) (*CentralSource, error) {
+func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource, error) {
 	ts, err := newTokenStore(db)
 	return &CentralSource{
 		notifyChs:    map[string]chan change{},
@@ -265,9 +265,9 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 			for _, ipNet := range cn.IPs {
 				usedIPs := []net.IPNet{}
 				for _, peer := range cn.Peers {
-					usedIPs = append(usedIPs, node.ToIPNets(peer.AllowedIPs)...)
+					usedIPs = append(usedIPs, central.ToIPNets(peer.AllowedIPs)...)
 				}
-				ip, err := util.AssignAddress(&ipNet.IPNet, usedIPs)
+				ip, err := util.AssignAddress((*net.IPNet)(&ipNet), usedIPs)
 				if err != nil {
 					return &api.PushS{
 						S: &api.PushS_Overflow{
@@ -275,7 +275,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 						},
 					}, nil
 				}
-				peer.AllowedIPs = node.FromIPNets([]net.IPNet{{IP: ip, Mask: net.IPMask{0xff, 0xff, 0xff, 0xff}}})
+				peer.AllowedIPs = central.FromIPNets([]net.IPNet{{IP: ip, Mask: net.IPMask{0xff, 0xff, 0xff, 0xff}}})
 			}
 		}
 		// TODO: impl checks for PublicKey, host, net overlap
