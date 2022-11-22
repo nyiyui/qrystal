@@ -20,8 +20,17 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 		if !ok {
 			continue
 		}
+		mePeer := cn.Peers[me]
+		if mePeer == nil {
+			panic("mePeer is nil")
+		}
 		peers := map[string]*api.CentralPeer{}
 		for pn, peer := range cn.Peers {
+			if mePeer.CanSee != nil {
+				if !contains(mePeer.CanSee, pn) {
+					continue
+				}
+			}
 			peers[pn] = &api.CentralPeer{
 				Host:            peer.Host,
 				AllowedIPs:      FromIPNets(central.ToIPNets(peer.AllowedIPs)),

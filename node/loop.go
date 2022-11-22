@@ -1,5 +1,7 @@
 package node
 
+// TODO: check if all AllowedIPs are in IPs
+
 import (
 	"bytes"
 	"context"
@@ -286,7 +288,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 				}
 			}
 			peer.PublicKey = peer2.PublicKey
-			peer.CanForward = peer2.CanForward
+			peer.CanSee = peer2.CanSee
 		}
 		for pn := range cn.Peers {
 			_, ok := cn2.Peers[pn]

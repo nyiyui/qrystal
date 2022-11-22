@@ -19,9 +19,8 @@ type Config struct {
 
 // Network configures a CN.
 type Network struct {
-	Name string
-	IPs  []IPNet `yaml:"ips"`
-	// TODO: check if all AllowedIPs are in IPs
+	Name       string
+	IPs        []IPNet          `yaml:"ips"`
 	Peers      map[string]*Peer `yaml:"peers"`
 	Me         string           `yaml:"me"`
 	Keepalive  time.Duration    `yaml:"keepalive"`
@@ -39,7 +38,8 @@ type Peer struct {
 	AllowedIPs      []IPNet               `yaml:"allowed-ips"`
 	ForwardingPeers []string              `yaml:"forwarding-peers"`
 	PublicKey       util.Ed25519PublicKey `yaml:"public-key"`
-	CanForward      bool                  `yaml:"can-forward"`
+	CanSee          []string              `yaml:"can-see"`
+	// If CanSee is nil, this Peer can see all peers. If CanSee is a zero-length slice, this Peer cannot see any peers.
 
 	LSA     time.Time
 	LSALock sync.RWMutex
