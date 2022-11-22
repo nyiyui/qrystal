@@ -35,12 +35,11 @@ type Network struct {
 // Peer configures a peer.
 type Peer struct {
 	Name            string
-	Host            string   `yaml:"host"`
-	AllowedIPs      []IPNet  `yaml:"allowed-ips"`
-	ForwardingPeers []string `yaml:"forwarding-peers"`
-	// TODO: use UnmarshalYAML
-	PublicKey  util.Ed25519PublicKey `yaml:"public-key"`
-	CanForward bool                  `yaml:"can-forward"`
+	Host            string                `yaml:"host"`
+	AllowedIPs      []IPNet               `yaml:"allowed-ips"`
+	ForwardingPeers []string              `yaml:"forwarding-peers"`
+	PublicKey       util.Ed25519PublicKey `yaml:"public-key"`
+	CanForward      bool                  `yaml:"can-forward"`
 
 	LSA     time.Time
 	LSALock sync.RWMutex
@@ -56,6 +55,7 @@ type Peer struct {
 }
 
 // IPNet is a YAML-friendly net.IPNet.
+// TODO: move to package util
 type IPNet net.IPNet
 
 // UnmarshalYAML implements yaml.Unmarshaler.
