@@ -27,7 +27,7 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 		peers := map[string]*api.CentralPeer{}
 		for pn, peer := range cn.Peers {
 			if mePeer.CanSee != nil {
-				if !contains(mePeer.CanSee, pn) {
+				if !contains(mePeer.CanSee.Only, pn) {
 					continue
 				}
 			}

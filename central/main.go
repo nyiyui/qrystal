@@ -38,8 +38,8 @@ type Peer struct {
 	AllowedIPs      []IPNet               `yaml:"allowed-ips"`
 	ForwardingPeers []string              `yaml:"forwarding-peers"`
 	PublicKey       util.Ed25519PublicKey `yaml:"public-key"`
-	CanSee          []string              `yaml:"can-see"`
-	// If CanSee is nil, this Peer can see all peers. If CanSee is a zero-length slice, this Peer cannot see any peers.
+	CanSee          *CanSee               `yaml:"can-see"`
+	// If CanSee is nil, this Peer can see all peers.
 
 	LSA     time.Time
 	LSALock sync.RWMutex
@@ -52,6 +52,9 @@ type Peer struct {
 	PSK    *wgtypes.Key
 	Creds  credentials.TransportCredentials
 	// creds for this specific peer.
+}
+type CanSee struct {
+	Only []string `yaml:"only"`
 }
 
 // IPNet is a YAML-friendly net.IPNet.
