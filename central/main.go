@@ -12,10 +12,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Config is the root.
 type Config struct {
 	Networks map[string]*Network `yaml:"networks"`
 }
 
+// Network configures a CN.
 type Network struct {
 	Name string
 	IPs  []IPNet `yaml:"ips"`
@@ -30,6 +32,7 @@ type Network struct {
 	MyPrivKey *wgtypes.Key
 }
 
+// Peer configures a peer.
 type Peer struct {
 	Name            string
 	Host            string   `yaml:"host"`
@@ -52,8 +55,10 @@ type Peer struct {
 	// creds for this specific peer.
 }
 
+// IPNet is a YAML-friendly net.IPNet.
 type IPNet net.IPNet
 
+// UnmarshalYAML implements yaml.Unmarshaler.
 func (i *IPNet) UnmarshalYAML(value *yaml.Node) error {
 	var raw string
 	err := value.Decode(&raw)
@@ -65,11 +70,13 @@ func (i *IPNet) UnmarshalYAML(value *yaml.Node) error {
 	return err
 }
 
+// MarshalYAML implements yaml.Marshaler.
 func (i IPNet) MarshalYAML() (interface{}, error) {
 	i2 := net.IPNet(i)
 	return i2.String(), nil
 }
 
+// ToIPNets converts IPNet slices.
 func ToIPNets(is2 []IPNet) []net.IPNet {
 	dest := make([]net.IPNet, len(is2))
 	for i, i2 := range is2 {
@@ -78,6 +85,7 @@ func ToIPNets(is2 []IPNet) []net.IPNet {
 	return dest
 }
 
+// ToIPNets converts IPNet slices.
 func FromIPNets(ipNets []net.IPNet) []IPNet {
 	dest := make([]IPNet, len(ipNets))
 	for i, i2 := range ipNets {
