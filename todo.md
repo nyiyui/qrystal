@@ -1,5 +1,9 @@
 # TODO
 
+## Stability
+
+Make WireGuard configuration updates less frequent.
+
 ## Host Fallback
 
 Specify multiple hosts for peers.

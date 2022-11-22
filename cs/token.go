@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/tidwall/buntdb"
 )
@@ -105,6 +106,9 @@ type TokenInfo struct {
 	CanPull      bool
 	CanPush      *CanPush
 	CanAddTokens *CanAddTokens
+
+	Using    bool
+	LastUsed time.Time
 }
 
 type CanAddTokens struct {
