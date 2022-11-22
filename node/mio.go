@@ -3,6 +3,7 @@ package node
 import (
 	"fmt"
 	"net/rpc"
+	"strings"
 
 	"github.com/nyiyui/qrystal/mio"
 )
@@ -12,8 +13,9 @@ type mioHandle struct {
 	token  []byte
 }
 
-func newMio(port uint16, token []byte) (*mioHandle, error) {
-	client, err := rpc.DialHTTP("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+func newMio(addr string, token []byte) (*mioHandle, error) {
+	tokens := strings.SplitN(addr, ":", 2)
+	client, err := rpc.DialHTTP(tokens[0], tokens[1])
 	if err != nil {
 		return nil, fmt.Errorf("dial: %w", err)
 	}

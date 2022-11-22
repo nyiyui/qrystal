@@ -18,7 +18,7 @@ import (
 type NodeConfig struct {
 	PrivKey  ed25519.PrivateKey
 	CC       central.Config
-	MioPort  uint16
+	MioAddr  string
 	MioToken []byte
 	CS       []CSConfig
 }
@@ -40,7 +40,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		}
 	}
 
-	mh, err := newMio(cfg.MioPort, cfg.MioToken)
+	mh, err := newMio(cfg.MioAddr, cfg.MioToken)
 	if err != nil {
 		return nil, fmt.Errorf("new mio: %w", err)
 	}

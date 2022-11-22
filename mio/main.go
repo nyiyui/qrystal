@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/rpc"
 	"os"
-	"strings"
 
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -64,13 +63,13 @@ func Main() error {
 		return err
 	}
 
-	handler := blockNonLocal(rs)
+	handler := guard(rs)
 
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	lis, addr, err := listen()
 	if err != nil {
 		log.Fatalf("バインド: %s", err)
 	}
-	fmt.Printf("port:%d\n", lis.Addr().(*net.TCPAddr).Port)
+	fmt.Printf("addr:%s\n", addr)
 	fmt.Printf("token:%s\n", tokenBase64)
 	err = os.Stdout.Close()
 	if err != nil {
@@ -194,20 +193,3 @@ const (
 	ForwardingTypeInvalid ForwardingType = iota
 	ForwardingTypeIPv4
 )
-
-// blockNonLocal aborts connections from hosts that are not localhost.
-//
-// This is intended to be a last resort; it should not be relied on for
-// security.
-//
-// Note: Server should be listening on 127.0.0.1, not 0.0.0.0.
-func blockNonLocal(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
-			log.Printf("blocked request from %s", r.RemoteAddr)
-			http.Error(w, "", 403)
-			return
-		}
-		handler.ServeHTTP(w, r)
-	})
-}

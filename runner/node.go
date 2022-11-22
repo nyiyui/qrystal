@@ -26,7 +26,7 @@ func newNode(cfg *config.Node, mh *mioHandle) (*nodeHandle, error) {
 	cmd.Env = []string{
 		// NOTE: this is for cmd/runner-node.go
 		fmt.Sprintf("CONFIG_PATH=%s", cfg.ConfigPath),
-		fmt.Sprintf("MIO_PORT=%d", mh.Port),
+		fmt.Sprintf("MIO_ADDR=%s", mh.Addr),
 		fmt.Sprintf("MIO_TOKEN=%s", mh.TokenBase64),
 	}
 	err = cmd.Start()

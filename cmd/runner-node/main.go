@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"regexp"
-	"strconv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -153,10 +152,7 @@ func main() {
 		}
 	}
 
-	mioPort, err := strconv.ParseUint(os.Getenv("MIO_PORT"), 10, 16)
-	if err != nil {
-		log.Fatalf("parse MIO_PORT: %s", err)
-	}
+	mioAddr := os.Getenv("MIO_ADDR")
 	mioToken, err := base64.StdEncoding.DecodeString(os.Getenv("MIO_TOKEN"))
 	if err != nil {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
@@ -164,7 +160,7 @@ func main() {
 	n, err := node.NewNode(node.NodeConfig{
 		PrivKey:  privKey2,
 		CC:       c.Central,
-		MioPort:  uint16(mioPort),
+		MioAddr:  mioAddr,
 		MioToken: mioToken,
 		CS:       ncscs,
 	})
