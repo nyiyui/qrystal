@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/node/verify"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -210,12 +212,6 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 		return SyncPeerRes{err: fmt.Errorf("ping: %w", err)}
 	}
 	util.S.Debugf("net %s peer %s: pinged", cnn, pn)
-	util.S.Debugf("net %s peer %s: authenticating", cnn, pn)
-	err = c.auth(ctx, cnn, pn)
-	if err != nil {
-		return SyncPeerRes{err: fmt.Errorf("auth: %w", err)}
-	}
-	util.S.Debugf("net %s peer %s: authed", cnn, pn)
 	util.S.Debugf("net %s peer %s: exchanging", cnn, pn)
 	err = c.xch(ctx, cnn, pn)
 	if err != nil {
@@ -223,44 +219,6 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	}
 	util.S.Debugf("net %s peer %s: xched", cnn, pn)
 	return SyncPeerRes{}
-}
-
-func (c *Node) auth(ctx context.Context, cnn string, pn string) (err error) {
-	c.serversLock.Lock()
-	defer c.serversLock.Unlock()
-	cs, ok := c.servers[networkPeerPair{cnn, pn}]
-	if !ok {
-		return errors.New("corresponding clientServer not found")
-	}
-	conn, err := cs.cl.Auth(ctx)
-	if err != nil {
-		return fmt.Errorf("connecting: %w", err)
-	}
-	cn := c.cc.Networks[cnn]
-	state := authState{
-		coordPrivKey: c.coordPrivKey,
-		conn:         conn,
-		cc:           c.cc,
-		cn:           cn,
-		you:          cn.Peers[pn],
-	}
-	err = state.verifyChall(cnn, pn)
-	if err != nil {
-		return fmt.Errorf("verify chall: %w", err)
-	}
-	err = state.solveChall()
-	if err != nil {
-		return fmt.Errorf("solve chall: %w", err)
-	}
-
-	util.S.Debugf("net %s peer %s: waiting for token", cnn, pn)
-	sq, err := conn.Recv()
-	if err != nil {
-		return err
-	}
-	token := sq.Sq.(*api.AuthSQ_Token).Token.Token
-	cs.token = string(token)
-	return nil
 }
 
 func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
@@ -291,6 +249,12 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	if err != nil {
 		return fmt.Errorf("send request: %w", err)
 	}
+
+	err = verify.VerifyXchS(ed25519.PublicKey(peer.PublicKey), s)
+	if err != nil {
+		return fmt.Errorf("VerifyXchS: %w", err)
+	}
+
 	yourPubKey, err := wgtypes.NewKey(s.PubKey)
 	if err != nil {
 		return errors.New("invalid public key")

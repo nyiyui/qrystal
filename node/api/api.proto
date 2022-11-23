@@ -8,13 +8,6 @@ message Ok {
 }
 
 service Node {
-  rpc auth(stream AuthSQ) returns (stream AuthSQ);
-  // #  client - server
-  // 1. AuthQ  →
-  // 2.        ← AuthS
-  // 3.        ← AuthQ
-  // 4. AuthS  →
-
   rpc xch(XchQ) returns (XchS);
 
   rpc ping(PingQS) returns (PingQS);
@@ -33,38 +26,23 @@ service Kiriyama {
   rpc getStatus(GetStatusQ) returns (stream GetStatusS);
 }
 
-message AuthSQ {
-  oneof sq {
-    AuthS s = 1;
-    AuthQ q = 2;
-    AuthToken token = 3;
-  }
-}
-
-message AuthQ {
-  string network = 1;
-  string me = 2;
-  string you = 4;
-  bytes chall = 5;
-}
-
-message AuthS {
-  bytes challResp = 1;
-  bytes challAdded = 2;
-}
-
-message AuthToken {
-  bytes token = 1;
-}
-
 message XchQ {
-  bytes token = 1;
   bytes pubKey = 2;
   bytes psk = 3;
+  string cnn = 4;
+  string peer = 5;
+  string ts = 6;
+  bytes sig = 7;
+  // Signature of {"pubKey":pubKey,"psk":psk,"cnn":cnn,"peer":peer,"ts":ts} encoded as the smallest JSON structure
 }
 
 message XchS {
   bytes pubKey = 1;
+  string cnn = 2;
+  string peer = 3;
+  string ts = 4;
+  bytes sig = 5;
+  // Signature of {"pubKey":pubKey,"cnn":cnn,"peer":peer,"ts":ts} encoded as the smallest JSON structure
 }
 
 message PingQS {}

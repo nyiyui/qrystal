@@ -11,6 +11,7 @@ import (
 
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/node/verify"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -49,9 +50,6 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		cc:           cfg.CC,
 		coordPrivKey: cfg.PrivKey,
 
-		state: serverState{
-			tokenSecrets: map[string]serverClient{},
-		},
 		servers: map[networkPeerPair]*clientServer{},
 		mio:     mh,
 		cs:      cfg.CS,
@@ -72,7 +70,6 @@ type Node struct {
 	cs           []CSConfig
 	csNets       map[string]int
 
-	state       serverState
 	serversLock sync.RWMutex
 	servers     map[networkPeerPair]*clientServer
 
@@ -86,102 +83,32 @@ type Node struct {
 
 var _ api.NodeServer = (*Node)(nil)
 
-type serverState struct {
-	lock         sync.RWMutex
-	tokenSecrets map[string]serverClient
-}
-
-type serverClient struct {
-	name string
-	cnn  string
-}
-
-// NOTES: Authn/z
-//     last AuthS provides random token by server for client to use in authn/zed calls
-
-func (s *Node) addRandomToken(cn *central.Network, clientName string) (token []byte, err error) {
-	token, err = readRand(65)
-	if err != nil {
-		return nil, err
-	}
-	_, ok := cn.Peers[clientName]
-	if !ok {
-		return nil, errors.New("client not found")
-	}
-	s.state.lock.Lock()
-	defer s.state.lock.Unlock()
-	s.state.tokenSecrets[string(token)] = serverClient{
-		name: clientName,
-		cnn:  cn.Name,
-	}
-	return token, nil
-}
-
-func (s *Node) Auth(conn api.Node_AuthServer) error {
-	s.ccLock.RLock()
-	defer s.ccLock.RUnlock()
-	state := authState{
-		coordPrivKey: s.coordPrivKey,
-		conn:         conn,
-		cc:           s.cc,
-	}
-	err := state.solveChall()
-	if err != nil {
-		return fmt.Errorf("solve chall: %w", err)
-	}
-	err = state.verifyChall(state.cn.Name, state.you.Name)
-	if err != nil {
-		return fmt.Errorf("verify chall: %w", err)
-	}
-	util.S.Debugf("net %s peer %s: generating token", state.cn.Name, state.you.Name)
-	err = func() error {
-		state.cn.Lock.Lock()
-		defer state.cn.Lock.Unlock()
-		token, err := s.addRandomToken(state.cn, state.you.Name)
-		if err != nil {
-			return fmt.Errorf("generating token failed: %w", err)
-		}
-		sq5 := api.AuthToken{
-			Token: token,
-		}
-		sq5Raw := api.AuthSQ{Sq: &api.AuthSQ_Token{Token: &sq5}}
-		err = conn.Send(&sq5Raw)
-		if err != nil {
-			return err
-		}
-		return nil
-	}()
-	return err
-}
-
-func (s *Node) readToken(token []byte) (sc serverClient, ok bool) {
-	s.state.lock.RLock()
-	defer s.state.lock.RUnlock()
-	sc, ok = s.state.tokenSecrets[string(token)]
-	return sc, ok
-}
-
 func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	s.ccLock.RLock()
 	defer s.ccLock.RUnlock()
-	sc, ok := s.readToken(q.Token)
-	if !ok {
-		return nil, errors.New("unknown token")
-	}
-	cnn := sc.cnn
-	s.Kiriyama.SetPeer(cnn, sc.name, "交換中")
+
+	cnn := q.Cnn
 	cn, ok := s.cc.Networks[cnn]
 	if !ok {
 		return nil, errors.New("unknown network")
 	}
 
 	var you *central.Peer
-	you = cn.Peers[sc.name]
+	you = cn.Peers[q.Peer]
+
+	err = verify.VerifyXchQ(ed25519.PublicKey(you.PublicKey), q)
+	if err != nil {
+		util.S.Warnf("VerifyXchQ: %s", err)
+		return nil, errors.New("q verification failed")
+	}
+
 	you.LSALock.Lock()
 	defer you.LSALock.Unlock()
-	if time.Since(you.LSA) < 1*time.Second {
+	if time.Since(you.LSA) < verify.Grave {
 		return nil, errors.New("attempted to sync too recently")
 	}
+
+	s.Kiriyama.SetPeer(cnn, q.Peer, "交換中")
 
 	var myPubKey wgtypes.Key
 	err = func() error {
@@ -219,7 +146,7 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 		util.S.Errorf("configuration of net %s failed (iniiated by peer %s):\n%s", cn.Name, you.Name, err)
 		return nil, errors.New("configuration failed")
 	}
-	s.Kiriyama.SetPeer(cnn, sc.name, "交換OK")
+	s.Kiriyama.SetPeer(cnn, q.Peer, "交換OK")
 
 	return &api.XchS{
 		PubKey: myPubKey[:],
