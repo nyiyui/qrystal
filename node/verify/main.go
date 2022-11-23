@@ -62,16 +62,12 @@ func SignXchQ(signUsing ed25519.PrivateKey, q *api.XchQ) (err error) {
 
 type xchSSigPayload struct {
 	PubKey []byte `json:"pubKey"`
-	Cnn    string `json:"cnn"`
-	Peer   string `json:"peer"`
 	Ts     string `json:"ts"`
 }
 
 func newXchSPayload(s *api.XchS) xchSSigPayload {
 	return xchSSigPayload{
 		PubKey: s.PubKey,
-		Cnn:    s.Cnn,
-		Peer:   s.Peer,
 		Ts:     s.Ts,
 	}
 }

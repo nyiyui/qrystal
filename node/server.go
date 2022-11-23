@@ -148,9 +148,16 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 	}
 	s.Kiriyama.SetPeer(cnn, q.Peer, "交換OK")
 
-	return &api.XchS{
+	s2 := &api.XchS{
 		PubKey: myPubKey[:],
-	}, nil
+		Ts:     time.Now().Format(time.RFC3339),
+		Sig:    nil,
+	}
+	err = verify.SignXchS(s.coordPrivKey, s2)
+	if err != nil {
+		return nil, err
+	}
+	return s2, nil
 }
 
 func (s *Node) Ping(context.Context, *api.PingQS) (*api.PingQS, error) {

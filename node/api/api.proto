@@ -38,11 +38,9 @@ message XchQ {
 
 message XchS {
   bytes pubKey = 1;
-  string cnn = 2;
-  string peer = 3;
   string ts = 4;
   bytes sig = 5;
-  // Signature of {"pubKey":pubKey,"cnn":cnn,"peer":peer,"ts":ts} encoded as the smallest JSON structure
+  // Signature of {"pubKey":pubKey,"ts":ts} encoded as the smallest JSON structure
 }
 
 message PingQS {}

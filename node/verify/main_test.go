@@ -64,8 +64,6 @@ func TestSignVerifyXchQSig(t *testing.T) {
 func newXchS() api.XchS {
 	return api.XchS{
 		PubKey: []byte("pubKey"),
-		Cnn:    "cnn",
-		Peer:   "peer",
 		Ts:     time.Now().Add(-Grave * 2).Format(time.RFC3339),
 		Sig:    nil,
 	}

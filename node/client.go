@@ -241,11 +241,20 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	if cs.token == "" {
 		return errors.New("blank token")
 	}
-	s, err := cs.cl.Xch(ctx, &api.XchQ{
+	q := &api.XchQ{
 		Token:  []byte(cs.token),
 		PubKey: pubKey[:],
 		Psk:    psk[:],
-	})
+		Cnn:    cnn,
+		Peer:   pn,
+		Ts:     time.Now().Format(time.RFC3339),
+		Sig:    nil,
+	}
+	err = verify.SignXchQ(c.coordPrivKey, q)
+	if err != nil {
+		return fmt.Errorf("SignXchQ: %w", err)
+	}
+	s, err := cs.cl.Xch(ctx, q)
 	if err != nil {
 		return fmt.Errorf("send request: %w", err)
 	}
