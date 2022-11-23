@@ -238,11 +238,7 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	if err != nil {
 		return errors.New("PSK generation failed")
 	}
-	if cs.token == "" {
-		return errors.New("blank token")
-	}
 	q := &api.XchQ{
-		Token:  []byte(cs.token),
 		PubKey: pubKey[:],
 		Psk:    psk[:],
 		Cnn:    cnn,

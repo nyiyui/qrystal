@@ -10,8 +10,7 @@ import (
 )
 
 type clientServer struct {
-	cl    api.NodeClient
-	token string
+	cl api.NodeClient
 }
 
 func (c *Node) ensureClient(ctx context.Context, cnn string, pn string) (err error) {
