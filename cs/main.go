@@ -66,6 +66,18 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 	if !ti.CanPull {
 		return errors.New("cannot pull")
 	}
+	ti.StartUse()
+	err = s.Tokens.UpdateToken(ti)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		ti.StopUse()
+		err = s.Tokens.UpdateToken(ti)
+		if err != nil {
+			util.S.Errorf("UpdateToken %s: %s", ti.sum, err)
+		}
+	}()
 	log.Printf("%sから新たな認証済プル", ti.Name)
 	// TODO: incremental changes (e.g. added peer) (instead of sending whole config every time)
 	ctx := ss.Context()
@@ -242,6 +254,12 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 		}
 	}
 
+	ti.Use()
+	err = s.Tokens.UpdateToken(ti)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Printf("push %#v", q)
 
 	peer, err := convertPeer(q.Peer)
@@ -305,6 +323,11 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	if !ok {
 		return nil, newTokenAuthError(q.CentralToken)
 	}
+	ti.Use()
+	err = s.Tokens.UpdateToken(ti)
+	if err != nil {
+		return nil, err
+	}
 	if ti.CanAddTokens == nil {
 		return nil, errors.New("cannot add tokens")
 	}
@@ -354,6 +377,11 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	forwarderPeer, ok := ti.Networks[q.Network]
 	if !ok {
 		return nil, errors.New("bad cn")
+	}
+	ti.Use()
+	err = s.Tokens.UpdateToken(ti)
+	if err != nil {
+		return nil, err
 	}
 	log.Printf("%s can forward for %s", forwarderPeer, q.ForwardeePeers)
 	cn := s.cc.Networks[q.Network]

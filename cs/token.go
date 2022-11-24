@@ -28,6 +28,19 @@ func newTokenStore(db *buntdb.DB) (TokenStore, error) {
 
 var errCannotOverwrite = errors.New("cannot overwrite")
 
+func (s *TokenStore) UpdateToken(info TokenInfo) (err error) {
+	encoded, err := json.Marshal(info)
+	if err != nil {
+		return
+	}
+	key := tokenPrefix + info.sum
+	err = s.db.Update(func(tx *buntdb.Tx) (err error) {
+		_, _, err = tx.Set(key, string(encoded), nil)
+		return
+	})
+	return
+}
+
 func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (err error) {
 	encoded, err := json.Marshal(info)
 	if err != nil {
@@ -68,6 +81,7 @@ func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, er
 		return
 	}
 	err = json.Unmarshal([]byte(encoded), &info)
+	info.sum = hashHex
 	ok = true
 	return
 }
@@ -85,6 +99,7 @@ func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error)
 		return
 	}
 	err = json.Unmarshal([]byte(encoded), &info)
+	info.sum = hex.EncodeToString(sum[:])
 	ok = true
 	return
 }
@@ -101,6 +116,7 @@ func (s *TokenStore) convertToMap() (m map[string]string, err error) {
 }
 
 type TokenInfo struct {
+	sum          string `json:"-"`
 	Name         string
 	Networks     map[string]string
 	CanPull      bool
@@ -109,6 +125,19 @@ type TokenInfo struct {
 
 	Using    bool
 	LastUsed time.Time
+}
+
+func (ti *TokenInfo) StartUse() {
+	ti.Using = true
+}
+
+func (ti *TokenInfo) StopUse() {
+	ti.Using = true
+	ti.LastUsed = time.Now()
+}
+
+func (ti *TokenInfo) Use() {
+	ti.LastUsed = time.Now()
 }
 
 type CanAddTokens struct {
