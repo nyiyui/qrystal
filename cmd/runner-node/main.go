@@ -132,18 +132,20 @@ func main() {
 	}
 
 	// CS
-	ncscs := make([]node.CSConfig, 1+len(c.CS2))
-	ncsc, err := processCSConfig(c.CS)
-	if err != nil {
-		log.Fatalf("config cs: %s", err)
+	ncscs := make([]node.CSConfig, 0, 1+len(c.CS2))
+	if c.CS != nil {
+		ncsc, err := processCSConfig(c.CS)
+		if err != nil {
+			log.Fatalf("config cs: %s", err)
+		}
+		ncscs = append(ncscs, *ncsc)
 	}
-	ncscs[0] = *ncsc
 	for i, csc := range c.CS2 {
 		ncsc, err := processCSConfig(&csc)
 		if err != nil {
 			log.Fatalf("config cs2 %d: %s", i, err)
 		}
-		ncscs[1+i] = *ncsc
+		ncscs = append(ncscs, *ncsc)
 		if csc.Azusa != nil {
 			ncsc.Azusa = &node.AzusaConfig{
 				Host:     csc.Azusa.Host,
