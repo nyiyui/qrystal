@@ -174,6 +174,9 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			if err != nil {
 				return
 			}
+			if len(n.cc.Networks) == 0 {
+				continue
+			}
 			name := "新"
 			if s.ForwardingOnly {
 				name = "フォワード"
