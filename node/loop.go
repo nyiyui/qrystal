@@ -172,64 +172,54 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			if err != nil {
 				return
 			}
+			name := "新"
 			if s.ForwardingOnly {
-				n.Kiriyama.SetCS(i, "同期中（フォワード）")
-				util.S.Infof("===フォワードだけなので同期しません。")
-				var res *SyncRes
-				res, err = n.syncBackoff(context.Background(), false, s.ChangedCNs)
-				if err != nil {
-					err = fmt.Errorf("sync: %w", err)
-					return
-				}
-				// TODO: check res
-				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-				util.S.Infof("===フォワードだけ：\n%s", res)
-				n.Kiriyama.SetCS(i, "同期OK（フォワード）")
-			} else {
-				n.Kiriyama.SetCS(i, "同期中（新規）")
-				util.S.Infof("===新たなCCで同期します。")
-				var res *SyncRes
-				res, err = n.syncBackoff(context.Background(), true, s.ChangedCNs)
-				if err != nil {
-					err = fmt.Errorf("sync: %w", err)
-					return
-				}
-				// TODO: check res
-				// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-				util.S.Infof("===新たなCCで同期：\n%s", res)
-				n.Kiriyama.SetCS(i, "同期OK（新規）")
+				name = "フォワード"
 			}
+			n.Kiriyama.SetCS(i, "同期中（"+name+"）")
+			util.S.Infof("===新たなCCで同期します。")
+			util.Backoff(func() (resetBackoff bool, err error) {
+				res, err := n.syncOnce(context.Background(), i, !s.ForwardingOnly, s.ChangedCNs)
+				// TODO: check res
+				resetBackoff = err == nil
+				n.Kiriyama.SetCS(i, "同期"+formatRes(res)+"（"+name+"）")
+				util.S.Infof("===新たなCCで同期：\n%s", res)
+				return
+			}, func(backoff time.Duration, err error) error {
+				util.S.Errorf("===新たなCCで同期：err %s", err)
+				return nil
+			})
+			// TODO: fallback to previous if all fails? perhaps as an option in PullS?
 			resetBackoff = true
 		}
 	}
 }
 
-func (n *Node) syncBackoff(ctx context.Context, xch bool, changedCNs []string) (*SyncRes, error) {
-	backoff := 1 * time.Second
-	tryNum := 1
-	for {
-		// TODO: don't increase backoff if succees for a while
-		util.S.Infof("sync starting: try num %d", tryNum)
-		res, err := n.Sync(ctx, xch, changedCNs)
-		if err != nil || res.allOK() {
-			return res, nil
-		}
-		if err != nil {
-			util.S.Errorf("sync: %s; retry in %s", err, backoff)
+func formatRes(res *SyncRes) string {
+	var full, partial, none int
+	for _, ns := range res.netStatus {
+		if ns.allOK() {
+			full++
+		} else if ns.allNOK() {
+			none++
 		} else {
-			util.S.Errorf("sync res: %s; retry in %s", res, backoff)
+			partial++
 		}
-		util.S.Errorw("sync: error",
-			"err", err,
-			"res", res,
-			"backoff", backoff,
-		)
-		time.Sleep(backoff)
-		if backoff <= backoffTimeout {
-			backoff *= 2
-		}
-		tryNum++
 	}
+	return fmt.Sprintf("%d/%d/%d", full, partial, none)
+}
+
+func (n *Node) syncOnce(ctx context.Context, i int, xch bool, changedCNs []string) (res *SyncRes, err error) {
+	res, err = n.Sync(context.Background(), true, changedCNs)
+	if err != nil {
+		err = fmt.Errorf("sync: %w", err)
+		return
+	}
+	// TODO: check res
+	// TODO: fallback to previous if all fails? perhaps as an option in PullS?
+	util.S.Infof("===新たなCCで同期：\n%s", res)
+	n.Kiriyama.SetCS(i, "同期OK（新規）")
+	return
 }
 
 func (c *Node) removeAllDevices() error {

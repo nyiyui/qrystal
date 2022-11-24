@@ -56,6 +56,21 @@ func (r *SyncNetRes) allOK() bool {
 	return true
 }
 
+func (r *SyncNetRes) allNOK() bool {
+	if r.err == nil {
+		return false
+	}
+	for _, peerRes := range r.peerStatus {
+		if peerRes.err == nil {
+			return false
+		}
+		if peerRes.forwardErr == nil {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *SyncNetRes) String() string {
 	b := new(strings.Builder)
 	if r.err != nil {
