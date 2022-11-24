@@ -181,7 +181,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 			util.Backoff(func() (resetBackoff bool, err error) {
 				res, err := n.syncOnce(context.Background(), i, !s.ForwardingOnly, s.ChangedCNs)
 				// TODO: check res
-				resetBackoff = err == nil
+				resetBackoff = res.allOK()
 				n.Kiriyama.SetCS(i, "同期"+formatRes(res)+"（"+name+"）")
 				util.S.Infof("===新たなCCで同期：\n%s", res)
 				return
