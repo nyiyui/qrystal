@@ -16,4 +16,6 @@ func SetupLog() {
 	}
 	defer L.Sync()
 	S = L.Sugar()
+
+	S.Debug("test SugaredLogger")
 }
