@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
@@ -162,7 +163,8 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				for cnn := range cc.Networks {
 					n.csNets[cnn] = i
 				}
-				err = n.removeAllDevices()
+				toRemove := cs.MissingFromFirst(cc.Networks, n.cc.Networks)
+				err = n.removeDevices(toRemove)
 				if err != nil {
 					return fmt.Errorf("rm all devs: %w", err)
 				}
@@ -217,13 +219,11 @@ func (n *Node) syncOnce(ctx context.Context, i int, xch bool, changedCNs []strin
 	}
 	// TODO: check res
 	// TODO: fallback to previous if all fails? perhaps as an option in PullS?
-	util.S.Infof("===新たなCCで同期：\n%s", res)
-	n.Kiriyama.SetCS(i, "同期OK（新規）")
 	return
 }
 
-func (c *Node) removeAllDevices() error {
-	for nn := range c.cc.Networks {
+func (c *Node) removeDevices(devices []string) error {
+	for _, nn := range devices {
 		err := c.mio.RemoveDevice(mio.RemoveDeviceQ{
 			Name: nn,
 		})

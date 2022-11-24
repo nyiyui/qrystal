@@ -160,7 +160,7 @@ func ToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 	return
 }
 
-func sliceToMap(ss []string) map[string]struct{} {
+func SliceToMap(ss []string) map[string]struct{} {
 	m := map[string]struct{}{}
 	for _, s := range ss {
 		m[s] = struct{}{}
@@ -168,7 +168,7 @@ func sliceToMap(ss []string) map[string]struct{} {
 	return m
 }
 
-func missingFromFirst(m1, m2 map[string]struct{}) []string {
+func MissingFromFirst[T any](m1 map[string]T, m2 map[string]T) []string {
 	r := []string{}
 	for k := range m2 {
 		if _, ok := m1[k]; !ok {
@@ -215,7 +215,7 @@ func (s *CentralSource) notifyChange(ch change) {
 				continue
 			}
 			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, ti.Name, peersToForward)
-			peersToForward = missingFromFirst(sliceToMap(peer.ForwardingPeers), sliceToMap(peersToForward))
+			peersToForward = MissingFromFirst(SliceToMap(peer.ForwardingPeers), SliceToMap(peersToForward))
 			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, ti.Name, peersToForward)
 			if len(peersToForward) == 0 {
 				continue
