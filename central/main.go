@@ -41,16 +41,16 @@ type Peer struct {
 	CanSee          *CanSee               `yaml:"can-see"`
 	// If CanSee is nil, this Peer can see all peers.
 
-	LSA     time.Time
-	LSALock sync.RWMutex
+	LSA     time.Time    `yaml:"-"`
+	LSALock sync.RWMutex `yaml:"-"`
 
-	Lock       sync.RWMutex
-	LatestSync time.Time
-	Accessible bool
+	Lock       sync.RWMutex `yaml:"-"`
+	LatestSync time.Time    `yaml:"-"`
+	Accessible bool         `yaml:"-"`
 	// accessible represents whether this peer is accessible in the latest sync.
-	PubKey *wgtypes.Key
-	PSK    *wgtypes.Key
-	Creds  credentials.TransportCredentials
+	PubKey *wgtypes.Key                     `yaml:"-"`
+	PSK    *wgtypes.Key                     `yaml:"-"`
+	Creds  credentials.TransportCredentials `yaml:"-"`
 	// creds for this specific peer.
 }
 type CanSee struct {
