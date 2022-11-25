@@ -202,25 +202,26 @@ func (s *CentralSource) notifyChange(ch change) {
 			panic(fmt.Sprintf("getToken on token %s failed", token))
 		}
 		if ch.forwardingOnly {
+			peerName := ti.Networks[ch.net]
 			peersToForward := make([]string, 0, len(ch.forwardeePeers))
-			for _, peerName := range ch.forwardeePeers {
-				if peerName != ti.Name {
+			for _, forwardee := range ch.forwardeePeers {
+				if forwardee != peerName {
 					// forwarding for itself is useless
-					peersToForward = append(peersToForward, peerName)
+					peersToForward = append(peersToForward, forwardee)
 				}
 			}
-			peer, ok := s.cc.Networks[ch.net].Peers[ti.Name]
+			peer, ok := s.cc.Networks[ch.net].Peers[peerName]
 			if !ok {
-				util.S.Warnf("notifyChange net %s peer %s not found in cc", ch.net, ti.Name)
+				util.S.Warnf("notifyChange net %s peer %s not found in cc", ch.net, peerName)
 				continue
 			}
-			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, ti.Name, peersToForward)
+			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward1: %s", ch.net, ch.peerName, peerName, peersToForward)
 			peersToForward = MissingFromFirst(SliceToMap(peer.ForwardingPeers), SliceToMap(peersToForward))
-			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, ti.Name, peersToForward)
+			util.S.Debugf("notifyChange net %s peer %s forwards for peer %s: peersToForward2: %s", ch.net, ch.peerName, peerName, peersToForward)
 			if len(peersToForward) == 0 {
 				continue
 			} else {
-				forwardsForPeers = append(forwardsForPeers, ti.Name)
+				forwardsForPeers = append(forwardsForPeers, peerName)
 			}
 		}
 		timer := time.NewTimer(1 * time.Second)
