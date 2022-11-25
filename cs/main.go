@@ -202,7 +202,10 @@ func (s *CentralSource) notifyChange(ch change) {
 			panic(fmt.Sprintf("getToken on token %s failed", token))
 		}
 		if ch.forwardingOnly {
-			peerName := ti.Networks[ch.net]
+			peerName, ok := ti.Networks[ch.net]
+			if !ok {
+				util.S.Errorf("notifyChange net %s peer %s token %s hash %s not found", ch.net, peerName, ti.Name, token)
+			}
 			peersToForward := make([]string, 0, len(ch.forwardeePeers))
 			for _, forwardee := range ch.forwardeePeers {
 				if forwardee != peerName {
