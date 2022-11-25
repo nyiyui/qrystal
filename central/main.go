@@ -99,6 +99,9 @@ type CanSee struct {
 }
 
 func NewCanSeeFromAPI(c2 *api.CanSee) *CanSee {
+	if c2 == nil {
+		return nil
+	}
 	return &CanSee{Only: c2.Only}
 }
 
