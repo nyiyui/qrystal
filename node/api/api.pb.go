@@ -68,8 +68,9 @@ type XchQ struct {
 	Psk    []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty"`
 	Cnn    string `protobuf:"bytes,4,opt,name=cnn,proto3" json:"cnn,omitempty"`
 	Peer   string `protobuf:"bytes,5,opt,name=peer,proto3" json:"peer,omitempty"`
-	Ts     string `protobuf:"bytes,6,opt,name=ts,proto3" json:"ts,omitempty"`
-	Sig    []byte `protobuf:"bytes,7,opt,name=sig,proto3" json:"sig,omitempty"` // Signature of {"pubKey":pubKey,"psk":psk,"cnn":cnn,"peer":peer,"ts":ts} encoded as the smallest JSON structure
+	// Peer is the recevier's name.
+	Ts  string `protobuf:"bytes,6,opt,name=ts,proto3" json:"ts,omitempty"`
+	Sig []byte `protobuf:"bytes,7,opt,name=sig,proto3" json:"sig,omitempty"` // Signature of {"pubKey":pubKey,"psk":psk,"cnn":cnn,"peer":peer,"ts":ts} encoded as the smallest JSON structure
 }
 
 func (x *XchQ) Reset() {

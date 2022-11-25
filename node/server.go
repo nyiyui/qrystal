@@ -98,7 +98,7 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 
 	err = verify.VerifyXchQ(ed25519.PublicKey(you.PublicKey), q)
 	if err != nil {
-		util.S.Warnf("VerifyXchQ: %s", err)
+		util.S.Warnf("VerifyXchQ (signed by %s): %s", q.Peer, err)
 		return nil, errors.New("q verification failed")
 	}
 

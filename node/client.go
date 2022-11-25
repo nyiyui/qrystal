@@ -257,7 +257,7 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 		PubKey: pubKey[:],
 		Psk:    psk[:],
 		Cnn:    cnn,
-		Peer:   pn,
+		Peer:   cn.Me,
 		Ts:     time.Now().Format(time.RFC3339),
 		Sig:    nil,
 	}
