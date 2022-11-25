@@ -234,7 +234,7 @@ func (s *CentralSource) notifyChange(ch change) {
 			util.S.Warnf("notifyChange net %s peer %s forwards for peer %s: chan send timeout", ch.net, ch.peerName, ti.Name)
 		}
 	}
-	log.Printf("notifyChange net %s peer %s forwards for peers %s", ch.net, ch.peerName, forwardsForPeers)
+	log.Printf("notifyChange net %s peer %s forwards for peers %s %t", ch.net, ch.peerName, forwardsForPeers, ch.forwardingOnly)
 }
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
@@ -376,6 +376,9 @@ func contains(ss []string, s string) bool {
 }
 
 func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*api.CanForwardS, error) {
+	if len(q.ForwardeePeers) == 0 {
+		return nil, errors.New("no ForwardeePeers")
+	}
 	ti, ok, err := s.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return nil, err

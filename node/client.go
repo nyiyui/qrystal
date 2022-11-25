@@ -179,7 +179,7 @@ func (c *Node) syncNetwork(ctx context.Context, cnn string, xch bool) (*SyncNetR
 		pnsLock.Lock()
 	}
 
-	if xch {
+	if xch && len(pns) != 0 {
 		util.S.Debugf("net %s peers %s advertising forwarding capability", cn.Name, pns)
 		csI, err := c.getCSForNet(cnn)
 		if err != nil {
