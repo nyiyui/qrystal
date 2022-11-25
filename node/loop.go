@@ -191,6 +191,8 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				util.S.Infof("===新たなCCで同期：\n%s", res)
 				if !res.allOK() {
 					err = errors.New("not allOK")
+				} else {
+					err = util.ErrEndBackoff
 				}
 				return
 			}, func(backoff time.Duration, err error) error {

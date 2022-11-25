@@ -1,10 +1,13 @@
 package util
 
 import (
+	"errors"
 	"time"
 )
 
 const backoffMax = 5 * time.Minute
+
+var ErrEndBackoff = errors.New("internal: end backoff")
 
 func Backoff(once func() (resetBackoff bool, err error), singleError func(backoff time.Duration, err error) error) error {
 	backoff := 1 * time.Second
@@ -15,6 +18,8 @@ func Backoff(once func() (resetBackoff bool, err error), singleError func(backof
 		}
 		if err == nil {
 			continue
+		} else if err == ErrEndBackoff {
+			return nil
 		}
 		err = singleError(backoff, err)
 		if err != nil {
