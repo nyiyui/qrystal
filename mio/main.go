@@ -163,6 +163,10 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		}
 		log.Printf("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
 	}
+	if q.Config.ListenPort == nil {
+		*r = "nil ListenPort"
+		return nil
+	}
 	err = devAdd(q.Name, devConfig{
 		Address:    q.Address,
 		PrivateKey: q.Config.PrivateKey,
