@@ -1,13 +1,10 @@
 package cs
 
 import (
-	"crypto/ed25519"
-	"fmt"
 	"log"
 
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
-	"github.com/nyiyui/qrystal/util"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -52,20 +49,5 @@ func (s *CentralSource) convertCC(tokenNetworks map[string]string) (*api.Central
 	}
 	return &api.CentralConfig{
 		Networks: networks,
-	}, nil
-}
-
-func convertPeer(peer *api.CentralPeer) (*central.Peer, error) {
-	allowedIPs, err := ToIPNets(peer.AllowedIPs)
-	if err != nil {
-		return nil, fmt.Errorf("AllowedIPs: %w", err)
-	}
-	if l := len(peer.PublicKey.Raw); l != ed25519.PublicKeySize {
-		return nil, fmt.Errorf("PublicKey: invalid size %d b", l)
-	}
-	return &central.Peer{
-		Host:       peer.Host,
-		AllowedIPs: central.FromIPNets(allowedIPs),
-		PublicKey:  util.Ed25519PublicKey(peer.PublicKey.Raw),
 	}, nil
 }

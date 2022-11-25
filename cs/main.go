@@ -271,7 +271,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 
 	log.Printf("push %#v", q)
 
-	peer, err := convertPeer(q.Peer)
+	peer, err := central.NewPeerFromAPI(q.PeerName, q.Peer)
 	if err != nil {
 		return &api.PushS{
 			S: &api.PushS_InvalidData{
