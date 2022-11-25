@@ -9,12 +9,12 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/rpc"
 	"os"
 
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -53,7 +53,7 @@ func Main() error {
 
 	token, tokenBase64, err := genToken()
 	if err != nil {
-		log.Fatalf("トークン生成: %s", err)
+		util.S.Fatalf("トークン生成: %s", err)
 	}
 	_ = tokenBase64
 
@@ -67,15 +67,15 @@ func Main() error {
 
 	lis, addr, err := listen()
 	if err != nil {
-		log.Fatalf("バインド: %s", err)
+		util.S.Fatalf("バインド: %s", err)
 	}
 	fmt.Printf("addr:%s\n", addr)
 	fmt.Printf("token:%s\n", tokenBase64)
 	err = os.Stdout.Close()
 	if err != nil {
-		log.Fatalf("close stdout: %s", err)
+		util.S.Fatalf("close stdout: %s", err)
 	}
-	log.Printf("聞きます。")
+	util.S.Info("聞きます。")
 	return http.Serve(lis, handler)
 }
 
@@ -110,7 +110,7 @@ func (sm *Mio) RemoveDevice(q RemoveDeviceQ, r *string) error {
 		*r = fmt.Sprintf("wg dev: %s", err)
 		return nil
 	}
-	log.Printf("デバイスを削除：%s", q.Name)
+	util.S.Infof("デバイスを削除：%s", q.Name)
 	err = devRemove(q.Name)
 	if err != nil {
 		*r = fmt.Sprintf("devRemove: %s", err)
@@ -151,7 +151,7 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 
 	_, err := sm.client.Device(q.Name)
 	if errors.Is(err, os.ErrNotExist) {
-		log.Printf("デバイスを追加：%s\n%s", q.Name, wgConfigToString(q.Config))
+		util.S.Infof("デバイスを追加：%s\n%s", q.Name, wgConfigToString(q.Config))
 	} else if err != nil {
 		*r = fmt.Sprintf("wg dev: %s", err)
 		return nil
@@ -161,7 +161,7 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 			*r = fmt.Sprintf("devRemove2: %s", err)
 			return nil
 		}
-		log.Printf("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
+		util.S.Infof("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
 	}
 	if q.Config.ListenPort == nil {
 		*r = "nil ListenPort"

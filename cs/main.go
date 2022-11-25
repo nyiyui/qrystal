@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"sync"
 	"time"
@@ -78,7 +77,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 			util.S.Errorf("UpdateToken %s: %s", ti.sum, err)
 		}
 	}()
-	log.Printf("%sから新たな認証済プル", ti.Name)
+	util.S.Infof("%sから新たな認証済プル", ti.Name)
 	// TODO: incremental changes (e.g. added peer) (instead of sending whole config every time)
 	ctx := ss.Context()
 	cnCh := s.addChangeNotify(q.CentralToken, 2)
@@ -101,7 +100,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 				return errors.New("cannot pull")
 			}
 
-			log.Printf("%sに送ります。", ti.Name)
+			util.S.Infof("%sに送ります。", ti.Name)
 
 			if ch.except == q.CentralToken {
 				continue
@@ -109,7 +108,7 @@ func (s *CentralSource) Pull(q *api.PullQ, ss api.CentralSource_PullServer) erro
 
 			newCC, err := s.convertCC(ti.Networks)
 			if err != nil {
-				log.Printf("convertCC: %s", err)
+				util.S.Infof("convertCC: %s", err)
 				return errors.New("conversion failed")
 			}
 			var changedCNs []string
@@ -182,9 +181,9 @@ func (s *CentralSource) notifyChange(ch change) {
 	time.Sleep(commitDelay)
 	err := s.backport()
 	if err != nil {
-		log.Printf("backport error: %s", err)
+		util.S.Warnf("backport error: %s", err)
 	} else {
-		log.Printf("backport ok")
+		util.S.Infof("backport ok")
 	}
 	s.notifyChsLock.RLock()
 	defer s.notifyChsLock.RUnlock()
@@ -234,7 +233,7 @@ func (s *CentralSource) notifyChange(ch change) {
 			util.S.Warnf("notifyChange net %s peer %s forwards for peer %s: chan send timeout", ch.net, ch.peerName, ti.Name)
 		}
 	}
-	log.Printf("notifyChange net %s peer %s forwards for peers %s %t", ch.net, ch.peerName, forwardsForPeers, ch.forwardingOnly)
+	util.S.Infof("notifyChange net %s peer %s forwards for peers %s %t", ch.net, ch.peerName, forwardsForPeers, ch.forwardingOnly)
 }
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
@@ -269,7 +268,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 		return nil, err
 	}
 
-	log.Printf("push %#v", q)
+	util.S.Infof("push %#v", q)
 
 	peer, err := central.NewPeerFromAPI(q.PeerName, q.Peer)
 	if err != nil {
@@ -287,7 +286,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 		defer s.ccLock.Unlock()
 		cn := s.cc.Networks[q.Cnn]
 		if len(peer.AllowedIPs) == 0 {
-			log.Printf("push net %s peer %s: assigning IP", q.Cnn, q.PeerName)
+			util.S.Infof("push net %s peer %s: assigning IP", q.Cnn, q.PeerName)
 			// assign an IP address chosen by me
 			for _, ipNet := range cn.IPs {
 				usedIPs := []net.IPNet{}
@@ -315,9 +314,7 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 	if pushS != nil {
 		return pushS, nil
 	}
-	log.Printf("push net %s peer %s: notify change", q.Cnn, q.PeerName)
-	log.Printf("debug: %#v", s.cc.Networks[q.Cnn])
-	log.Printf("debug: %#v", s.cc.Networks[q.Cnn].Peers[q.PeerName])
+	util.S.Infof("push net %s peer %s: notify change", q.Cnn, q.PeerName)
 	s.notifyChange(change{reason: fmt.Sprintf("push net %s peer %s", q.Cnn, q.PeerName)})
 	return &api.PushS{
 		S: &api.PushS_Ok{},
@@ -395,7 +392,7 @@ func (s *CentralSource) CanForward(ctx context.Context, q *api.CanForwardQ) (*ap
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("%s can forward for %s", forwarderPeer, q.ForwardeePeers)
+	util.S.Infof("%s can forward for %s", forwarderPeer, q.ForwardeePeers)
 	cn := s.cc.Networks[q.Network]
 	for _, forwardeePeer := range q.ForwardeePeers {
 		peer := cn.Peers[forwardeePeer]

@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"log"
 	"math/big"
 	"net"
 )
@@ -34,7 +33,6 @@ func AssignAddress(ipNet *net.IPNet, usedIPs []net.IPNet) (ip net.IP, err error)
 	cand := ipNet.IP
 NextIP:
 	for {
-		log.Print(cand)
 		if !ipNet.Contains(cand) {
 			return nil, AddressOverflow
 		}

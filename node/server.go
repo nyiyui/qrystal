@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -161,6 +160,6 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 }
 
 func (s *Node) Ping(context.Context, *api.PingQS) (*api.PingQS, error) {
-	log.Print("server: pinged")
+	util.S.Debugf("server: pinged")
 	return &api.PingQS{}, nil
 }
