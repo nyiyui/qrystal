@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -eux
 
 name="$1"
 private_key="$2"
@@ -26,7 +26,7 @@ EOF
 
 ifaces=($(wg show interfaces))
 
-echo interfaces $ifaces
+echo interfaces ${ifaces[*]}
 
 log=$(mktemp)
 
