@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -eu
 
@@ -24,7 +24,7 @@ PostDown=$post_down
 $after
 EOF
 
-IFS=' ' read -r -a ifaces <<< "$(wg show interfaces)"
+ifaces=($(wg show interfaces))
 
 echo interfaces $ifaces
 
