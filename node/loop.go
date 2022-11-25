@@ -191,7 +191,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 				util.S.Infof("===新たなCCで同期：\n%s", res)
 				return
 			}, func(backoff time.Duration, err error) error {
-				util.S.Errorf("===新たなCCで同期：err %s", err)
+				util.S.Errorf("===新たなCCで同期：backoff %s err %s", backoff, err)
 				return nil
 			})
 			// TODO: fallback to previous if all fails? perhaps as an option in PullS?
