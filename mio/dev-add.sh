@@ -24,7 +24,7 @@ PostDown=$post_down
 $after
 EOF
 
-read -r -a ifaces <<< "$(wg show interfaces)"
+IFS=' ' read -r -a ifaces <<< "$(wg show interfaces)"
 
 echo interfaces $ifaces
 
