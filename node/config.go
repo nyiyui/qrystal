@@ -72,9 +72,9 @@ func (s *Node) convertNetwork(cn *central.Network) (config *wgtypes.Config, err 
 }
 
 func (s *Node) convertPeer(cn *central.Network, peer *central.Peer) (config *wgtypes.PeerConfig, accessible bool, err error) {
-	peer.Lock.RLock()
-	defer peer.Lock.RUnlock()
-	if !peer.Accessible {
+	peer.Internal.Lock.RLock()
+	defer peer.Internal.Lock.RUnlock()
+	if !peer.Internal.Accessible {
 		return nil, false, nil
 	}
 	var host *net.UDPAddr
@@ -90,7 +90,7 @@ func (s *Node) convertPeer(cn *central.Network, peer *central.Peer) (config *wgt
 		}
 	}
 
-	if peer.PubKey == nil {
+	if peer.Internal.PubKey == nil {
 		panic(fmt.Sprintf("net %#v peer %#v pubKey is nil", cn, peer))
 	}
 
@@ -105,10 +105,10 @@ func (s *Node) convertPeer(cn *central.Network, peer *central.Peer) (config *wgt
 	}
 
 	return &wgtypes.PeerConfig{
-		PublicKey:                   *peer.PubKey,
+		PublicKey:                   *peer.Internal.PubKey,
 		Remove:                      false,
 		UpdateOnly:                  false,
-		PresharedKey:                peer.PSK,
+		PresharedKey:                peer.Internal.PSK,
 		Endpoint:                    host,
 		PersistentKeepaliveInterval: &keepalive,
 		ReplaceAllowedIPs:           true,

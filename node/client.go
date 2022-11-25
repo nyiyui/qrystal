@@ -205,8 +205,8 @@ func (c *Node) xchPeer(ctx context.Context, cnn string, pn string) (res SyncPeer
 	cn := c.cc.Networks[cnn]
 	skip := func() bool {
 		peer := cn.Peers[pn]
-		peer.Lock.RLock()
-		defer peer.Lock.RUnlock()
+		peer.Internal.Lock.RLock()
+		defer peer.Internal.Lock.RUnlock()
 		if peer.Host == "" {
 			return true
 		}
@@ -240,13 +240,13 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	cn := c.cc.Networks[cnn]
 	peer := cn.Peers[pn]
 	// TODO: dont xch if locked?
-	peer.LSALock.Lock()
-	defer peer.LSALock.Unlock()
-	if time.Since(peer.LSA) < 1*time.Second {
+	peer.Internal.LSALock.Lock()
+	defer peer.Internal.LSALock.Unlock()
+	if time.Since(peer.Internal.LSA) < 1*time.Second {
 		return errors.New("attempted to sync too recently")
 	}
-	peer.Lock.Lock()
-	defer peer.Lock.Unlock()
+	peer.Internal.Lock.Lock()
+	defer peer.Internal.Lock.Unlock()
 	cs := c.servers[networkPeerPair{cnn, pn}]
 	pubKey := c.cc.Networks[cnn].MyPrivKey.PublicKey()
 	psk, err := wgtypes.GenerateKey()
@@ -279,10 +279,10 @@ func (c *Node) xch(ctx context.Context, cnn string, pn string) (err error) {
 	if err != nil {
 		return errors.New("invalid public key")
 	}
-	peer.PubKey = &yourPubKey
-	peer.PSK = &psk
-	peer.LatestSync = time.Now()
-	peer.Accessible = true
+	peer.Internal.PubKey = &yourPubKey
+	peer.Internal.PSK = &psk
+	peer.Internal.LatestSync = time.Now()
+	peer.Internal.Accessible = true
 	return nil
 }
 

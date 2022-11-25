@@ -39,8 +39,8 @@ type serverConfig struct {
 }
 
 type azusaConfig struct {
-	Networks map[string]string `yaml:"networks"`
-	Host     string            `yaml:"host"`
+	Networks map[string]central.Peer `yaml:"networks"`
+	Host     string                  `yaml:"host"`
 }
 
 type configValidated config

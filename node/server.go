@@ -102,9 +102,9 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 		return nil, errors.New("q verification failed")
 	}
 
-	you.LSALock.Lock()
-	defer you.LSALock.Unlock()
-	if time.Since(you.LSA) < verify.Grave {
+	you.Internal.LSALock.Lock()
+	defer you.Internal.LSALock.Unlock()
+	if time.Since(you.Internal.LSA) < verify.Grave {
 		return nil, errors.New("attempted to sync too recently")
 	}
 
@@ -112,18 +112,18 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 
 	var myPubKey wgtypes.Key
 	err = func() error {
-		you.Lock.Lock()
-		defer you.Lock.Unlock()
+		you.Internal.Lock.Lock()
+		defer you.Internal.Lock.Unlock()
 		yourPubKey, err := wgtypes.NewKey(q.PubKey)
 		if err != nil {
 			return errors.New("invalid public key")
 		}
-		you.PubKey = &yourPubKey
+		you.Internal.PubKey = &yourPubKey
 		yourPSK, err := wgtypes.NewKey(q.Psk)
 		if err != nil {
 			return errors.New("invalid psk")
 		}
-		you.PSK = &yourPSK
+		you.Internal.PSK = &yourPSK
 
 		util.S.Debugf("net %s peer %s: generating", cnn, you.Name)
 		err = ensureWGPrivKey(cn)
@@ -132,7 +132,7 @@ func (s *Node) Xch(ctx context.Context, q *api.XchQ) (r *api.XchS, err error) {
 		}
 		myPubKey = cn.MyPrivKey.PublicKey()
 
-		you.Accessible = true
+		you.Internal.Accessible = true
 		return nil
 	}()
 	if err != nil {

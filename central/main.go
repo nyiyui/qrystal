@@ -2,10 +2,14 @@
 package central
 
 import (
+	"crypto/ed25519"
+	"errors"
+	"fmt"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc/credentials"
@@ -41,20 +45,65 @@ type Peer struct {
 	CanSee          *CanSee               `yaml:"can-see"`
 	// If CanSee is nil, this Peer can see all peers.
 
-	LSA     time.Time    `yaml:"-"`
-	LSALock sync.RWMutex `yaml:"-"`
+	Internal *PeerInternal `yaml:"-"`
+}
 
-	Lock       sync.RWMutex `yaml:"-"`
-	LatestSync time.Time    `yaml:"-"`
-	Accessible bool         `yaml:"-"`
+func NewPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *Peer, err error) {
+	if len(peer.PublicKey.Raw) == 0 {
+		return nil, errors.New("public key blank")
+	}
+	if len(peer.PublicKey.Raw) != ed25519.PublicKeySize {
+		return nil, errors.New("public key size invalid")
+	}
+	ipNets, err := FromAPIToIPNets(peer.AllowedIPs)
+	if err != nil {
+		return nil, fmt.Errorf("ToIPNets: %w", err)
+	}
+	return &Peer{
+		Name:            pn,
+		Host:            peer.Host,
+		AllowedIPs:      FromIPNets(ipNets),
+		ForwardingPeers: peer.ForwardingPeers,
+		PublicKey:       util.Ed25519PublicKey(peer.PublicKey.Raw),
+		CanSee:          NewCanSeeFromAPI(peer.CanSee),
+		Internal:        new(PeerInternal),
+	}, nil
+}
+
+type PeerInternal struct {
+	LSA     time.Time
+	LSALock sync.RWMutex
+
+	Lock       sync.RWMutex
+	LatestSync time.Time
+	Accessible bool
 	// accessible represents whether this peer is accessible in the latest sync.
-	PubKey *wgtypes.Key                     `yaml:"-"`
-	PSK    *wgtypes.Key                     `yaml:"-"`
-	Creds  credentials.TransportCredentials `yaml:"-"`
+	PubKey *wgtypes.Key
+	PSK    *wgtypes.Key
+	Creds  credentials.TransportCredentials
 	// creds for this specific peer.
 }
+
+func (p *Peer) ToAPI() *api.CentralPeer {
+	return &api.CentralPeer{
+		Host:            p.Host,
+		AllowedIPs:      FromIPNetsToAPI(ToIPNets(p.AllowedIPs)),
+		ForwardingPeers: p.ForwardingPeers,
+		PublicKey:       p.PublicKey.ToAPI(),
+		CanSee:          p.CanSee.ToAPI(),
+	}
+}
+
 type CanSee struct {
 	Only []string `yaml:"only"`
+}
+
+func NewCanSeeFromAPI(c2 *api.CanSee) *CanSee {
+	return &CanSee{Only: c2.Only}
+}
+
+func (c *CanSee) ToAPI() *api.CanSee {
+	return &api.CanSee{Only: c.Only}
 }
 
 // IPNet is a YAML-friendly net.IPNet.

@@ -25,12 +25,12 @@ func (c *Node) ensureClient(ctx context.Context, cnn string, pn string) (err err
 
 func (c *Node) newClient(ctx context.Context, cnn string, pn string) (err error) {
 	peer := c.cc.Networks[cnn].Peers[pn]
-	peer.Lock.Lock()
-	defer peer.Lock.Unlock()
+	peer.Internal.Lock.Lock()
+	defer peer.Internal.Lock.Unlock()
 	var cs clientServer
 	var creds credentials.TransportCredentials
-	if peer.Creds != nil {
-		creds = peer.Creds
+	if peer.Internal.Creds != nil {
+		creds = peer.Internal.Creds
 	} else {
 		creds = credentials.NewTLS(nil)
 	}

@@ -1,8 +1,6 @@
 package node
 
 import (
-	"crypto/ed25519"
-	"errors"
 	"fmt"
 	"net"
 
@@ -30,7 +28,7 @@ func newCCFromAPI(cc *api.CentralConfig) (cc2 *central.Config, err error) {
 func newCNFromAPI(cnn string, cn *api.CentralNetwork) (cn2 *central.Network, err error) {
 	peers := map[string]*central.Peer{}
 	for key, network := range cn.Peers {
-		peers[key], err = newPeerFromAPI(key, network)
+		peers[key], err = central.NewPeerFromAPI(key, network)
 		if err != nil {
 			return nil, fmt.Errorf("peer %s: %w", key, err)
 		}
@@ -60,24 +58,4 @@ func FromAPIToIPNets(nets []*api.IPNet) (dest []net.IPNet, err error) {
 		dest[i] = n2
 	}
 	return
-}
-
-func newPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *central.Peer, err error) {
-	if len(peer.PublicKey.Raw) == 0 {
-		return nil, errors.New("public key blank")
-	}
-	if len(peer.PublicKey.Raw) != ed25519.PublicKeySize {
-		return nil, errors.New("public key size invalid")
-	}
-	ipNets, err := FromAPIToIPNets(peer.AllowedIPs)
-	if err != nil {
-		return nil, fmt.Errorf("ToIPNets: %w", err)
-	}
-	return &central.Peer{
-		Name:            pn,
-		Host:            peer.Host,
-		AllowedIPs:      central.FromIPNets(ipNets),
-		ForwardingPeers: peer.ForwardingPeers,
-		PublicKey:       util.Ed25519PublicKey(peer.PublicKey.Raw),
-	}, nil
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"github.com/nyiyui/qrystal/node/api"
 	"gopkg.in/yaml.v3"
 )
 
@@ -57,6 +58,10 @@ func (b *HexBytes) UnmarshalYAML(value *yaml.Node) error {
 
 // Ed25519PublicKey is a byte slice with methods for (un)marshalling to YAML (using base64.StdEncoding).
 type Ed25519PublicKey ed25519.PublicKey
+
+func (b Ed25519PublicKey) ToAPI() *api.PublicKey {
+	return &api.PublicKey{Raw: []byte(b)}
+}
 
 // MarshalYAML implements yaml.Marshaler.
 func (b Ed25519PublicKey) MarshalYAML() (interface{}, error) {

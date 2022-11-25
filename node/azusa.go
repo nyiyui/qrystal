@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 )
 
 type AzusaConfig struct {
 	Host     string
-	Networks map[string]string
+	Networks map[string]central.Peer
 }
 
 func newAzusa(c AzusaConfig) *azusa {
@@ -26,11 +27,11 @@ func newAzusa(c AzusaConfig) *azusa {
 
 type azusa struct {
 	enabled  bool
-	networks map[string]string
+	networks map[string]central.Peer
 	host     string
 }
 
-func (n *Node) AzusaConfigure(networks map[string]string, host string) {
+func (n *Node) AzusaConfigure(networks map[string]central.Peer, host string) {
 	n.azusa.enabled = true
 	n.azusa.networks = networks
 	n.azusa.host = host
@@ -41,14 +42,14 @@ func (a *azusa) setup(n *Node, csc CSConfig, cl api.CentralSourceClient) error {
 	cnns := make([]string, len(a.networks))
 	i := 0
 	var wg sync.WaitGroup
-	for cnn, peerName := range a.networks {
+	for cnn, peer := range a.networks {
 		cnns[i] = cnn
 		wg.Add(1)
-		go func(i int, cnn, peerName string) {
+		go func(i int, cnn string, peer central.Peer) {
 			defer wg.Done()
-			errs[i] = a.setupOne(n, csc, cl, cnn, peerName)
+			errs[i] = a.setupOne(n, csc, cl, cnn, peer)
 			i++
-		}(i, cnn, peerName)
+		}(i, cnn, peer)
 	}
 	wg.Wait()
 	fail := false
@@ -64,17 +65,15 @@ func (a *azusa) setup(n *Node, csc CSConfig, cl api.CentralSourceClient) error {
 	}
 	return nil
 }
-func (a *azusa) setupOne(n *Node, csc CSConfig, cl api.CentralSourceClient, cnn, peerName string) error {
-	util.S.Debugf("azusa: net %s peer %s: pushing", cnn, peerName)
+func (a *azusa) setupOne(n *Node, csc CSConfig, cl api.CentralSourceClient, cnn string, peer central.Peer) error {
+	util.S.Debugf("azusa: net %s peer %s: pushing", cnn, peer.Name)
 	pubKey := n.coordPrivKey.Public().(ed25519.PublicKey)
+	peer.PublicKey = util.Ed25519PublicKey(pubKey)
 	q := api.PushQ{
 		CentralToken: csc.Token,
 		Cnn:          cnn,
-		PeerName:     peerName,
-		Peer: &api.CentralPeer{
-			Host:      a.host,
-			PublicKey: &api.PublicKey{Raw: []byte(pubKey)},
-		},
+		PeerName:     peer.Name,
+		Peer:         peer.ToAPI(),
 	}
 	s, err := cl.Push(context.Background(), &q)
 	if err != nil {
@@ -89,6 +88,6 @@ func (a *azusa) setupOne(n *Node, csc CSConfig, cl api.CentralSourceClient, cnn,
 	default:
 		panic(fmt.Sprintf("%#v", s))
 	}
-	util.S.Infof("azusa: net %s peer %s: pushed", cnn, peerName)
+	util.S.Infof("azusa: net %s peer %s: pushed", cnn, peer.Name)
 	return nil
 }

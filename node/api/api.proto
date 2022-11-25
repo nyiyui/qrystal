@@ -95,6 +95,11 @@ message CentralPeer {
   // forwardingPeers may overlap (i.e. duplicate IPs may appear in other
   // CentralPeers), so nodes must choose one for their WireGuard config.
   PublicKey publicKey = 3;
+  CanSee canSee = 5;
+}
+
+message CanSee {
+  repeated string only = 1;
 }
 
 message PublicKey {
