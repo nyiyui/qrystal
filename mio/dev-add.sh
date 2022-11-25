@@ -26,10 +26,13 @@ EOF
 
 read -r -a ifaces <<< "$(wg show interfaces)"
 
+echo interfaces $ifaces
+
 log=$(mktemp)
 
 if [[ " ${ifaces[*]} " =~ " $name " ]]; then
-	# TODO; syncconf if ips don't change
+	echo down
+	# TODO: syncconf if ips don't change
 	wg-quick down "$name" 2> $log || 1>&2 cat $log
 fi
 

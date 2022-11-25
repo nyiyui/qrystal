@@ -42,12 +42,17 @@ func devAdd(name string, cfg devConfig) error {
 	after := toAfter(cfg.Peers)
 
 	address := strings.Join(addresses, ", ")
+	outBuf := new(bytes.Buffer)
 	errBuf := new(bytes.Buffer)
 	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after)
+	cmd.Stdout = outBuf
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
 		return &scriptError{err: errBuf.Bytes(), wrapped: err}
+	}
+	if outBuf.Len() != 0 {
+		util.S.Warnf("dev-add %s out:\n%s", name, outBuf)
 	}
 	if errBuf.Len() != 0 {
 		util.S.Warnf("dev-add %s err:\n%s", name, errBuf)
