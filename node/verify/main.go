@@ -2,6 +2,7 @@ package verify
 
 import (
 	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,6 +36,11 @@ func newXchQPayload(q *api.XchQ) xchQSigPayload {
 	}
 }
 
+func newErrInvalidSig(signedBy ed25519.PublicKey) (err error) {
+	signedBy2 := base64.StdEncoding.EncodeToString([]byte(signedBy))
+	return fmt.Errorf("%w (signed by %s", ErrInvalidSig, signedBy2)
+}
+
 func VerifyXchQ(signedBy ed25519.PublicKey, q *api.XchQ) (err error) {
 	err = verifyTs(q.Ts)
 	if err != nil {
@@ -46,7 +52,7 @@ func VerifyXchQ(signedBy ed25519.PublicKey, q *api.XchQ) (err error) {
 	}
 	ok := ed25519.Verify(signedBy, payload2, q.Sig)
 	if !ok {
-		return ErrInvalidSig
+		return newErrInvalidSig(signedBy)
 	}
 	return nil
 }
@@ -83,7 +89,7 @@ func VerifyXchS(signedBy ed25519.PublicKey, s *api.XchS) (err error) {
 	}
 	ok := ed25519.Verify(signedBy, payload2, s.Sig)
 	if !ok {
-		return ErrInvalidSig
+		return newErrInvalidSig(signedBy)
 	}
 	return nil
 }
