@@ -167,6 +167,7 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		Address:    q.Address,
 		PrivateKey: q.Config.PrivateKey,
 		Peers:      q.Config.Peers,
+		ListenPort: uint(*q.Config.ListenPort),
 	})
 	if err != nil {
 		*r = fmt.Sprintf("devAdd: %s", err)

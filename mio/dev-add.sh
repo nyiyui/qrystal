@@ -8,6 +8,7 @@ address="$3"
 post_up="$4"
 post_down="$5"
 after="$6"
+listen_port="$7"
 
 umask 077
 cat > "/etc/wireguard/$name.conf" << EOF
@@ -16,6 +17,7 @@ cat > "/etc/wireguard/$name.conf" << EOF
 [Interface]
 PrivateKey=$private_key
 Address=$address
+ListenPort=$listen_port
 
 PostUp=$post_up
 PostDown=$post_down

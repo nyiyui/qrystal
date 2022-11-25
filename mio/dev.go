@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/nyiyui/qrystal/util"
@@ -15,6 +16,7 @@ import (
 type devConfig struct {
 	Address    []net.IPNet
 	PrivateKey *wgtypes.Key
+	ListenPort uint
 	PostUp     string
 	PostDown   string
 	Peers      []wgtypes.PeerConfig
@@ -44,7 +46,7 @@ func devAdd(name string, cfg devConfig) error {
 	address := strings.Join(addresses, ", ")
 	outBuf := new(bytes.Buffer)
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after)
+	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after, strconv.FormatUint(uint64(cfg.ListenPort), 10))
 	cmd.Stdout = outBuf
 	cmd.Stderr = errBuf
 	err := cmd.Run()
