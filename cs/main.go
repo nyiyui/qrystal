@@ -258,6 +258,11 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 		}
 	}
 
+	if ti.Networks == nil {
+		ti.Networks = map[string]string{}
+	}
+	ti.Networks[q.Cnn] = q.PeerName
+
 	ti.Use()
 	err = s.Tokens.UpdateToken(ti)
 	if err != nil {
