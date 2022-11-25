@@ -34,7 +34,7 @@ func wgConfigToString(config *wgtypes.Config) string {
 		fmt.Fprintf(b, "ReplaceAllowedIPs = %t\n", peer.ReplaceAllowedIPs)
 		allowedIPs := new(bytes.Buffer)
 		for i, allowedIP := range peer.AllowedIPs {
-			fmt.Fprintf(allowedIPs, "%s", allowedIP)
+			fmt.Fprintf(allowedIPs, "%s", &allowedIP)
 			if i != len(peer.AllowedIPs)-1 {
 				fmt.Fprint(allowedIPs, ", ")
 			}
