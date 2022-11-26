@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getlantern/systray"
 	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"go.uber.org/zap"
@@ -32,21 +31,14 @@ func Main() {
 	if !strings.Contains(target, "unix:///") {
 		util.S.Fatalf("only sockets supported")
 	}
-
-	systray.Run(onReady, onExit)
 }
 
 type kiriyamaConn struct {
-	cl        api.KiriyamaClient
-	csMenus   map[int32]*systray.MenuItem
-	peerMenus map[string]*systray.MenuItem
+	cl api.KiriyamaClient
 }
 
 func (k *kiriyamaConn) loop() {
 	util.S.Fatalf("loop2: %s", util.Backoff(k.loopOnce, func(backoff time.Duration, err error) error {
-		for _, menu := range k.csMenus {
-			menu.SetTitle(fmt.Sprintf("backoff %s", backoff))
-		}
 		util.S.Warnf("(backoff %s) loop: %s", backoff, err)
 		return nil
 	}))
@@ -57,47 +49,35 @@ func (k *kiriyamaConn) loopOnce() (resetBackoff bool, err error) {
 	if err != nil {
 		return false, fmt.Errorf("recv: %w", err)
 	}
-	tc := time.NewTicker(500 * time.Millisecond)
-	for range tc.C {
-		s, err := conn.Recv()
-		if err != nil {
-			if err == io.EOF {
-				return true, nil
-			}
-			util.S.Warnf("GetStatus Recv: %s", err)
-			return false, fmt.Errorf("recv: %w", err)
+	res := new(strings.Builder)
+	s, err := conn.Recv()
+	if err != nil {
+		if err == io.EOF {
+			return true, nil
 		}
-		util.S.Infof("GetStatus S: %s", s)
-		for key, status := range s.Cs {
-			title := fmt.Sprintf("%s - %s", status.Name, status.Status)
-			if _, ok := k.csMenus[key]; ok {
-				k.csMenus[key].SetTitle(title)
-			} else {
-				k.csMenus[key] = systray.AddMenuItem(title, "")
-			}
-		}
-		for cnpn, status := range s.Peer {
-			title := fmt.Sprintf("%s - %s", cnpn, status)
-			if _, ok := k.peerMenus[cnpn]; ok {
-				k.peerMenus[cnpn].SetTitle(title)
-			} else {
-				k.peerMenus[cnpn] = systray.AddMenuItem(title, "")
-			}
-		}
+		util.S.Warnf("GetStatus Recv: %s", err)
+		return false, fmt.Errorf("recv: %w", err)
 	}
-	panic("unreacheable")
+	util.S.Infof("GetStatus S: %s", s)
+	for _, status := range s.Cs {
+		fmt.Fprintf(res, "%s - %s\n", status.Name, status.Status)
+	}
+	for cnpn, status := range s.Peer {
+		fmt.Fprintf(res, "%s - %s\n", cnpn, status)
+	}
+	fmt.Println(res)
+	return false, util.ErrEndBackoff
 }
 
 func onReady() {
-	systray.SetTitle("Qrystal")
 	clientConn, err := grpc.Dial(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	// NOTE: insecure conn is fine here because this should be protected by fs perms.
 	if err != nil {
 		util.S.Fatalf("dial target: %s", err)
 	}
 	kryCl := api.NewKiriyamaClient(clientConn)
-	kc = kiriyamaConn{cl: kryCl, csMenus: map[int32]*systray.MenuItem{}, peerMenus: map[string]*systray.MenuItem{}}
-	go kc.loop()
+	kc = kiriyamaConn{cl: kryCl}
+	kc.loop()
 }
 
 func onExit() {
