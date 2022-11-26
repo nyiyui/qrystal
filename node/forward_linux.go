@@ -15,7 +15,7 @@ func getOutbound() (string, error) {
 	errBuf := new(bytes.Buffer)
 	outBuf := new(bytes.Buffer)
 	// NOTE: workaround for $PATH being weird
-	cmd := exec.Command("/usr/bin/ip", "route", "show", "default")
+	cmd := exec.Command("ip", "route", "show", "default")
 	cmd.Stderr = errBuf
 	cmd.Stdout = outBuf
 	err := cmd.Run()
