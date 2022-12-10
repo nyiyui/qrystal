@@ -10,8 +10,19 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func (s *Node) configNetwork(cn *central.Network) (err error) {
-	config, err := s.convertNetwork(cn)
+func (s *Node) reify() (err error) {
+	for cnn, cn := range s.cc.Networks {
+		err = s.reifyCN(cn)
+		if err != nil {
+			err = fmt.Errorf("reify net %s: %w", cnn, err)
+			return
+		}
+	}
+	return
+}
+
+func (s *Node) reifyCN(cn *central.Network) (err error) {
+	config, err := s.convCN(cn)
 	if err != nil {
 		return fmt.Errorf("convert: %w", err)
 	}
@@ -52,10 +63,10 @@ func (s *Node) configNetwork(cn *central.Network) (err error) {
 	return nil
 }
 
-func (s *Node) convertNetwork(cn *central.Network) (config *wgtypes.Config, err error) {
+func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn, peer := range cn.Peers {
-		config, accessible, err := s.convertPeer(cn, peer)
+		config, accessible, err := s.convPeer(cn, peer)
 		if err != nil {
 			return nil, fmt.Errorf("peer %s: %w", pn, err)
 		}
@@ -72,7 +83,7 @@ func (s *Node) convertNetwork(cn *central.Network) (config *wgtypes.Config, err 
 	return config, nil
 }
 
-func (s *Node) convertPeer(cn *central.Network, peer *central.Peer) (config *wgtypes.PeerConfig, accessible bool, err error) {
+func (s *Node) convPeer(cn *central.Network, peer *central.Peer) (config *wgtypes.PeerConfig, accessible bool, err error) {
 	peer.Internal.Lock.RLock()
 	defer peer.Internal.Lock.RUnlock()
 	if !peer.Internal.Accessible {

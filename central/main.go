@@ -2,8 +2,6 @@
 package central
 
 import (
-	"crypto/ed25519"
-	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -16,13 +14,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	DNone    = 0x0
+	DNetwork = 0x1
+	DIPs     = 0x2
+)
+
 // Config is the root.
 type Config struct {
+	Desynced int
 	Networks map[string]*Network `yaml:"networks"`
 }
 
 // Network configures a CN.
 type Network struct {
+	Desynced   int
 	Name       string
 	IPs        []IPNet          `yaml:"ips"`
 	Peers      map[string]*Peer `yaml:"peers"`
@@ -30,31 +36,24 @@ type Network struct {
 	Keepalive  time.Duration    `yaml:"keepalive"`
 	ListenPort int              `yaml:"listen-port"`
 
-	Lock sync.RWMutex
 	// lock is only for myPrivKey.
 	MyPrivKey *wgtypes.Key
 }
 
 // Peer configures a peer.
 type Peer struct {
+	Desynced        int
 	Name            string
-	Host            string                `yaml:"host"`
-	AllowedIPs      []IPNet               `yaml:"allowed-ips"`
-	ForwardingPeers []string              `yaml:"forwarding-peers"`
-	PublicKey       util.Ed25519PublicKey `yaml:"public-key"`
-	CanSee          *CanSee               `yaml:"can-see"`
+	Host            string   `yaml:"host"`
+	AllowedIPs      []IPNet  `yaml:"allowed-ips"`
+	ForwardingPeers []string `yaml:"forwarding-peers"`
+	CanSee          *CanSee  `yaml:"can-see"`
 	// If CanSee is nil, this Peer can see all peers.
 
 	Internal *PeerInternal `yaml:"-"`
 }
 
 func NewPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *Peer, err error) {
-	if len(peer.PublicKey.Raw) == 0 {
-		return nil, errors.New("public key blank")
-	}
-	if len(peer.PublicKey.Raw) != ed25519.PublicKeySize {
-		return nil, errors.New("public key size invalid")
-	}
 	ipNets, err := FromAPIToIPNets(peer.AllowedIPs)
 	if err != nil {
 		return nil, fmt.Errorf("ToIPNets: %w", err)
@@ -64,10 +63,13 @@ func NewPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *Peer, err error) {
 		Host:            peer.Host,
 		AllowedIPs:      FromIPNets(ipNets),
 		ForwardingPeers: peer.ForwardingPeers,
-		PublicKey:       util.Ed25519PublicKey(peer.PublicKey.Raw),
 		CanSee:          NewCanSeeFromAPI(peer.CanSee),
 		Internal:        new(PeerInternal),
 	}, nil
+}
+
+func (p *Peer) Same(p2 *Peer) bool {
+	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee)
 }
 
 type PeerInternal struct {
@@ -89,7 +91,6 @@ func (p *Peer) ToAPI() *api.CentralPeer {
 		Host:            p.Host,
 		AllowedIPs:      FromIPNetsToAPI(ToIPNets(p.AllowedIPs)),
 		ForwardingPeers: p.ForwardingPeers,
-		PublicKey:       p.PublicKey.ToAPI(),
 		CanSee:          p.CanSee.ToAPI(),
 	}
 }
@@ -107,6 +108,19 @@ func NewCanSeeFromAPI(c2 *api.CanSee) *CanSee {
 
 func (c *CanSee) ToAPI() *api.CanSee {
 	return &api.CanSee{Only: c.Only}
+}
+
+func (c *CanSee) Same(c2 *CanSee) bool {
+	if c == nil && c2 == nil {
+		return true
+	}
+	if c == nil && c2 != nil {
+		return false
+	}
+	if c2 == nil {
+		return false
+	}
+	return Same3(c.Only, c2.Only)
 }
 
 // IPNet is a YAML-friendly net.IPNet.
@@ -147,4 +161,43 @@ func FromIPNets(ipNets []net.IPNet) []IPNet {
 		dest[i] = IPNet(i2)
 	}
 	return dest
+}
+
+func Same(a []IPNet, b []IPNet) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, a2 := range a {
+		b2 := b[i]
+		if (*net.IPNet)(&a2).String() == (*net.IPNet)(&b2).String() {
+			return false
+		}
+	}
+	return true
+}
+
+func Same3(a []string, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, a2 := range a {
+		b2 := b[i]
+		if a2 == b2 {
+			return false
+		}
+	}
+	return true
+}
+
+func Same2(a map[string]*Peer, b map[string]*Peer) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, a2 := range a {
+		b2 := b[i]
+		if !a2.Same(b2) {
+			return false
+		}
+	}
+	return true
 }

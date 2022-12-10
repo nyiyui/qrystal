@@ -1,46 +1,25 @@
 package main
 
 import (
-	"crypto/ed25519"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"regexp"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"crypto/tls"
+	"crypto/x509"
 
-	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node"
-	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
 	"gopkg.in/yaml.v3"
 )
 
 type config struct {
-	PrivKey  string         `yaml:"private-key"`
-	Server   *serverConfig  `yaml:"server"`
-	Central  central.Config `yaml:"central"`
-	CS       *csConfig      `yaml:"cs"`
-	CS2      []csConfig     `yaml:"cs2"`
-	Azusa    *azusaConfig   `yaml:"azusa"`
-	Kiriyama string         `yaml:"kiriyama"`
-}
-
-type serverConfig struct {
-	TLSCertPath string `yaml:"tls-cert-path"`
-	TLSKeyPath  string `yaml:"tls-key-path"`
-	Addr        string `yaml:"addr"`
-}
-
-type azusaConfig struct {
-	Networks map[string]central.Peer `yaml:"networks"`
-	Host     string                  `yaml:"host"`
+	CSs      []csConfig `yaml:"css"`
+	Kiriyama string     `yaml:"kiriyama"`
 }
 
 type configValidated config
@@ -51,34 +30,29 @@ func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	if len(c.PrivKey) == 0 {
-		return errors.New("private-key cannot be blank")
-	}
-	if c.PrivKey[0] != 'R' {
-		return errors.New("private-key is not a private key (starts with \"R\")")
-	}
 	*c = configValidated(c2)
 	return nil
 }
 
 type csConfig struct {
-	Comment     string       `yaml:"comment"`
-	TLSCertPath string       `yaml:"tls-cert-path"`
-	AllowedNets []string     `yaml:"networks"`
-	Host        string       `yaml:"host"`
-	Token       string       `yaml:"token"`
-	Azusa       *azusaConfig `yaml:"azusa"`
+	Comment     string   `yaml:"comment"`
+	TLSCertPath string   `yaml:"tls-cert-path"`
+	AllowedNets []string `yaml:"networks"`
+	Host        string   `yaml:"host"`
+	Token       string   `yaml:"token"`
 }
 
 func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
-	var creds credentials.TransportCredentials
 	var err error
-	if cfg.TLSCertPath == "" {
-		creds = credentials.NewTLS(nil)
-	} else {
-		creds, err = credentials.NewClientTLSFromFile(cfg.TLSCertPath, "")
+	var cert []byte
+	if cfg.TLSCertPath != "" {
+		cert, err = ioutil.ReadFile(cfg.TLSCertPath)
 		if err != nil {
-			return nil, fmt.Errorf("tls cert: %w", err)
+			return nil, fmt.Errorf("read tls cert: %w", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(cert) {
+			return nil, fmt.Errorf("load pem: %w", err)
 		}
 	}
 	netsAllowed := make([]*regexp.Regexp, len(cfg.AllowedNets))
@@ -89,12 +63,17 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		}
 	}
 	return &node.CSConfig{
-		Comment:         cfg.Comment,
-		Creds:           creds,
+		Comment: cfg.Comment,
+		NewTLSConfig: func() *tls.Config {
+			pool := x509.NewCertPool()
+			if !pool.AppendCertsFromPEM(cert) {
+				panic(fmt.Sprintf("load pem: %s", err))
+			}
+			return &tls.Config{RootCAs: pool}
+		},
 		Host:            cfg.Host,
 		Token:           cfg.Token,
 		NetworksAllowed: netsAllowed,
-		//Azusa:cfg.Azusa, TODO: azusa
 	}, err
 }
 
@@ -116,42 +95,14 @@ func main() {
 		log.Fatalf("load config: %s", err)
 	}
 
-	privKey, err := base64.StdEncoding.DecodeString(c.PrivKey[2:])
-	if err != nil {
-		log.Fatalf("load config: decoding private key failed: %s", err)
-	}
-	privKey2 := ed25519.NewKeyFromSeed([]byte(privKey))
-
-	var serverCreds credentials.TransportCredentials
-	if c.Server != nil {
-		s := c.Server
-		serverCreds, err = credentials.NewServerTLSFromFile(s.TLSCertPath, s.TLSKeyPath)
-		if err != nil {
-			log.Fatalf("client tls: %s", err)
-		}
-	}
-
 	// CS
-	ncscs := make([]node.CSConfig, 0, 1+len(c.CS2))
-	if c.CS != nil {
-		ncsc, err := processCSConfig(c.CS)
-		if err != nil {
-			log.Fatalf("config cs: %s", err)
-		}
-		ncscs = append(ncscs, *ncsc)
-	}
-	for i, csc := range c.CS2 {
+	ncscs := make([]node.CSConfig, 0, len(c.CSs))
+	for i, csc := range c.CSs {
 		ncsc, err := processCSConfig(&csc)
 		if err != nil {
 			log.Fatalf("config cs2 %d: %s", i, err)
 		}
 		ncscs = append(ncscs, *ncsc)
-		if csc.Azusa != nil {
-			ncsc.Azusa = &node.AzusaConfig{
-				Host:     csc.Azusa.Host,
-				Networks: csc.Azusa.Networks,
-			}
-		}
 	}
 
 	mioAddr := os.Getenv("MIO_ADDR")
@@ -160,8 +111,6 @@ func main() {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
 	n, err := node.NewNode(node.NodeConfig{
-		PrivKey:  privKey2,
-		CC:       c.Central,
 		MioAddr:  mioAddr,
 		MioToken: mioToken,
 		CS:       ncscs,
@@ -170,28 +119,7 @@ func main() {
 		panic(err)
 	}
 
-	if c.CS == nil && c.Azusa != nil {
-		log.Fatal("config: azusa requires cs")
-	}
-
-	if c.Server != nil {
-		go func() {
-			server := grpc.NewServer(grpc.Creds(serverCreds))
-			api.RegisterNodeServer(server, n)
-			lis, err := net.Listen("tcp", c.Server.Addr)
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = server.Serve(lis)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}()
-	}
-	if c.CS != nil {
-		if c.Azusa != nil {
-			n.AzusaConfigure(c.Azusa.Networks, c.Azusa.Host)
-		}
+	if c.CSs != nil {
 		go n.ListenCS()
 	}
 	if c.Kiriyama != "" {
