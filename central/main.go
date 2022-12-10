@@ -18,6 +18,7 @@ const (
 	DNone    = 0x0
 	DNetwork = 0x1
 	DIPs     = 0x2
+	DPeer    = 0x4
 )
 
 // Config is the root.
@@ -81,7 +82,6 @@ type PeerInternal struct {
 	Accessible bool
 	// accessible represents whether this peer is accessible in the latest sync.
 	PubKey *wgtypes.Key
-	PSK    *wgtypes.Key
 	Creds  credentials.TransportCredentials
 	// creds for this specific peer.
 }

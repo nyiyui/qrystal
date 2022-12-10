@@ -26,6 +26,9 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 	if err != nil {
 		return fmt.Errorf("convert: %w", err)
 	}
+	if cn.Desynced == 0 {
+		return nil
+	}
 	me, ok := cn.Peers[cn.Me]
 	if !ok {
 		return fmt.Errorf("peer %s not found", cn.Me)
@@ -76,7 +79,7 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	}
 	config = &wgtypes.Config{
 		PrivateKey:   cn.MyPrivKey,
-		ReplacePeers: true,
+		ReplacePeers: true, // (cn.Desynced & central.DIPs)==central.DIPs,
 		Peers:        configs,
 		ListenPort:   &cn.ListenPort,
 	}
@@ -120,7 +123,6 @@ func (s *Node) convPeer(cn *central.Network, peer *central.Peer) (config *wgtype
 		PublicKey:                   *peer.Internal.PubKey,
 		Remove:                      false,
 		UpdateOnly:                  false,
-		PresharedKey:                peer.Internal.PSK,
 		Endpoint:                    host,
 		PersistentKeepaliveInterval: &keepalive,
 		ReplaceAllowedIPs:           true,
