@@ -39,6 +39,10 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 		Tokens:       ts,
 		backportPath: backportPath,
 	}
+	err = cs.cc.Assign()
+	if err != nil {
+		return nil, fmt.Errorf("assign: %w", err)
+	}
 	cs.newHandler()
 	return cs, nil
 }
@@ -143,25 +147,6 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 		s.ccLock.Lock()
 		defer s.ccLock.Unlock()
 		cn := s.cc.Networks[q.Cnn]
-		if len(peer.AllowedIPs) == 0 {
-			util.S.Infof("push net %s peer %s: assigning IP", q.Cnn, q.PeerName)
-			// assign an IP address chosen by me
-			for _, ipNet := range cn.IPs {
-				usedIPs := []net.IPNet{}
-				for _, peer := range cn.Peers {
-					usedIPs = append(usedIPs, central.ToIPNets(peer.AllowedIPs)...)
-				}
-				ip, err := util.AssignAddress((*net.IPNet)(&ipNet), usedIPs)
-				if err != nil {
-					return &api.PushS{
-						S: &api.PushS_Overflow{
-							Overflow: fmt.Sprint(err),
-						},
-					}, nil
-				}
-				peer.AllowedIPs = central.FromIPNets([]net.IPNet{{IP: ip, Mask: net.IPMask{0xff, 0xff, 0xff, 0xff}}})
-			}
-		}
 		// TODO: impl checks for PublicKey, host, net overlap
 		cn.Peers[q.PeerName] = peer
 		return nil, nil
