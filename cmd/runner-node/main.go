@@ -38,7 +38,7 @@ type csConfig struct {
 	Comment     string   `yaml:"comment"`
 	TLSCertPath string   `yaml:"tls-cert-path"`
 	AllowedNets []string `yaml:"networks"`
-	Host        string   `yaml:"host"`
+	Host        string   `yaml:"endpoint"`
 	Token       string   `yaml:"token"`
 }
 
