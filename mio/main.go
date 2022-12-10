@@ -31,7 +31,7 @@ type Server struct {
 }
 
 func genToken() ([]byte, string, error) {
-	b := make([]byte, 4)
+	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
 		return nil, "", err
