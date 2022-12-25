@@ -19,9 +19,11 @@ import (
 )
 
 var configPath string
+var configJSON bool
 
 func main() {
 	flag.StringVar(&configPath, "config", "", "config file path")
+	flag.BoolVar(&configJSON, "config-json", false, "whether config file is in json")
 	flag.Parse()
 
 	util.SetupLog()
@@ -29,7 +31,7 @@ func main() {
 	util.ShowCurrent()
 	profile.Profile()
 
-	config, err := cs.LoadConfig(configPath)
+	config, err := cs.LoadConfig(configPath, configJSON)
 	if err != nil {
 		log.Fatalf("load config: %s", err)
 	}
@@ -69,7 +71,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("listen: %s", err)
 	}
-	log.Print("will serve…")
+	log.Print("listening ok")
+	log.Print("serving…")
+	err = util.Notify("READY=1\nSTATUS=serving…")
+	if err != nil {
+		log.Printf("Notify: %s", err)
+	}
 	err = gs.Serve(lis)
 	if err != nil {
 		log.Fatalf("serve: %s", err)

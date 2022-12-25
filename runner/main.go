@@ -3,16 +3,11 @@
 package runner
 
 import (
-	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/nyiyui/qrystal/runner/config"
-	"gopkg.in/yaml.v3"
 )
 
 // Main runs mio and node.
@@ -47,19 +42,7 @@ func Main() {
 }
 
 func main2() (mh *mioHandle, nh *nodeHandle, err error) {
-	var configPath string
-	flag.StringVar(&configPath, "config", "", "path to config file")
-	flag.Parse()
-
-	var cfg config.Root
-	raw, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("read config: %s", err)
-	}
-	err = yaml.Unmarshal(raw, &cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("decode config: %s", err)
-	}
+	cfg := newConfig()
 	log.Printf("%#v", cfg)
 	mh, err = newMio(&cfg.Mio)
 	if err != nil {

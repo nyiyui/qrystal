@@ -3,6 +3,7 @@ package node
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/mio"
@@ -109,7 +110,7 @@ func (s *Node) convPeer(cn *central.Network, peer *central.Peer) (config *wgtype
 		panic(fmt.Sprintf("net %#v peer %#v pubKey is nil", cn, peer))
 	}
 
-	keepalive := cn.Keepalive
+	keepalive := time.Duration(cn.Keepalive)
 
 	allowedIPs := make([]central.IPNet, len(peer.AllowedIPs))
 	copy(allowedIPs, peer.AllowedIPs)

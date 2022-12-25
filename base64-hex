@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+cut -c 8- | base64 -d | hexdump -e '16/1 "%02x" ""'

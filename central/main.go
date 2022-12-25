@@ -2,6 +2,7 @@
 package central
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"sync"
@@ -34,7 +35,7 @@ type Network struct {
 	IPs        []IPNet          `yaml:"ips"`
 	Peers      map[string]*Peer `yaml:"peers"`
 	Me         string           `yaml:"me"`
-	Keepalive  time.Duration    `yaml:"keepalive"`
+	Keepalive  Duration         `yaml:"keepalive"`
 	ListenPort int              `yaml:"listen-port"`
 
 	// lock is only for myPrivKey.
@@ -123,9 +124,35 @@ func (c *CanSee) Same(c2 *CanSee) bool {
 	return Same3(c.Only, c2.Only)
 }
 
+// Duration is a JSON-friendly time.Duration.
+type Duration time.Duration
+
+func (d *Duration) UnmarshalJSON(data []byte) error {
+	var raw string
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	d2, err := time.ParseDuration(raw)
+	*d = Duration(d2)
+	return err
+}
+
 // IPNet is a YAML-friendly net.IPNet.
 // TODO: move to package util
 type IPNet net.IPNet
+
+// UnmarshalJSON implements yaml.Unmarshaler.
+func (i *IPNet) UnmarshalJSON(data []byte) error {
+	var cidr string
+	err := json.Unmarshal(data, &cidr)
+	if err != nil {
+		return err
+	}
+	net, err := util.ParseCIDR(cidr)
+	*i = IPNet(net)
+	return err
+}
 
 // UnmarshalYAML implements yaml.Unmarshaler.
 func (i *IPNet) UnmarshalYAML(value *yaml.Node) error {

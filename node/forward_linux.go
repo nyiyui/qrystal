@@ -2,12 +2,14 @@ package node
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
 )
+
+var CommandIp string
+var CommandIptables string
 
 var outboundRe = regexp.MustCompile(`(dev )(?P<dev>\S+)`)
 
@@ -15,7 +17,7 @@ func getOutbound() (string, error) {
 	errBuf := new(bytes.Buffer)
 	outBuf := new(bytes.Buffer)
 	// NOTE: workaround for $PATH being weird
-	cmd := exec.Command("ip", "route", "show", "default")
+	cmd := exec.Command(CommandIp, "route", "show", "default")
 	cmd.Stderr = errBuf
 	cmd.Stdout = outBuf
 	err := cmd.Run()
@@ -25,17 +27,19 @@ func getOutbound() (string, error) {
 	out := outBuf.String()
 	// NOTE: check if locale affects this
 	if !strings.HasPrefix(out, "default via") {
-		return "", errors.New("unexpected output not starting with \"default via\"")
+		return "", fmt.Errorf("unexpected output (%s) not starting with \"default via\"", out)
 	}
 	return outboundRe.FindStringSubmatch(out)[2], nil
 }
 
 func makePost(flag, rule, cnn, outbound string) string {
 	return fmt.Sprintf(
-		`iptables %s FORWARD %s -i %s -j ACCEPT && iptables -t nat %s POSTROUTING %s 0 -o %s -j MASQUERADE`,
+		`%s %s FORWARD %s -i %s -j ACCEPT && %s -t nat %s POSTROUTING %s 0 -o %s -j MASQUERADE`,
+		CommandIptables,
 		flag,
 		rule,
 		cnn,
+		CommandIptables,
 		flag,
 		rule,
 		outbound,

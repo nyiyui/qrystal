@@ -42,7 +42,7 @@ func newCNFromAPI(cnn string, cn *api.CentralNetwork) (cn2 *central.Network, err
 		IPs:        central.FromIPNets(ips),
 		Peers:      peers,
 		Me:         cn.Me,
-		Keepalive:  cn.Keepalive.AsDuration(),
+		Keepalive:  central.Duration(cn.Keepalive.AsDuration()),
 		ListenPort: int(cn.ListenPort),
 	}, nil
 }

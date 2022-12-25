@@ -30,10 +30,8 @@ central:
         - 10.123.0.1/16
       peers:
         phone:
-          public-key: U_…
           allowed-ips:
             - 10.123.0.1/32
         desktop:
-          public-key: U_…
           allowed-ips:
             - 10.123.0.2/32

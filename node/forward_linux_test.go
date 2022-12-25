@@ -1,3 +1,5 @@
+//go:build !nix
+
 package node
 
 import "testing"
