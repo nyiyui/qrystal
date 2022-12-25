@@ -138,7 +138,6 @@
               };
 
               serviceConfig = {
-                User = "qrystal-node";
                 Restart = "on-failure";
                 ExecStart = "${pkg}/bin/runner";
                 #ExecStart = '' ${pkgs.bash}/bin/bash -c '${pkgs.coreutils}/bin/ls -al ${pkg}/bin/runner ${packages.mio}/bin; ${pkgs.coreutils-full}/bin/id; ${pkg}/bin/runner' '';
