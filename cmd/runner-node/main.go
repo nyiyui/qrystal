@@ -67,7 +67,7 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		NewTLSConfig: func() *tls.Config {
 			pool := x509.NewCertPool()
 			if !pool.AppendCertsFromPEM(cert) {
-				panic(fmt.Sprintf("load pem: %s", err))
+				panic(fmt.Sprintf("load pem: %s", cert))
 			}
 			return &tls.Config{RootCAs: pool}
 		},
