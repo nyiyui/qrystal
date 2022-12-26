@@ -124,12 +124,25 @@ func (c *CanSee) Same(c2 *CanSee) bool {
 	return Same3(c.Only, c2.Only)
 }
 
-// Duration is a JSON-friendly time.Duration.
+// Duration is a encoding-friendly time.Duration.
 type Duration time.Duration
 
+// UnmarshalJSON implements json.Unmarshaler.
 func (d *Duration) UnmarshalJSON(data []byte) error {
 	var raw string
 	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	d2, err := time.ParseDuration(raw)
+	*d = Duration(d2)
+	return err
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler.
+func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
+	var raw string
+	err := value.Decode(&raw)
 	if err != nil {
 		return err
 	}
@@ -142,7 +155,7 @@ func (d *Duration) UnmarshalJSON(data []byte) error {
 // TODO: move to package util
 type IPNet net.IPNet
 
-// UnmarshalJSON implements yaml.Unmarshaler.
+// UnmarshalJSON implements json.Unmarshaler.
 func (i *IPNet) UnmarshalJSON(data []byte) error {
 	var cidr string
 	err := json.Unmarshal(data, &cidr)

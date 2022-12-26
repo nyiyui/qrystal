@@ -19,11 +19,9 @@ import (
 )
 
 var configPath string
-var configJSON bool
 
 func main() {
 	flag.StringVar(&configPath, "config", "", "config file path")
-	flag.BoolVar(&configJSON, "config-json", false, "whether config file is in json")
 	flag.Parse()
 
 	util.SetupLog()
@@ -31,7 +29,7 @@ func main() {
 	util.ShowCurrent()
 	profile.Profile()
 
-	config, err := cs.LoadConfig(configPath, configJSON)
+	config, err := cs.LoadConfig(configPath)
 	if err != nil {
 		log.Fatalf("load config: %s", err)
 	}

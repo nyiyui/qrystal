@@ -6,104 +6,103 @@ let
   node2Hash = "b7ba9038ed61f27a1e4142007eaaed7a0309fed9180bace0474d2891bada9395";
   rootCert = ''
 -----BEGIN CERTIFICATE-----
-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
+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
-BgEFBQcDAjASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBSjCcxWVdVtcWck
-j19JrTJ+6aArLDAfBgNVHSMEGDAWgBSjCcxWVdVtcWckj19JrTJ+6aArLDANBgkq
-hkiG9w0BAQsFAAOCAQEAkdVKhwkpeRh5771K5rZ/Nnc8MBkWAFtfnNso4iu1R1tm
-eBS1+5+MtTr09x9j6/MHBpXhQ9RiXlmPeZ8RxrMV41tpOjSWa1K8rbeQMg4/P7RW
-mpvrFfbs3yvoAL9Ge3A0De7HK4mnkgPsStGv3lkLbc7daQj7KZvSlVKe96CDpFVs
-Sy0ShTI9qTQ5ef1yBdgXduxcEyqUkKz0nIxLrxKgn6SR7gHYuEhHPFTIV/0nuTeK
-e10PhLbzCiijUbXIjXDItDrt94mBssxgOMTwJDi54ovaEkGtc1MfM1tyyqmWqz5o
-BQ1yF+Ass/zzbui911XnI+NRM+93xAg5bRUgJwnKwA==
+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
 -----END CERTIFICATE-----
 '';
   rootKey = ''
 -----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----
 '';
   csCert = ''
 -----BEGIN CERTIFICATE-----
-MIIDSDCCAjCgAwIBAgIIQRvAzz9DI9MwDQYJKoZIhvcNAQELBQAwIDEeMBwGA1UE
-AxMVbWluaWNhIHJvb3QgY2EgMjJmOTQ5MB4XDTIyMTIxODE5MjYxN1oXDTI1MDEx
-NzE5MjYxN1owITEfMB0GA1UEAxMWY3MudGVzdG5ldC5leGFtcGxlLm5ldDCCASIw
-DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALUnOtOm1Kje6QGFmbDd1B2d2sBN
-Hh3ZJDGBNLvFNp/FkDccTHi8qSXlg49BM+qq216UWA629ow652K/8v17UODyJdQV
-QJU7DgRxJrA5A5BYPA53j22Yz4Q417p6mwgVCsPDqgG/xDP4nnlwryTPz/hTRIRt
-jvldkfy92j504sEw9nVF7YYyfQfvdnMW5PRi+f4mwIobZwsjFT0NzjS5wj5frERs
-Wdv8uyQ5eJGZmu6kd9Uqg1AIZPZ8ZUwV/mG1LUNrylZ+XjOn4ImmHahFQfJvWqXZ
-bo4YIBJSE0wltS+H0b6bJBYq4pHkuM5tKuaCmZdb2NCWqzYXZTV0tks6o1cCAwEA
-AaOBhDCBgTAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG
-AQUFBwMCMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUownMVlXVbXFnJI9fSa0y
-fumgKywwIQYDVR0RBBowGIIWY3MudGVzdG5ldC5leGFtcGxlLm5ldDANBgkqhkiG
-9w0BAQsFAAOCAQEAbp7ugJuzSpUToKm0rSZZ8XkJ1MahQ4OsM+vGcN6x2TZZrWUs
-d4jHOlbGaZnu9wQUzAjGA/CkCIwB2qdcTZhae95tg/H1UUlJIcTRLhp/Y6IwKcul
-T4SsuF5qyO3q3boaI+1bsDnjhXaclsaHJpo6uaU9257LEa3xmPt2r1/YSg/oa5fV
-QMDoUVvqtuHqIIFscObp3bly3ZIwC72Chj8h8Ys09i4QiAyr81eAP+4IruVxJjOC
-SqE65bF2dHmuG5qOlDcCl5aeXGzt4qY8emJo4d65rSxu8OLwVIG0t1KkXtAdUZ/O
-1m/aCLEDg8M1aDkVWwezne1NRnnFLadW0cY/og==
+MIIDHjCCAgagAwIBAgIIATrnPnVsh48wDQYJKoZIhvcNAQELBQAwIDEeMBwGA1UE
+AxMVbWluaWNhIHJvb3QgY2EgMDI1ZjhiMB4XDTIyMTIyNjA1MTMwMVoXDTI1MDEy
+NTA1MTMwMVowDTELMAkGA1UEAxMCY3MwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+ggEKAoIBAQCgLOhKRh6/44dflWoor5bVnqHgcb2SIMBPZHX5GjXy7V1CG8sDy12/
+cnHGsuVQi9PtM/PFe1zKxNPkFiPp81RNwzGSBkfP3P0Y5t4jLpJEr7V+jbP0ag6f
+QHbqrlB20E0UyT5eTC+8zzkmlmwZjSuZikJ2KEHckyNEb1b/jXsF3phGOky3qCZw
+MaY5njQIFyWC/9MRa/i/Dfx+qbL02mqaXKUJhB4OExaf4xWP8U6TbluOthzuZ4Bf
+MdrP2wYmUjP8xAT0VGNqxi4UDsJN8xe4+sDzBIYoXWqO0G5wPymUq0TRlR13C1dv
+XbH2fsya0jF4aJbQRSMKQ+mh/EAs2YdJAgMBAAGjbzBtMA4GA1UdDwEB/wQEAwIF
+oDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAf
+BgNVHSMEGDAWgBRC63gaY8+PMYdXHOzZZjt4MaPxhDANBgNVHREEBjAEggJjczAN
+BgkqhkiG9w0BAQsFAAOCAQEAoxefM68W/FJ3Vy2dnoLKmiZWFuaabMatVzU37ciZ
+arvKvjoIw8mwKglsHOHCMANcDX/xKr7TTzUw5sJXvgNe0yglFlAhxgSxDkMMjTl3
+Z6a7eaiDRRwxcz5jovjtGYxPFXzERN1XQohHTXUtmfIhAmRX5+BXLiB8Vqmhh8Zz
+GoW4sBBy8LMRIqC97yashjEAX7bcVdU2Q/smIWDimYsOHrg3mb9jvyimZ7PruL8R
+EEnR6uXcy2ckAdMAyOnJ1VU3UMXr2UN3LZ8NKmUQiLevNJeUyDqWzIragkKqCd0o
+1GAYQjATERhjwzQMmVA4AOP2T9BMmwVX/T5ZA67acmDxiA==
 -----END CERTIFICATE-----
 '';
   csKey = ''
 -----BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEAtSc606bUqN7pAYWZsN3UHZ3awE0eHdkkMYE0u8U2n8WQNxxM
-eLypJeWDj0Ez6qrbXpRYDrb2jDrnYr/y/XtQ4PIl1BVAlTsOBHEmsDkDkFg8DneP
-bZjPhDjXunqbCBUKw8OqAb/EM/ieeXCvJM/P+FNEhG2O+V2R/L3aPnTiwTD2dUXt
-hjJ9B+92cxbk9GL5/ibAihtnCyMVPQ3ONLnCPl+sRGxZ2/y7JDl4kZma7qR31SqD
-UAhk9nxlTBX+YbUtQ2vKVn5eM6fgiaYdqEVB8m9apdlujhggElITTCW1L4fRvpsk
-FirikeS4zm0q5oKZl1vY0JarNhdlNXS2SzqjVwIDAQABAoIBAA/V8xWHcvWkLtg8
-Npg4fA9uui2vUB+p2LkfI136unCzE41Nwv2W+G5gpuSB/ajY8L5O13fJ1LmjeJCw
-WOyBuCtB376vcOras7n9rjUfdslKfU2CdB5Pimxzj6A0kZLeTAea9iSa/+rPJANX
-r2fXZsW9ebLd5O61mEpwykBFdYEPwgFdE7oSTo600ahI0dJZ2JObnn66tMUDT1lr
-A8Wzo1SehRWWQA6XdHFhvOduA5b5djYW79fC09Yh3U7dnLpXu5CTMSk5LEL3iS2i
-IGncxu5bWGY0dXmZgLetsfrC1W2v/8pA2kkzWnx14aQ+uXQ8T44bUeDrctjcmxqN
-7Pnf48kCgYEA0WVzOfqYrwgvvcU06Wb/1EeYlThN9SP/PZylPyJJp3+fz2Uecjuv
-pQvPOSdtlweyF0GnKh6xtgF2s4aHnIeXyVYEIkdIP3Jzvfak6MjBYfBgn4jQG13h
-kdCd4kHbL5TMsjj6Amuh0Ih0XULXyu2VDVnmy7xRf3zSQnjpl5/8npsCgYEA3Xib
-BRa0GJPc1viTG+WFVaPHZ/EBhnhzrZcZAt0FZTkxYDJQYN0MvQur92t4sZfOtdrp
-uYCUaUuLr1N6pk+0eWg1wVUg34Tuxw1LM+P5oQp9mupqK+hcWFBXkzFPNJE9Fxwk
-7Y+mteekAkJUGoilKuXKfUW4x/kaxqI5Aoa9m/UCgYBSYCzCZFlokjnl2A0GvSRr
-qHbYTTwt8ilZXaSMf7qmEEkYV9lwaxagQVMWUvKD9d0T1RokMcsLpOvDmGsFIzqN
-VC9wJMbBXw81bjBV+5RIKT55xGLKQVaZ/I4AEpRd1ZXpjwyboygXV3cfsUofZPO8
-Ot/WypDtLHey+so6gg/pfQKBgCjhNzQUQb/7oxrnHThcAGWTap5MBS0OFMQpDMvT
-gkhx6yRHhUCr7MsEWYS9CLU3QUeeFeBQ1JQvBqShMxV5xuVWD/4UuZGolu6VDJmS
-biSErDSpKlnadRk0E0YvJuCcInuejU5wYqRXEpX8KkwPhvVJHzxKX1ZCK+gYT4+g
-0WT1AoGAWANSu0Z+JlzXJ4jsyPSM/wT+yJAx4Vx6hT+K/M6LeErd/GVITrprbRdi
-FrPsI0Vtbe9DTzjmBF2RrRzZ8ePirbMlETPXkS4v4sISIhmWnPi3cy4GjuxQ8tfq
-V3q3hlKpuGWhFQxyV4E3CqkHfP1jhp7xdZgrpi5uiznUGxrU9j0=
+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
 -----END RSA PRIVATE KEY-----
 '';
 in
@@ -147,35 +146,36 @@ in
     pkgs = nixpkgsFor.${system};
     lib = nixosLibFor.${system} { inherit system; };
     networkName = "testnet";
+    base = { # TODO
+      virtualisation.vlans = [ 1 ];
+    };
   in let
-    node = (token: { pkgs, ... }: {
+    node = ({ token }: { pkgs, ... }: base // {
       imports = [ self.outputs.nixosModules.${system}.node ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
       qrystal.services.node = {
         enable = true;
-        #config.css = [
-        #  {
-        #    comment = "cs";
-        #    endpoint = "cs.testnet.example.net";
-        #    tls.certPath = rootCert + "\n" + csCert;
-        #    networks = [ networkName ];
-        #    inherit token;
-        #  }
-        #];
+        config.css = [
+          {
+            comment = "cs";
+            endpoint = "cs:39252";
+            tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
+            networks = [ networkName ];
+            inherit token;
+          }
+        ];
       };
+      systemd.services.qrystal-node.wantedBy = [];
     });
-    base = { # TODO
-      virtualisation.vlans = [ 1 ];
-    };
   in
   lib.runTest ({
     name = "integration";
     hostPkgs = pkgs;
     nodes = {
-      node1 = node node1Token;
-      node2 = node node2Token;
-      cs = { pkgs, ... }: {
+      node1 = node { token = node1Token; };
+      node2 = node { token = node2Token; };
+      cs = { pkgs, ... }: base // {
         imports = [ self.outputs.nixosModules.${system}.cs ];
 
         networking.firewall.allowedTCPPorts = [ 39252 ];
@@ -203,7 +203,11 @@ in
       nodes = [node1, node2]
       start_all()
       cs.wait_for_unit("qrystal-cs.service")
-      list(map(lambda node: node.wait_for_unit("qrystal-node.service"), nodes))
+      for node in nodes:
+        node.succeed("ping cs")
+      for node in nodes:
+        node.systemctl("start qrystal-node.service")
+        node.wait_for_unit("qrystal-node.service", timeout=20)
       addrs = ["10.123.10.1", "10.123.10.2"]
       for node in nodes:
         for addr in addrs:

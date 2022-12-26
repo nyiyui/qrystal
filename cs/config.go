@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -16,15 +15,15 @@ import (
 )
 
 type Config struct {
-	Addr        string `yaml:"addr" json:"addr"`
+	Addr        string `yaml:"addr"`
 	TLSCertPath string `yaml:"tls-cert-path"`
 	TLSKeyPath  string `yaml:"tls-key-path"`
 	TLS         struct {
-		CertPath string `json:"certPath"`
-		KeyPath  string `json:"keyPath"`
-	} `json:"tls"`
-	CC           *central.Config `yaml:"central" json:"central"`
-	Tokens       *TokensConfig   `yaml:"tokens" json:"tokens"`
+		CertPath string `yaml:"certPath"`
+		KeyPath  string `yaml:"keyPath"`
+	} `yaml:"tls"`
+	CC           *central.Config `yaml:"central"`
+	Tokens       *TokensConfig   `yaml:"tokens"`
 	BackportPath string          `yaml:"backport-path"`
 	DBPath       string          `yaml:"db-path"`
 }
@@ -87,7 +86,6 @@ func convertTokens2(tokens []TokenConfig) ([]Token, error) {
 	res := make([]Token, len(tokens))
 	for i, token := range tokens {
 		var hash [sha256.Size]byte
-		log.Println(len(hash))
 		n := copy(hash[:], *token.Hash)
 		if n != len(hash) {
 			return nil, fmt.Errorf("token %d: invalid length (%d) hash", i, n)
@@ -106,22 +104,16 @@ func convertTokens2(tokens []TokenConfig) ([]Token, error) {
 	return res, nil
 }
 
-func LoadConfig(configPath string, isJSON bool) (*Config, error) {
+func LoadConfig(configPath string) (*Config, error) {
 	raw, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("config read: %s", err)
 	}
-	log.Printf("config1: %s", raw)
 	var config Config
-	if isJSON {
-		err = json.Unmarshal(raw, &config)
-	} else {
-		err = yaml.Unmarshal(raw, &config)
-	}
+	err = yaml.Unmarshal(raw, &config)
 	if err != nil {
 		return nil, fmt.Errorf("config unmarshal: %s", err)
 	}
-	log.Printf("config2: %#v", config)
 	if config.CC == nil {
 		return nil, errors.New("no central config specified")
 	}

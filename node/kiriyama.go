@@ -18,16 +18,17 @@ type Kiriyama struct {
 	Addr string
 
 	// state
-	csLock   sync.RWMutex
+	csLock   sync.RWMutex // locks for cs and csReady
 	cs       map[int32]*api.CSStatus
-	peerLock sync.RWMutex
+	csReady  map[int32]bool
+	peerLock sync.RWMutex // locks for peer
 	peer     map[string]string
 }
 
 var _ api.KiriyamaServer = (*Kiriyama)(nil)
 
 func newKiriyama(n *Node) *Kiriyama {
-	return &Kiriyama{N: n, cs: map[int32]*api.CSStatus{}, peer: map[string]string{}}
+	return &Kiriyama{N: n, cs: map[int32]*api.CSStatus{}, csReady: map[int32]bool{}, peer: map[string]string{}}
 }
 
 func (k *Kiriyama) SetCS(i int, s string) {
@@ -44,6 +45,22 @@ func (k *Kiriyama) SetCS(i int, s string) {
 		css.Name, _, _ = net.SplitHostPort(csc.Host)
 	}
 	k.cs[int32(i)] = css
+}
+
+func (k *Kiriyama) SetCSReady(i int, ready bool) {
+	k.csLock.Lock()
+	defer k.csLock.Unlock()
+	k.csReady[int32(i)] = ready
+	k.notifyCSStatus()
+}
+
+func (k *Kiriyama) notifyCSStatus() {
+	for _, ready := range k.csReady {
+		if !ready {
+			return
+		}
+	}
+	util.Notify("READY=1\nSTATUS=all css ready")
 }
 
 func (k *Kiriyama) SetPeer(cnn string, pn string, s string) {

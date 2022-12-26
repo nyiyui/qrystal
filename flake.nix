@@ -92,7 +92,7 @@
               type = submodule {
                 options = {
                   css = mkOption {
-                    type = listOf submodule {
+                    type = listOf (submodule {
                       options = {
                         comment = mkOption {
                           type = str;
@@ -116,7 +116,7 @@
                           type = str;
                         };
                       };
-                    };
+                    });
                   };
                 };
               };
@@ -134,13 +134,13 @@
               environment = {
                 "RUNNER_MIO_PATH" = "${pkg}/bin/runner-mio";
                 "RUNNER_NODE_PATH" = "${pkg}/bin/runner-node";
-                #RUNNER_NODE_CONFIG_PATH = mkConfigFile cfg;
+                "RUNNER_NODE_CONFIG_PATH" = mkConfigFile cfg;
               };
 
               serviceConfig = {
                 Restart = "on-failure";
+                Type = "notify";
                 ExecStart = "${pkg}/bin/runner";
-                #ExecStart = '' ${pkgs.bash}/bin/bash -c '${pkgs.coreutils}/bin/ls -al ${pkg}/bin/runner ${packages.mio}/bin; ${pkgs.coreutils-full}/bin/id; ${pkg}/bin/runner' '';
                 StateDirectory = "qrystal-node";
                 StateDirectoryMode = "0700";
               };
@@ -246,13 +246,12 @@
             };
             systemd.services.qrystal-cs = {
               wantedBy = [ "network-online.target" ];
-
               serviceConfig = let pkg = packages.cs;
               in {
                 User = "qrystal-cs";
                 Restart = "on-failure";
                 Type = "notify";
-                ExecStart = "${pkg}/bin/cs -config-json -config ${mkConfigFile cfg}";
+                ExecStart = "${pkg}/bin/cs -config ${mkConfigFile cfg}";
                 RuntimeDirectory = "qrystal-cs";
                 RuntimeDirectoryMode = "0700";
                 StateDirectory = "qrystal-cs";

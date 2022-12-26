@@ -35,8 +35,11 @@ func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type csConfig struct {
-	Comment     string   `yaml:"comment"`
-	TLSCertPath string   `yaml:"tls-cert-path"`
+	Comment     string `yaml:"comment"`
+	TLSCertPath string `yaml:"tls-cert-path"`
+	TLS         struct {
+		CertPath string `yaml:"certPath"`
+	} `yaml:"tls"`
 	AllowedNets []string `yaml:"networks"`
 	Host        string   `yaml:"endpoint"`
 	Token       string   `yaml:"token"`
@@ -45,6 +48,9 @@ type csConfig struct {
 func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 	var err error
 	var cert []byte
+	if cfg.TLSCertPath == "" {
+		cfg.TLSCertPath = cfg.TLS.CertPath
+	}
 	if cfg.TLSCertPath != "" {
 		cert, err = ioutil.ReadFile(cfg.TLSCertPath)
 		if err != nil {
@@ -86,7 +92,8 @@ func main() {
 	profile.Profile()
 
 	var c config
-	data, err := ioutil.ReadFile(os.Getenv("CONFIG_PATH"))
+	configPath := os.Getenv("CONFIG_PATH")
+	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("read config: %s", err)
 	}
@@ -94,6 +101,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("load config: %s", err)
 	}
+	log.Printf("config loaded from %s: %s", configPath, c)
 
 	// CS
 	ncscs := make([]node.CSConfig, 0, len(c.CSs))

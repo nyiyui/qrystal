@@ -64,13 +64,18 @@ func (n *Node) listenCS(i int) error {
 }
 
 func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
+	defer n.Kiriyama.SetCSReady(i, resetBackoff)
 	// Setup
 	cl, err := n.newClient(i)
 	if err != nil {
 		return
 	}
 
-	return false, n.pullCS(i, cl)
+	err = n.pullCS(i, cl)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
