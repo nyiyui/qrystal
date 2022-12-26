@@ -2,7 +2,7 @@ package node
 
 import (
 	"crypto/tls"
-	"errors"
+	"fmt"
 
 	"github.com/cenkalti/rpc2"
 	"github.com/nyiyui/qrystal/api"
@@ -13,17 +13,20 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 	cl.Handle("generate", func(cl *rpc2.Client, q *api.GenerateQ, s *api.GenerateS) error {
 		n.ccLock.Lock()
 		defer n.ccLock.Unlock()
-		cn, ok := n.cc.Networks[q.CNN]
-		if !ok {
-			return errors.New("unknown CN")
+		s.PubKeys = make([]wgtypes.Key, len(q.CNNs), len(q.CNNs))
+		for i, cnn := range q.CNNs {
+			cn, ok := n.cc.Networks[cnn]
+			if !ok {
+				return fmt.Errorf("%d: unknown CN %s", i, cnn)
+			}
+			key, err := wgtypes.GeneratePrivateKey()
+			if err != nil {
+				return fmt.Errorf("%d: GeneratePrivateKey: %w", i, err)
+			}
+			cn.MyPrivKey = &key
+			n.cc.Networks[cnn] = cn
+			s.PubKeys[i] = key
 		}
-		key, err := wgtypes.GeneratePrivateKey()
-		if err != nil {
-			return err
-		}
-		cn.MyPrivKey = &key
-		n.cc.Networks[q.CNN] = cn
-		s.PubKey = key
 		return nil
 	})
 	go cl.Run()

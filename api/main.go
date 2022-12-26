@@ -14,9 +14,9 @@ type PullS struct {
 }
 
 type GenerateQ struct {
-	CNN string
+	CNNs []string
 }
 
 type GenerateS struct {
-	PubKey wgtypes.Key
+	PubKeys []wgtypes.Key
 }

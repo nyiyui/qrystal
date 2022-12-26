@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cenkalti/rpc2"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/cenkalti/rpc2"
 
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node/api"
@@ -34,6 +35,13 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 	if err != nil {
 		return nil, err
 	}
+
+	for _, cn := range cc.Networks {
+		for _, peer := range cn.Peers {
+			peer.Internal = new(central.PeerInternal)
+		}
+	}
+
 	cs := &CentralSource{
 		cc:           cc,
 		Tokens:       ts,

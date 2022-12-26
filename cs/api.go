@@ -38,18 +38,31 @@ func (c *CentralSource) pull(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error 
 		}
 	}()
 	util.S.Infof("%sから新たな認証済プル", ti.Name)
-	// token status could change while this is called
-	ti, ok, err = c.Tokens.getToken(q.CentralToken)
+
+	grcns, err := c.generationRequests(ti.Networks)
 	if err != nil {
-		return err
+		util.S.Infof("generationRequests (possibly invalid config): %s", err)
+		return errors.New("generationRequests failed (possibly invalid config)")
 	}
-	if !ok {
-		return newTokenAuthError(q.CentralToken)
+	if len(grcns) != 0 {
+		util.S.Infof("pull %s: requesting generation of keys", ti.Name)
+		var s2 api.GenerateS
+		err = cl.Call("generate", &api.GenerateQ{CNNs: grcns}, &s2)
+		if err != nil {
+			util.S.Infof("generate with %s: %s", grcns, err)
+			return errors.New("generate failed")
+		}
+		func() {
+			c.ccLock.Lock()
+			defer c.ccLock.Unlock()
+			for i, key := range s2.PubKeys {
+				cnn := grcns[i]
+				cn := c.cc.Networks[cnn]
+				peer := cn.Peers[ti.Networks[cnn]]
+				peer.Internal.PubKey = &key
+			}
+		}()
 	}
-	if !ti.CanPull {
-		return errors.New("cannot pull")
-	}
-	util.S.Infof("%sに送ります。", ti.Name)
 
 	newCC, err := c.copyCC(ti.Networks)
 	if err != nil {
@@ -57,5 +70,6 @@ func (c *CentralSource) pull(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error 
 		return errors.New("conversion failed")
 	}
 	s.CC = *newCC
+	// TODO: how to notify nodes of changes to cc
 	return nil
 }
