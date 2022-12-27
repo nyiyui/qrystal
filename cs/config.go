@@ -14,18 +14,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type TLS struct {
+	CertPath string `yaml:"certPath"`
+	KeyPath  string `yaml:"keyPath"`
+}
+
 type Config struct {
-	Addr        string `yaml:"addr"`
-	TLSCertPath string `yaml:"tls-cert-path"`
-	TLSKeyPath  string `yaml:"tls-key-path"`
-	TLS         struct {
-		CertPath string `yaml:"certPath"`
-		KeyPath  string `yaml:"keyPath"`
-	} `yaml:"tls"`
+	Addr         string          `yaml:"addr"`
+	TLS          TLS             `yaml:"tls"`
 	CC           *central.Config `yaml:"central"`
 	Tokens       *TokensConfig   `yaml:"tokens"`
-	BackportPath string          `yaml:"backport-path"`
-	DBPath       string          `yaml:"db-path"`
+	BackportPath string          `yaml:"backportPath"`
+	DBPath       string          `yaml:"dbPath"`
 }
 
 func (c *Config) apply() {
@@ -34,10 +34,6 @@ func (c *Config) apply() {
 	}
 	if c.DBPath == "" {
 		c.DBPath = filepath.Join(os.Getenv("STATE_DIRECTORY"), "db")
-	}
-	if c.TLSCertPath == "" && c.TLSKeyPath == "" {
-		c.TLSCertPath = c.TLS.CertPath
-		c.TLSKeyPath = c.TLS.KeyPath
 	}
 }
 
@@ -77,9 +73,9 @@ type TokenConfig struct {
 	Name         string            `yaml:"name" json:"name"`
 	Hash         *util.HexBytes    `yaml:"hash" json:"hash"`
 	Networks     map[string]string `yaml:"networks" json:"networks"`
-	CanPull      bool              `yaml:"can-pull"`
-	CanPush      *CanPush          `yaml:"can-push"`
-	CanAddTokens *CanAddTokens     `yaml:"can-add-tokens"`
+	CanPull      bool              `yaml:"canPull"`
+	CanPush      *CanPush          `yaml:"canPush"`
+	CanAddTokens *CanAddTokens     `yaml:"canAddTokens"`
 }
 
 func convertTokens2(tokens []TokenConfig) ([]Token, error) {

@@ -8,7 +8,7 @@ import (
 
 type CSConfig struct {
 	Comment         string
-	NewTLSConfig    func() *tls.Config
+	TLSConfig       *tls.Config
 	Host            string
 	Token           string
 	NetworksAllowed []*regexp.Regexp

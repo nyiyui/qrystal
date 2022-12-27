@@ -7,15 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/nyiyui/qrystal/cs"
-	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var configPath string
@@ -34,51 +30,40 @@ func main() {
 		log.Fatalf("load config: %s", err)
 	}
 	log.Print("config file loaded")
-	creds, err := credentials.NewServerTLSFromFile(config.TLSCertPath, config.TLSKeyPath)
-	if err != nil {
-		log.Fatalf("server tls: %s", err)
-	}
-	log.Printf("TLS creds read")
 
 	db, err := buntdb.Open(config.DBPath)
 	if err != nil {
 		log.Fatalf("open db: %s", err)
 	}
-	server, err := cs.New(*config.CC, config.BackportPath, db)
+	cs2, err := cs.New(*config.CC, config.BackportPath, db)
 	if err != nil {
 		log.Fatalf("new: %s", err)
 	}
-	err = warnDivergentTokens(config, server)
+	err = warnDivergentTokens(config, cs2)
 	if err != nil {
 		log.Fatalf("warn divergent tokens: %s", err)
 	}
-	err = server.AddTokens(config.Tokens.Raw)
+	err = cs2.AddTokens(config.Tokens.Raw)
 	if err != nil {
 		log.Fatalf("add tokens: %s", err)
 	}
 	if config.BackportPath != "" && false {
-		err = server.ReadBackport()
+		err = cs2.ReadBackport()
 		if err != nil {
 			log.Fatalf("read backport: %s", err)
 		}
 		log.Printf("read backport from %s", config.BackportPath)
 	}
-	gs := grpc.NewServer(grpc.Creds(creds))
-	api.RegisterCentralSourceServer(gs, server)
-	lis, err := net.Listen("tcp", config.Addr)
+	err = cs2.Handle(config.Addr, config.TLS)
 	if err != nil {
-		log.Fatalf("listen: %s", err)
+		log.Fatalf("Handle: %s", err)
 	}
-	log.Print("listening ok")
-	log.Print("serving…")
 	err = util.Notify("READY=1\nSTATUS=serving…")
 	if err != nil {
 		log.Printf("Notify: %s", err)
 	}
-	err = gs.Serve(lis)
-	if err != nil {
-		log.Fatalf("serve: %s", err)
-	}
+	log.Printf("notify ok")
+	select {}
 }
 
 // warnDivergentTokens warns for any divergent tokens.

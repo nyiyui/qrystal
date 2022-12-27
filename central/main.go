@@ -2,6 +2,7 @@
 package central
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -36,7 +37,7 @@ type Network struct {
 	Peers      map[string]*Peer `yaml:"peers"`
 	Me         string           `yaml:"me"`
 	Keepalive  Duration         `yaml:"keepalive"`
-	ListenPort int              `yaml:"listen-port"`
+	ListenPort int              `yaml:"listenPort"`
 
 	// lock is only for myPrivKey.
 	MyPrivKey *wgtypes.Key
@@ -47,9 +48,9 @@ type Peer struct {
 	Desynced        int
 	Name            string
 	Host            string   `yaml:"host"`
-	AllowedIPs      []IPNet  `yaml:"allowed-ips"`
-	ForwardingPeers []string `yaml:"forwarding-peers"`
-	CanSee          *CanSee  `yaml:"can-see"`
+	AllowedIPs      []IPNet  `yaml:"allowedIPs"`
+	ForwardingPeers []string `yaml:"forwardingPeers"`
+	CanSee          *CanSee  `yaml:"canSee"`
 	// If CanSee is nil, this Peer can see all peers.
 
 	Internal *PeerInternal `yaml:"-"`
@@ -87,6 +88,17 @@ type PeerInternal struct {
 	// creds for this specific peer.
 }
 
+var _ gob.GobEncoder = new(PeerInternal)
+var _ gob.GobDecoder = new(PeerInternal)
+
+func (pi *PeerInternal) GobEncode() ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (pi *PeerInternal) GobDecode([]byte) error {
+	return nil
+}
+
 func (p *Peer) ToAPI() *api.CentralPeer {
 	return &api.CentralPeer{
 		Host:            p.Host,
@@ -98,6 +110,7 @@ func (p *Peer) ToAPI() *api.CentralPeer {
 
 type CanSee struct {
 	Only []string `yaml:"only"`
+	// Only means that this peer can see itself and only the listed peers.
 }
 
 func NewCanSeeFromAPI(c2 *api.CanSee) *CanSee {

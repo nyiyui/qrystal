@@ -51,6 +51,7 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 	if cfg.TLSCertPath == "" {
 		cfg.TLSCertPath = cfg.TLS.CertPath
 	}
+	var tlsCfg *tls.Config
 	if cfg.TLSCertPath != "" {
 		cert, err = ioutil.ReadFile(cfg.TLSCertPath)
 		if err != nil {
@@ -60,6 +61,7 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		if !pool.AppendCertsFromPEM(cert) {
 			return nil, fmt.Errorf("load pem: %w", err)
 		}
+		tlsCfg = &tls.Config{RootCAs: pool}
 	}
 	netsAllowed := make([]*regexp.Regexp, len(cfg.AllowedNets))
 	for i, net := range cfg.AllowedNets {
@@ -69,14 +71,8 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		}
 	}
 	return &node.CSConfig{
-		Comment: cfg.Comment,
-		NewTLSConfig: func() *tls.Config {
-			pool := x509.NewCertPool()
-			if !pool.AppendCertsFromPEM(cert) {
-				panic(fmt.Sprintf("load pem: %s", cert))
-			}
-			return &tls.Config{RootCAs: pool}
-		},
+		Comment:         cfg.Comment,
+		TLSConfig:       tlsCfg,
 		Host:            cfg.Host,
 		Token:           cfg.Token,
 		NetworksAllowed: netsAllowed,

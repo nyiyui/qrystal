@@ -6,12 +6,18 @@ import (
 )
 
 type PullQ struct {
+	I            int
 	CentralToken string
 }
 
-type PullS struct {
+type PullS struct{}
+
+type PushQ struct {
+	I  int
 	CC central.Config
 }
+
+type PushS struct{}
 
 type GenerateQ struct {
 	CNNs []string

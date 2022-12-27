@@ -33,6 +33,9 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		Kiriyama: nil, // set below
 	}
 	node.Kiriyama = newKiriyama(node)
+	for i := 0; i < len(cfg.CS); i++ {
+		node.Kiriyama.SetCSReady(i, false)
+	}
 	return node, nil
 }
 

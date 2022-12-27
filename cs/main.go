@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -53,6 +54,10 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 	}
 	cs.newHandler()
 	return cs, nil
+}
+
+func (s *CentralSource) serve(conn io.ReadWriteCloser) {
+	s.handler.ServeConn(conn)
 }
 
 type change struct {

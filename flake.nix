@@ -68,12 +68,16 @@
           ];
         });
         cs = pkgs.buildGoModule (lib.recursiveUpdate common {
-          pname = "qrystal-cs";
+          pname = "cs";
           subPackages = [ "cmd/cs" ];
         });
         etc = pkgs.buildGoModule (lib.recursiveUpdate common {
-          pname = "qrystal-etc";
+          name = "etc";
           subPackages = [ "cmd/cs-push" "cmd/gen-keys" "cmd/tray" ];
+        });
+        sd-notify-test = pkgs.buildGoModule (lib.recursiveUpdate common {
+          pname = "sd-notify-test";
+          subPackages = [ "cmd/sd-notify-test" ];
         });
       };
       checks = (import ./test.nix) {
@@ -176,12 +180,31 @@
                       options = {
                         name = mkOption { type = str; };
                         hash = mkOption { type = str; };
-                        can = mkOption {
-                          type = submodule {
+                        networks = mkOption { type = attrsOf str; };
+                        canPull = mkOption { type = bool; default = false; };
+                        canPush = mkOption {
+                          type = nullOr (either
+                            (submodule {
+                              options = {
+                                any = mkOption { type = bool; default = false; };
+                              };
+                            })
+                            (submodule {
+                              options = {
+                                networks = mkOption { type = attrsOf str; };
+                              };
+                            })
+                          );
+                          default = null;
+                        };
+                        canAddTokens = mkOption {
+                          type = nullOr (submodule {
                             options = {
-                              pull = mkOption { type = bool; };
+                              canPull = mkOption { type = bool; };
+                              canPush = mkOption { type = bool; };
                             };
-                          };
+                          });
+                          default = null;
                         };
                       };
                     });

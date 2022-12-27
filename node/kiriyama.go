@@ -51,6 +51,7 @@ func (k *Kiriyama) SetCSReady(i int, ready bool) {
 	k.csLock.Lock()
 	defer k.csLock.Unlock()
 	k.csReady[int32(i)] = ready
+	util.S.Infof("SetCSReady %d %t", i, ready)
 	k.notifyCSStatus()
 }
 
@@ -60,6 +61,7 @@ func (k *Kiriyama) notifyCSStatus() {
 			return
 		}
 	}
+	util.S.Info("SetCSReady all ready")
 	util.Notify("READY=1\nSTATUS=all css ready")
 }
 

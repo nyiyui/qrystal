@@ -9,10 +9,8 @@ import (
 	"github.com/cenkalti/rpc2"
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/central"
-	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/util"
-	"gopkg.in/yaml.v3"
 )
 
 const backoffTimeout = 5 * time.Minute
@@ -37,40 +35,34 @@ func (n *Node) ListenCS() {
 }
 
 func (n *Node) listenCS(i int) error {
-	backoff := 1 * time.Second
 	n.Kiriyama.SetCS(i, "初期")
-	for {
-		resetBackoff, err := n.listenCSOnce(i)
+	return util.Backoff(func() (resetBackoff bool, err error) {
+		resetBackoff, err = n.listenCSOnce(i)
 		if err == nil {
-			continue
+			err = util.ErrEndBackoff
 		}
-		if resetBackoff {
-			backoff = 1 * time.Second
-		}
+		return
+	}, func(backoff time.Duration, err error) error {
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
 			"err", err,
 			"backoff", backoff,
 		)
 		n.Kiriyama.SetCS(i, fmt.Sprintf("%sで再試行", backoff))
-		time.Sleep(backoff)
-		if backoff <= backoffTimeout {
-			backoff *= 2
-		}
-		if resetBackoff {
-			backoff = 1 * time.Second
-		}
-	}
+		return nil
+	})
 }
 
 func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	defer n.Kiriyama.SetCSReady(i, resetBackoff)
 	// Setup
-	cl, err := n.newClient(i)
+	util.S.Debug("newClient…")
+	cl, _, err := n.newClient(i)
 	if err != nil {
 		return
 	}
 
+	util.S.Debug("pullCS…")
 	err = n.pullCS(i, cl)
 	if err != nil {
 		return false, err
@@ -80,45 +72,18 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 
 func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
 	csc := n.cs[i]
-	var s api.PullS
-	err = cl.Call("pull", &api.PullQ{CentralToken: csc.Token}, &s)
+	q2 := true
+	var s2 bool
+	err = cl.Call("ping", &q2, &s2)
 	if err != nil {
-		err = fmt.Errorf("pull init: %w", err)
+		err = fmt.Errorf("ping: %w", err)
 		return
 	}
-	cc := s.CC
-
+	var s api.PullS
 	n.Kiriyama.SetCS(i, "引き")
-	ccy, _ := yaml.Marshal(cc)
-	util.S.Infof("新たなCCを受信: %s", ccy)
-
-	// NetworksAllowed
-	cc2 := map[string]*central.Network{}
-	for cnn, cn := range cc.Networks {
-		if csc.netAllowed(cnn) {
-			cc2[cnn] = cn
-		} else {
-			util.S.Warnf("net not allowed; ignoring: %s", cnn)
-		}
-	}
-	cc.Networks = cc2
-
-	err = func() error {
-		n.ccLock.Lock()
-		defer n.ccLock.Unlock()
-		for cnn := range cc.Networks {
-			n.csNets[cnn] = i
-		}
-		toRemove := cs.MissingFromFirst(cc.Networks, n.cc.Networks)
-		err = n.removeDevices(toRemove)
-		if err != nil {
-			return fmt.Errorf("rm all devs: %w", err)
-		}
-		n.applyCC(&cc)
-		n.reify()
-		return nil
-	}()
+	err = cl.Call("sync", &api.PullQ{I: i, CentralToken: csc.Token}, &s)
 	if err != nil {
+		err = fmt.Errorf("sync init: %w", err)
 		return
 	}
 	return
