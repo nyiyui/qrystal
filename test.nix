@@ -107,6 +107,46 @@ hnjIiGz7Iq3wUpJXCnh5Xo7aOq4/fii7pBv2mCe22QGuppqZoZOtpEElWSQrqDll
 '';
 in
 {
+  sd-notify-baseline = let
+    pkgs = nixpkgsFor.${system};
+    lib = nixosLibFor.${system} { inherit system; };
+  in lib.runTest ({
+    name = "sd-notify-baseline";
+    hostPkgs = pkgs;
+    nodes.machine = { pkgs, ... }: {
+      systemd.services.sd-notify-test = {
+        serviceConfig = {
+          Type = "notify";
+          ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.coreutils}/bin/echo notifying; ${pkgs.systemd}/bin/systemd-notify --ready & ${pkgs.coreutils}/bin/echo notified; while true; do sleep 1; done'";
+        };
+      };
+    };
+    testScript = ''
+      machine.start()
+      machine.systemctl("start sd-notify-test.service")
+      machine.wait_for_unit("sd-notify-test.service")
+    '';
+  });
+  sd-notify = let
+    pkgs = nixpkgsFor.${system};
+    lib = nixosLibFor.${system} { inherit system; };
+  in lib.runTest ({
+    name = "sd-notify";
+    hostPkgs = pkgs;
+    nodes.machine = { pkgs, ... }: {
+      systemd.services.sd-notify-test = {
+        serviceConfig = {
+          Type = "notify";
+          ExecStart = "${self.outputs.packages.${system}.sd-notify-test}/bin/sd-notify-test";
+        };
+      };
+    };
+    testScript = ''
+      machine.start()
+      machine.systemctl("start sd-notify-test.service")
+      machine.wait_for_unit("sd-notify-test.service")
+    '';
+  });
   #cs = let
   #  pkgs = nixpkgsFor.${system};
   #  lib = nixosLibFor.${system} { inherit system; };
@@ -124,8 +164,8 @@ in
   #            tls.certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
   #            tls.keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
   #            tokens = [
-  #              { name = "node1"; hash = node1Hash; can.pull = true; }
-  #              { name = "node2"; hash = node2Hash; can.pull = true; }
+  #              { name = "node1"; hash = node1Hash; canPull = true; networks.testnet = "node1"; }
+  #              { name = "node2"; hash = node2Hash; canPull = true; networks.testnet = "node2"; }
   #            ];
   #            central.networks.testnet = {
   #              keepalive = "10s";
@@ -142,25 +182,6 @@ in
   #      cs.wait_for_unit("qrystal-cs.service")
   #    '';
   #  };
-  sd-notify = let
-    pkgs = nixpkgsFor.${system};
-    lib = nixosLibFor.${system} { inherit system; };
-  in lib.runTest ({
-    name = "sd-notify";
-    hostPkgs = pkgs;
-    nodes.machine = { pkgs, ... }: {
-      systemd.services.sd-notify-test = {
-        serviceConfig = {
-          Type = "notify";
-          ExecStart = "${self.outputs.packages.${system}.sd-notify-test}";
-        };
-      };
-    };
-    testScript = ''
-      machine.start()
-      machine.wait_for_unit("sd-notify-test.service")
-    '';
-  });
   #integration = let
   #  pkgs = nixpkgsFor.${system};
   #  lib = nixosLibFor.${system} { inherit system; };
