@@ -97,21 +97,27 @@ type PeerInternal struct {
 	// creds for this specific peer.
 }
 
-type PeerInternalProxy struct {
+type peerInternalProxy struct {
 	PubKey *wgtypes.Key
 }
 
 var _ gob.GobEncoder = new(PeerInternal)
 var _ gob.GobDecoder = new(PeerInternal)
 
+// GobEncode implements gob.GobEncoder.
+//
+// Only Peer.PubKey is encoded as only that should be shared over the network.
 func (pi *PeerInternal) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	err := gob.NewEncoder(buf).Encode(PeerInternalProxy{PubKey: pi.PubKey})
+	err := gob.NewEncoder(buf).Encode(peerInternalProxy{PubKey: pi.PubKey})
 	return buf.Bytes(), err
 }
 
+// GobDecode implements gob.GobDecoder.
+//
+// See PeerInternal.GobEncode for details about what is encoded.
 func (pi *PeerInternal) GobDecode(data []byte) error {
-	var proxy PeerInternalProxy
+	var proxy peerInternalProxy
 	err := gob.NewDecoder(bytes.NewBuffer(data)).Decode(&proxy)
 	if err != nil {
 		return err
