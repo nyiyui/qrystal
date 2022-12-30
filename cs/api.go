@@ -23,7 +23,6 @@ func (c *CentralSource) ping(cl *rpc2.Client, q *bool, s *bool) error {
 }
 
 func (c *CentralSource) sync(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error {
-	util.S.Infof("sync(%#v)", q)
 	ti, ok, err := c.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return err
@@ -89,10 +88,14 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error 
 		affectsYou := func(chg change) bool {
 			c.ccLock.RLock()
 			defer c.ccLock.RUnlock()
-			for cnn, pn := range ti.Networks {
+			for cnn, _ := range ti.Networks {
 				peers := chg.Changed[cnn]
+				cn, ok := newCC.Networks[cnn]
+				if !ok {
+					continue
+				}
 				for _, pn2 := range peers {
-					if pn == pn2 {
+					if _, ok := cn.Peers[pn2]; ok {
 						return true
 					}
 				}
@@ -100,6 +103,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error 
 			return false
 		}(chg)
 		if affectsYou {
+			util.S.Infof("token %s resync due to change %s", ti.Name, chg)
 			break
 		}
 	}
@@ -143,8 +147,8 @@ func (c *CentralSource) notify(chg change) {
 		case <-t.C:
 		}
 	}
-	err := c.backport()
-	if err != nil {
-		util.S.Errorf("backport: %s", err)
-	}
+	// err := c.backport()
+	// if err != nil {
+	// 	util.S.Errorf("backport: %s", err)
+	// }
 }
