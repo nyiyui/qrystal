@@ -12,14 +12,8 @@ import (
 
 func (c *CentralSource) newHandler() {
 	h := rpc2.NewServer()
-	h.Handle("ping", c.ping)
 	h.Handle("sync", c.sync)
 	c.handler = h
-}
-
-func (c *CentralSource) ping(cl *rpc2.Client, q *bool, s *bool) error {
-	*s = true
-	return nil
 }
 
 func (c *CentralSource) sync(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error {
@@ -147,8 +141,8 @@ func (c *CentralSource) notify(chg change) {
 		case <-t.C:
 		}
 	}
-	// err := c.backport()
-	// if err != nil {
-	// 	util.S.Errorf("backport: %s", err)
-	// }
+	err := c.backport()
+	if err != nil {
+		util.S.Errorf("backport: %s", err)
+	}
 }

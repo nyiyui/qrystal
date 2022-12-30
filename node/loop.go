@@ -63,13 +63,6 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 
 func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
 	csc := n.cs[i]
-	q2 := true
-	var s2 bool
-	err = cl.Call("ping", &q2, &s2)
-	if err != nil {
-		err = fmt.Errorf("ping: %w", err)
-		return
-	}
 	for {
 		var s api.PullS
 		n.Kiriyama.SetCS(i, "引き")
