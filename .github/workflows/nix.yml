@@ -18,4 +18,3 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
     - run: nix build .#runner
     - run: nix build .#etc
-    - run: nix flake check
