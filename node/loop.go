@@ -13,8 +13,6 @@ import (
 	"github.com/nyiyui/qrystal/util"
 )
 
-const backoffTimeout = 5 * time.Minute
-
 type listenError struct {
 	i   int
 	err error
@@ -27,11 +25,9 @@ func (n *Node) ListenCS() {
 			errCh <- listenError{i: i, err: n.listenCS(i)}
 		}(i)
 	}
-	select {
-	case err := <-errCh:
-		csc := n.cs[err.i]
-		util.S.Errorf("cs %d (%s at %s) error: %s", err.i, csc.Comment, csc.Host, err.err)
-	}
+	err := <-errCh
+	csc := n.cs[err.i]
+	util.S.Errorf("cs %d (%s at %s) error: %s", err.i, csc.Comment, csc.Host, err.err)
 }
 
 func (n *Node) listenCS(i int) error {

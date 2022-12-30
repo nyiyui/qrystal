@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -101,7 +100,7 @@ func convertTokens2(tokens []TokenConfig) ([]Token, error) {
 }
 
 func LoadConfig(configPath string) (*Config, error) {
-	raw, err := ioutil.ReadFile(configPath)
+	raw, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("config read: %s", err)
 	}
@@ -149,7 +148,7 @@ func (s *CentralSource) backport() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(s.backportPath, encoded, 0o0600)
+	err = os.WriteFile(s.backportPath, encoded, 0o0600)
 	if err != nil {
 		return err
 	}
@@ -159,7 +158,7 @@ func (s *CentralSource) backport() error {
 func (s *CentralSource) ReadBackport() error {
 	s.backportLock.Lock()
 	defer s.backportLock.Unlock()
-	encoded, err := ioutil.ReadFile(s.backportPath)
+	encoded, err := os.ReadFile(s.backportPath)
 	if err != nil {
 		return err
 	}

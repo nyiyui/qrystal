@@ -39,8 +39,8 @@ func TestAssignAddress(t *testing.T) {
 			mustCIDR("10.2.0.3/32"),
 		}
 		_, err := AssignAddress(&cidr, used)
-		if !errors.Is(err, AddressOverflow) {
-			t.Fatalf("unexpected error %s, wanted %s", err, AddressOverflow)
+		if !errors.Is(err, ErrAddressOverflow) {
+			t.Fatalf("unexpected error %s, wanted %s", err, ErrAddressOverflow)
 		}
 	})
 	t.Run("mcpt", func(t *testing.T) {

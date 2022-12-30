@@ -19,7 +19,6 @@ import (
 )
 
 type Server struct {
-	client  *wgctrl.Client
 	handler http.Handler
 }
 

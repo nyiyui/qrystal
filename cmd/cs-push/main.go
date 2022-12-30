@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"io/ioutil"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/nyiyui/qrystal/cs"
@@ -48,7 +48,7 @@ func main() {
 	flag.StringVar(&tcPath, "tmp-config", "", "path to tmp config file")
 	flag.Parse()
 
-	raw, err := ioutil.ReadFile(tcPath)
+	raw, err := os.ReadFile(tcPath)
 	if err != nil {
 		log.Fatalf("config read: %s", err)
 	}
@@ -62,7 +62,9 @@ func main() {
 
 	creds := credentials.NewTLS(nil)
 
-	conn, err := grpc.Dial(cfg.Server, grpc.WithTimeout(5*time.Second), grpc.WithTransportCredentials(creds))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, cfg.Server, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("dial: %s", err)
 	}

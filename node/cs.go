@@ -2,7 +2,6 @@ package node
 
 import (
 	"crypto/tls"
-	"errors"
 	"regexp"
 )
 
@@ -24,12 +23,4 @@ func (csc *CSConfig) netAllowed(cnn string) bool {
 		}
 	}
 	return false
-}
-
-func (n *Node) getCSForNet(cnn string) (i int, err error) {
-	i, ok := n.csNets[cnn]
-	if !ok {
-		return 0, errors.New("not found")
-	}
-	return
 }

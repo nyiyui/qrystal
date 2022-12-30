@@ -12,5 +12,4 @@ func ShowCurrent() {
 		return
 	}
 	log.Printf("current: uid %s gid %s", u.Uid, u.Gid)
-	return
 }

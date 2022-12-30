@@ -156,14 +156,6 @@ type Token struct {
 	Info TokenInfo
 }
 
-func convertTokens(tokens []Token) map[[sha256.Size]byte]TokenInfo {
-	m := map[[sha256.Size]byte]TokenInfo{}
-	for _, token := range tokens {
-		m[token.Hash] = token.Info
-	}
-	return m
-}
-
 func newTokenAuthError(token string) error {
 	sum := sha256.Sum256([]byte(token))
 	return fmt.Errorf("token auth failed with hash %x", sum)

@@ -1,5 +1,7 @@
 { self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, ... }:
 let
+  pkgs = nixpkgsFor.${system};
+  lib = nixosLibFor.${system} { inherit system; };
   node1Token = "3ztQRDsLo+iOEeU8BJp7GTiAhrpMr8rLt5HrAlDUwNEItGhcjW98lsCyKIpmCT+AtkC1vLDkfRSvWk1JQlMVlw==";
   node1Hash = "72d487c5632716c8cdf3cf440ed29e14171e27c245c715f92e2517aee605fc71";
   node2Token = "oiiOXY3dRRgmm/DjPQFJja5OftVBrZffRpxyUWk2CWabdAn9jUfeIh4vlSE35eJK0qjfb7w/2/XJya/xoduNew==";
@@ -107,10 +109,7 @@ hnjIiGz7Iq3wUpJXCnh5Xo7aOq4/fii7pBv2mCe22QGuppqZoZOtpEElWSQrqDll
 '';
 in
 {
-  sd-notify-baseline = let
-    pkgs = nixpkgsFor.${system};
-    lib = nixosLibFor.${system} { inherit system; };
-  in lib.runTest ({
+  sd-notify-baseline = lib.runTest ({
     name = "sd-notify-baseline";
     hostPkgs = pkgs;
     nodes.machine = { pkgs, ... }: {
@@ -127,10 +126,7 @@ in
       machine.wait_for_unit("sd-notify-test.service")
     '';
   });
-  sd-notify = let
-    pkgs = nixpkgsFor.${system};
-    lib = nixosLibFor.${system} { inherit system; };
-  in lib.runTest ({
+  sd-notify = lib.runTest ({
     name = "sd-notify";
     hostPkgs = pkgs;
     nodes.machine = { pkgs, ... }: {
@@ -147,11 +143,7 @@ in
       machine.wait_for_unit("sd-notify-test.service")
     '';
   });
-  cs = let
-    pkgs = nixpkgsFor.${system};
-    lib = nixosLibFor.${system} { inherit system; };
-  in
-    lib.runTest {
+  cs = lib.runTest {
       name = "cs";
       hostPkgs = pkgs;
       nodes = {
@@ -183,8 +175,6 @@ in
       '';
     };
   all = let
-    pkgs = nixpkgsFor.${system};
-    lib = nixosLibFor.${system} { inherit system; };
     networkName = "testnet";
     base = { # TODO
       virtualisation.vlans = [ 1 ];

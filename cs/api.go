@@ -85,8 +85,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error 
 
 	chI, ch := c.newNotifyCh()
 	defer c.removeNotifyCh(chI)
-	select {
-	case chg := <-ch:
+	for chg := range ch {
 		affectsYou := func(chg change) bool {
 			c.ccLock.RLock()
 			defer c.ccLock.RUnlock()
@@ -143,5 +142,9 @@ func (c *CentralSource) notify(chg change) {
 		case ch <- chg:
 		case <-t.C:
 		}
+	}
+	err := c.backport()
+	if err != nil {
+		util.S.Errorf("backport: %s", err)
 	}
 }

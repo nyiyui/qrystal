@@ -15,18 +15,7 @@ func ParseCIDR(s string) (net.IPNet, error) {
 	return *cidr, nil
 }
 
-var AddressOverflow = errors.New("overflowed network")
-
-func pow(a, b int) int {
-	if a == 0 {
-		return 0
-	}
-	r := a
-	for i := 2; i <= b; i++ {
-		r *= a
-	}
-	return r
-}
+var ErrAddressOverflow = errors.New("overflowed network")
 
 func AssignAddress(ipNet *net.IPNet, usedIPs []net.IPNet) (ip net.IP, err error) {
 	// TODO: performance improvements?
@@ -34,7 +23,7 @@ func AssignAddress(ipNet *net.IPNet, usedIPs []net.IPNet) (ip net.IP, err error)
 NextIP:
 	for {
 		if !ipNet.Contains(cand) {
-			return nil, AddressOverflow
+			return nil, ErrAddressOverflow
 		}
 		for _, usedIP := range usedIPs {
 			if usedIP.Contains(cand) {

@@ -10,13 +10,13 @@ import (
 func (c *CentralSource) Handle(addr string, tlsCfg TLS) error {
 	cert, err := tls.LoadX509KeyPair(tlsCfg.CertPath, tlsCfg.KeyPath)
 	if err != nil {
-		return fmt.Errorf("LoadX509KeyPair: %w", err)
+		return fmt.Errorf("loading cert or key: %w", err)
 	}
 	util.S.Info("LoadX509KeyPair ok")
 	cfg := tls.Config{Certificates: []tls.Certificate{cert}}
 	listener, err := tls.Listen("tcp", addr, &cfg)
 	if err != nil {
-		return fmt.Errorf("Listen: %w", err)
+		return fmt.Errorf("listen: %w", err)
 	}
 	util.S.Info("Listen ok")
 	go func() {

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"sync"
-	"time"
 
 	"github.com/cenkalti/rpc2"
 
@@ -16,8 +15,6 @@ import (
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
 )
-
-const commitDelay = 1 * time.Second
 
 type CentralSource struct {
 	api.UnimplementedCentralSourceServer

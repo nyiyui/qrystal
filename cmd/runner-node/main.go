@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -20,18 +19,6 @@ import (
 type config struct {
 	CSs      []csConfig `yaml:"css"`
 	Kiriyama string     `yaml:"kiriyama"`
-}
-
-type configValidated config
-
-func (c *configValidated) UnmarshalYAML(value *yaml.Node) error {
-	var c2 config
-	err := value.Decode(&c2)
-	if err != nil {
-		return err
-	}
-	*c = configValidated(c2)
-	return nil
 }
 
 type csConfig struct {
@@ -53,7 +40,7 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 	}
 	var tlsCfg *tls.Config
 	if cfg.TLSCertPath != "" {
-		cert, err = ioutil.ReadFile(cfg.TLSCertPath)
+		cert, err = os.ReadFile(cfg.TLSCertPath)
 		if err != nil {
 			return nil, fmt.Errorf("read tls cert: %w", err)
 		}
@@ -89,7 +76,7 @@ func main() {
 
 	var c config
 	configPath := os.Getenv("CONFIG_PATH")
-	data, err := ioutil.ReadFile(configPath)
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("read config: %s", err)
 	}
