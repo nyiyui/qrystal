@@ -16,7 +16,7 @@ func (c *CentralSource) newHandler() {
 	c.handler = h
 }
 
-func (c *CentralSource) sync(cl *rpc2.Client, q *api.PullQ, s *api.PullS) error {
+func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error {
 	ti, ok, err := c.Tokens.getToken(q.CentralToken)
 	if err != nil {
 		return err

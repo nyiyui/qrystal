@@ -64,9 +64,9 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
 	csc := n.cs[i]
 	for {
-		var s api.PullS
+		var s api.SyncS
 		n.Kiriyama.SetCS(i, "引き")
-		err = cl.Call("sync", &api.PullQ{I: i, CentralToken: csc.Token}, &s)
+		err = cl.Call("sync", &api.SyncQ{I: i, CentralToken: csc.Token}, &s)
 		if err != nil {
 			err = fmt.Errorf("sync init: %w", err)
 			return

@@ -5,12 +5,12 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-type PullQ struct {
+type SyncQ struct {
 	I            int
 	CentralToken string
 }
 
-type PullS struct{}
+type SyncS struct{}
 
 type PushQ struct {
 	I int
