@@ -141,8 +141,8 @@ func (ti *TokenInfo) Use() {
 }
 
 type CanAddTokens struct {
-	CanPull bool `yaml:"can-pull"`
-	CanPush bool `yaml:"can-push"`
+	CanPull bool `yaml:"canPull"`
+	CanPush bool `yaml:"canPush"`
 	// don't allow CanAddTokens to make logic simpler
 }
 

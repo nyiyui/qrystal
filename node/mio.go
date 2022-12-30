@@ -19,6 +19,13 @@ func newMio(addr string, token []byte) (*mioHandle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("dial: %w", err)
 	}
+	{
+		var s string
+		err = client.Call("Mio.Ping", "ping", &s)
+		if err != nil {
+			return nil, fmt.Errorf("ping: %w", err)
+		}
+	}
 	return &mioHandle{
 		client: client,
 		token:  token,
@@ -26,8 +33,6 @@ func newMio(addr string, token []byte) (*mioHandle, error) {
 }
 
 // ConfigureDevice requests mio to configure the WireGuard device.
-//
-// Note: q.Name will have "qrystal-" prepended for the WireGuard name.
 func (h *mioHandle) ConfigureDevice(q mio.ConfigureDeviceQ) (err error) {
 	var errString string
 	q.Token = h.token

@@ -2,27 +2,57 @@ package cs
 
 import (
 	"crypto/sha256"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/util"
 	"gopkg.in/yaml.v3"
 )
 
+type TLS struct {
+	CertPath string `yaml:"certPath"`
+	KeyPath  string `yaml:"keyPath"`
+}
+
 type Config struct {
 	Addr         string          `yaml:"addr"`
-	TLSCertPath  string          `yaml:"tls-cert-path"`
-	TLSKeyPath   string          `yaml:"tls-key-path"`
+	TLS          TLS             `yaml:"tls"`
 	CC           *central.Config `yaml:"central"`
 	Tokens       *TokensConfig   `yaml:"tokens"`
-	BackportPath string          `yaml:"backport-path"`
-	DBPath       string          `yaml:"db-path"`
+	BackportPath string          `yaml:"backportPath"`
+	DBPath       string          `yaml:"dbPath"`
+}
+
+func (c *Config) apply() {
+	if c.BackportPath == "" {
+		c.BackportPath = filepath.Join(os.Getenv("RUNTIME_DIRECTORY"), "cs-backport.yml")
+	}
+	if c.DBPath == "" {
+		c.DBPath = filepath.Join(os.Getenv("STATE_DIRECTORY"), "db")
+	}
 }
 
 type TokensConfig struct {
 	Raw []Token
+}
+
+func (t *TokensConfig) UnmarshalJSON(data []byte) error {
+	var raw []TokenConfig
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	t2, err := convertTokens2(raw)
+	if err != nil {
+		return err
+	}
+	t.Raw = t2
+	return nil
 }
 
 func (t *TokensConfig) UnmarshalYAML(value *yaml.Node) error {
@@ -40,19 +70,18 @@ func (t *TokensConfig) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type TokenConfig struct {
-	Name         string            `yaml:"name"`
-	Hash         *util.HexBytes    `yaml:"hash"`
-	Networks     map[string]string `yaml:"networks"`
-	CanPull      bool              `yaml:"can-pull"`
-	CanPush      *CanPush          `yaml:"can-push"`
-	CanAddTokens *CanAddTokens     `yaml:"can-add-tokens"`
+	Name         string            `yaml:"name" json:"name"`
+	Hash         *util.HexBytes    `yaml:"hash" json:"hash"`
+	Networks     map[string]string `yaml:"networks" json:"networks"`
+	CanPull      bool              `yaml:"canPull"`
+	CanPush      *CanPush          `yaml:"canPush"`
+	CanAddTokens *CanAddTokens     `yaml:"canAddTokens"`
 }
 
 func convertTokens2(tokens []TokenConfig) ([]Token, error) {
 	res := make([]Token, len(tokens))
 	for i, token := range tokens {
 		var hash [sha256.Size]byte
-		log.Println(len(hash))
 		n := copy(hash[:], *token.Hash)
 		if n != len(hash) {
 			return nil, fmt.Errorf("token %d: invalid length (%d) hash", i, n)
@@ -81,11 +110,18 @@ func LoadConfig(configPath string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config unmarshal: %s", err)
 	}
+	if config.CC == nil {
+		return nil, errors.New("no central config specified")
+	}
+	if len(config.CC.Networks) == 0 {
+		return nil, errors.New("no central networks specified")
+	}
 	for cnn, cn := range config.CC.Networks {
 		if cn.Me != "" {
 			return nil, fmt.Errorf("net %s: me is not blank", cnn)
 		}
 	}
+	config.apply()
 	return &config, nil
 }
 

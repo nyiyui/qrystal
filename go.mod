@@ -3,6 +3,8 @@ module github.com/nyiyui/qrystal
 go 1.19
 
 require (
+	github.com/cenkalti/rpc2 v0.0.0-20210604223624-c1acbc6ec984
+	github.com/google/go-cmp v0.5.7
 	github.com/tidwall/buntdb v1.2.10
 	go.uber.org/zap v1.23.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220916014741-473347a5e6e3
@@ -12,8 +14,9 @@ require (
 )
 
 require (
+	github.com/cenk/hub v1.0.1 // indirect
+	github.com/cenkalti/hub v1.0.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/mdlayher/genetlink v1.2.0 // indirect
 	github.com/mdlayher/netlink v1.6.0 // indirect

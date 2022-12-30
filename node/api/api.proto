@@ -7,17 +7,10 @@ option go_package = "github.com/nyiyui/qrystal/node/api";
 message Ok {
 }
 
-service Node {
-  rpc xch(XchQ) returns (XchS);
-
-  rpc ping(PingQS) returns (PingQS);
-}
-
 service CentralSource {
-  rpc pull(PullQ) returns (stream PullS);
   rpc push(PushQ) returns (PushS);
   rpc addToken(AddTokenQ) returns (AddTokenS);
-  rpc canForward(CanForwardQ) returns (CanForwardS);
+  // TODO: rpc canForward(CanForwardQ) returns (CanForwardS);
 
   rpc ping(PingQS) returns (PingQS);
 }
@@ -26,38 +19,7 @@ service Kiriyama {
   rpc getStatus(GetStatusQ) returns (stream GetStatusS);
 }
 
-message XchQ {
-  bytes pubKey = 2;
-  bytes psk = 3;
-  string cnn = 4;
-  string peer = 5;
-  // Peer is the recevier's name.
-  string ts = 6;
-  bytes sig = 7;
-  // Signature of {"pubKey":pubKey,"psk":psk,"cnn":cnn,"peer":peer,"ts":ts} encoded as the smallest JSON structure
-}
-
-message XchS {
-  bytes pubKey = 1;
-  string ts = 4;
-  bytes sig = 5;
-  // Signature of {"pubKey":pubKey,"ts":ts} encoded as the smallest JSON structure
-}
-
 message PingQS {}
-
-message PullQ {
-  string centralToken = 1;
-}
-
-message PullS {
-  CentralConfig cc = 1;
-  ForwardPreQ fc = 2;
-  bool forwardingOnly = 3;
-  repeated string changedCNs = 5; // TODO: stop these bodges (:
-  string reason = 4;
-  //TODO: eventually migrate to oneof
-}
 
 message PushQ {
   string centralToken = 1;
@@ -95,7 +57,7 @@ message CentralPeer {
   // forwardingPeers lists the allowedIPs this peer can forward for.
   // forwardingPeers may overlap (i.e. duplicate IPs may appear in other
   // CentralPeers), so nodes must choose one for their WireGuard config.
-  PublicKey publicKey = 3;
+  WGPubKey wgPubKey = 3;
   CanSee canSee = 5;
 }
 
@@ -103,7 +65,7 @@ message CanSee {
   repeated string only = 1;
 }
 
-message PublicKey {
+message WGPubKey {
   bytes raw = 1;
 }
 
@@ -126,27 +88,6 @@ message CanPush {
 }
 
 message AddTokenS {}
-
-message ForwardPreQ {
-  string network = 1;
-  string forwardee_peer = 2;
-}
-
-message CanForwardQ {
-  string centralToken = 1;
-  string network = 2;
-  repeated string forwardeePeers = 3;
-  ForwardMetric metric = 4;
-}
-
-message ForwardMetric {
-  uint64 latency = 1;
-  // latency in nanoseconds
-  double bandwidth = 2;
-  // bandwidth in bps
-}
-
-message CanForwardS {}
 
 message GetStatusQ {}
 

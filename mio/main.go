@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	_ "embed"
 	"encoding/base64"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"net"
@@ -19,19 +18,13 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
-func init() {
-	gob.Register(new(ConfigureDeviceQ))
-	gob.Register(new(RemoveDeviceQ))
-	gob.Register(new(ForwardingQ))
-}
-
 type Server struct {
 	client  *wgctrl.Client
 	handler http.Handler
 }
 
 func genToken() ([]byte, string, error) {
-	b := make([]byte, 4)
+	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
 		return nil, "", err
@@ -129,6 +122,11 @@ type ConfigureDeviceQ struct {
 	PostDown string
 }
 
+func (sm *Mio) Ping(q string, r *string) error {
+	*r = "pong"
+	return nil
+}
+
 // TODO: allow removing devices
 
 func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
@@ -165,6 +163,10 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	}
 	if q.Config.ListenPort == nil {
 		*r = "nil ListenPort"
+		return nil
+	}
+	if q.Config.PrivateKey == nil {
+		*r = "nil PrivateKey"
 		return nil
 	}
 	err = devAdd(q.Name, devConfig{

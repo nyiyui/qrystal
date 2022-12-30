@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -20,28 +19,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("gen hash/token: %s", err)
 	}
-	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		log.Fatalf("gen key pair: %s", err)
-	}
-	pubKeyEnc := base64.StdEncoding.EncodeToString(pubKey)
-	seedEnc := base64.StdEncoding.EncodeToString(privKey.Seed())
 	hashEnc := hex.EncodeToString(hash[:])
 	if formatJson {
 		fmt.Printf(`{
   "keys": {
-		"public-key": "U_%s",
-		"private-key": "R_%s",
 		"token": "%s",
 		"hash": "%s"
 	}
-}`, pubKeyEnc, seedEnc, token, hashEnc)
+}`, token, hashEnc)
 	} else {
 		fmt.Print("[keys]\n")
-		fmt.Printf("public-key  = U_%s\n", pubKeyEnc)
-		fmt.Printf("private-key = R_%s\n", seedEnc)
-		fmt.Printf("token       = %s\n", token)
-		fmt.Printf("hash        = %s\n", hashEnc)
+		fmt.Printf("token = %s\n", token)
+		fmt.Printf("hash  = %s\n", hashEnc)
 	}
 }
 

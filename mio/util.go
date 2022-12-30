@@ -11,7 +11,8 @@ import (
 func wgConfigToString(config *wgtypes.Config) string {
 	b := new(strings.Builder)
 	fmt.Fprint(b, "[Interface]\n")
-	fmt.Fprintf(b, "PrivateKey = %s\n", config.PrivateKey)
+	// fmt.Fprintf(b, "PrivateKey = %s\n", config.PrivateKey)
+	fmt.Fprint(b, "PrivateKey = hidden\n")
 	if config.ListenPort == nil {
 		fmt.Fprint(b, "ListenPort is not set\n")
 	} else {
@@ -28,7 +29,8 @@ func wgConfigToString(config *wgtypes.Config) string {
 		fmt.Fprintf(b, "PublicKey = %s\n", peer.PublicKey)
 		fmt.Fprintf(b, "Remove = %t\n", peer.Remove)
 		fmt.Fprintf(b, "UpdateOnly = %t\n", peer.UpdateOnly)
-		fmt.Fprintf(b, "PresharedKey = %s\n", peer.PresharedKey)
+		// fmt.Fprintf(b, "PresharedKey = %s\n", peer.PresharedKey)
+		fmt.Fprint(b, "PresharedKey = hidden\n")
 		fmt.Fprintf(b, "Endpoint = %s\n", peer.Endpoint)
 		fmt.Fprintf(b, "PersistentKeepalive = %s\n", peer.PersistentKeepaliveInterval)
 		fmt.Fprintf(b, "ReplaceAllowedIPs = %t\n", peer.ReplaceAllowedIPs)

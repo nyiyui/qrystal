@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -12,6 +13,22 @@ import (
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
+
+var CommandWg string
+var CommandWgQuick string
+var CommandBash string
+
+func init() {
+	if c := os.Getenv("MIO_COMMAND_WG"); c != "" {
+		CommandWg = c
+	}
+	if c := os.Getenv("MIO_COMMAND_WG_QUICK"); c != "" {
+		CommandWgQuick = c
+	}
+	if c := os.Getenv("MIO_COMMAND_BASJ"); c != "" {
+		CommandBash = c
+	}
+}
 
 type devConfig struct {
 	Address    []net.IPNet
@@ -35,6 +52,7 @@ func (s *scriptError) Error() string {
 }
 
 func devAdd(name string, cfg devConfig) error {
+	util.S.Infof("devAdd %s", name)
 	privateKey := cfg.PrivateKey.String()
 	addresses := make([]string, len(cfg.Address))
 	for i := range cfg.Address {
@@ -46,7 +64,19 @@ func devAdd(name string, cfg devConfig) error {
 	address := strings.Join(addresses, ", ")
 	outBuf := new(bytes.Buffer)
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command("/bin/bash", "./dev-add.sh", name, privateKey, address, cfg.PostUp, cfg.PostDown, after, strconv.FormatUint(uint64(cfg.ListenPort), 10))
+	cmd := exec.Command(
+		CommandBash,
+		"./dev-add.sh",
+		name,
+		privateKey,
+		address,
+		cfg.PostUp,
+		cfg.PostDown,
+		after,
+		strconv.FormatUint(uint64(cfg.ListenPort), 10),
+		CommandWg,
+		CommandWgQuick,
+	)
 	cmd.Stdout = outBuf
 	cmd.Stderr = errBuf
 	err := cmd.Run()
@@ -63,8 +93,9 @@ func devAdd(name string, cfg devConfig) error {
 }
 
 func devRemove(name string) error {
+	util.S.Infof("devRemove %s", name)
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command("/bin/bash", "./dev-remove.sh", name)
+	cmd := exec.Command(CommandBash, "./dev-remove.sh", name, CommandWgQuick)
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {

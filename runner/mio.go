@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -36,6 +37,16 @@ func newMio(cfg *config.Mio) (*mioHandle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("start: %w", err)
 	}
+	go func() {
+		err := cmd.Wait()
+		if err != nil {
+			log.Printf("mio: Wait: %s", err)
+			if err, ok := err.(*exec.ExitError); ok {
+				log.Printf("mio: Wait stderr:\n%s", err.Stderr)
+			}
+			panic("mio failed")
+		}
+	}()
 	reader := bufio.NewReader(stdout)
 
 	addrRaw, err := reader.ReadString('\n')

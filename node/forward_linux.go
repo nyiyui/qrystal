@@ -1,51 +1,42 @@
 package node
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"os/exec"
-	"regexp"
-	"strings"
+	"os"
 )
 
-var outboundRe = regexp.MustCompile(`(dev )(?P<dev>\S+)`)
+var CommandIp string
+var CommandIptables string
 
-func getOutbound() (string, error) {
-	errBuf := new(bytes.Buffer)
-	outBuf := new(bytes.Buffer)
-	// NOTE: workaround for $PATH being weird
-	cmd := exec.Command("ip", "route", "show", "default")
-	cmd.Stderr = errBuf
-	cmd.Stdout = outBuf
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("exec: %w\n\n%s", err, errBuf)
+func init() {
+	if c := os.Getenv("NODE_COMMAND_IP"); c != "" {
+		CommandIp = c
 	}
-	out := outBuf.String()
-	// NOTE: check if locale affects this
-	if !strings.HasPrefix(out, "default via") {
-		return "", errors.New("unexpected output not starting with \"default via\"")
+	if c := os.Getenv("NODE_COMMAND_IPTABLES"); c != "" {
+		CommandIptables = c
 	}
-	return outboundRe.FindStringSubmatch(out)[2], nil
 }
 
-func makePost(flag, rule, cnn, outbound string) string {
+var outbound = fmt.Sprintf(`%s route show default | grep -oP 'dev \K\W+'`, CommandIp)
+
+func makePost(flag, rule, cnn string) string {
 	return fmt.Sprintf(
-		`iptables %s FORWARD %s -i %s -j ACCEPT && iptables -t nat %s POSTROUTING %s 0 -o %s -j MASQUERADE`,
+		`%s %s FORWARD %s -i %s -j ACCEPT && %s -t nat %s POSTROUTING %s 0 -o %s -j MASQUERADE`,
+		CommandIptables,
 		flag,
 		rule,
 		cnn,
+		CommandIptables,
 		flag,
 		rule,
 		outbound,
 	)
 }
 
-func makePostUp(cnn, outbound string) string {
-	return makePost("-A", "", cnn, outbound)
+func makePostUp(cnn string) string {
+	return makePost("-A", "", cnn)
 }
 
-func makePostDown(cnn, outbound string) string {
-	return makePost("-I", "0", cnn, outbound)
+func makePostDown(cnn string) string {
+	return makePost("-I", "0", cnn)
 }

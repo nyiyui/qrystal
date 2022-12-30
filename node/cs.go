@@ -1,19 +1,17 @@
 package node
 
 import (
+	"crypto/tls"
 	"errors"
 	"regexp"
-
-	"google.golang.org/grpc/credentials"
 )
 
 type CSConfig struct {
 	Comment         string
-	Creds           credentials.TransportCredentials
+	TLSConfig       *tls.Config
 	Host            string
 	Token           string
 	NetworksAllowed []*regexp.Regexp
-	Azusa           *AzusaConfig
 }
 
 func (csc *CSConfig) netAllowed(cnn string) bool {

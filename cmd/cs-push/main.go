@@ -26,8 +26,7 @@ type TmpConfig struct {
 	Name      string                   `yaml:"name"`
 	Networks  map[string]NetworkConfig `yaml:"networks"`
 
-	PublicKey util.Ed25519PublicKey `yaml:"public-key"`
-	TokenHash util.HexBytes         `yaml:"token-hash"`
+	TokenHash util.HexBytes `yaml:"token-hash"`
 }
 
 type NetworkConfig struct {
@@ -107,7 +106,6 @@ func main() {
 			Peer: &api.CentralPeer{
 				Host:       nc.Host,
 				AllowedIPs: cs.FromIPNets(allowedIPs),
-				PublicKey:  &api.PublicKey{Raw: tc.PublicKey},
 			},
 		})
 		if err != nil {
