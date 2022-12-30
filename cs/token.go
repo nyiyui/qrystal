@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
 )
 
@@ -87,16 +86,13 @@ func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, er
 	return
 }
 func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error) {
-	util.S.Info("getToken1")
 	sum := sha256.Sum256([]byte(token))
 	key := tokenPrefix + hex.EncodeToString(sum[:])
 	var encoded string
-	util.S.Info("getToken2")
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		encoded, err = tx.Get(key)
 		return err
 	})
-	util.S.Info("getToken3")
 	if err == buntdb.ErrNotFound {
 		ok = false
 		err = nil
@@ -105,7 +101,6 @@ func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error)
 	err = json.Unmarshal([]byte(encoded), &info)
 	info.sum = hex.EncodeToString(sum[:])
 	ok = true
-	util.S.Info("getToken4")
 	return
 }
 

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/profile"
@@ -38,6 +40,10 @@ func main() {
 	cs2, err := cs.New(*config.CC, config.BackportPath, db)
 	if err != nil {
 		log.Fatalf("new: %s", err)
+	}
+	err = warnNoPorts(config)
+	if err != nil {
+		log.Fatalf("warn no ports: %s", err)
 	}
 	err = warnDivergentTokens(config, cs2)
 	if err != nil {
@@ -87,6 +93,25 @@ func warnDivergentTokens(config *cs.Config, server *cs.CentralSource) error {
 		if !bytes.Equal(info2, already2) {
 			util.S.Warnf("token %x diverges from db", tr.Hash[:])
 		}
+	}
+	return nil
+}
+
+func warnNoPorts(config *cs.Config) error {
+	bad := false
+	for cnn, cn := range config.CC.Networks {
+		for pn, peer := range cn.Peers {
+			if peer.Host != "" {
+				_, _, err := net.SplitHostPort(peer.Host)
+				if err != nil {
+					util.S.Warnf("net %s peer %s has bad host: %s", cnn, pn, err)
+					bad = true
+				}
+			}
+		}
+	}
+	if bad {
+		return errors.New("bad hosts")
 	}
 	return nil
 }

@@ -62,7 +62,10 @@ func (k *Kiriyama) notifyCSStatus() {
 		}
 	}
 	util.S.Info("SetCSReady all ready")
-	util.Notify("READY=1\nSTATUS=all css ready")
+	err := util.Notify("READY=1\nSTATUS=all css ready")
+	if err != nil {
+		util.S.Errorf("Notify: %s", err)
+	}
 }
 
 func (k *Kiriyama) SetPeer(cnn string, pn string, s string) {

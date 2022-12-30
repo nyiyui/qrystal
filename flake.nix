@@ -30,6 +30,14 @@
       nixosLib = import (nixpkgs + "/nixos/lib") {
         inherit system;
       };
+      ldflags = pkgs: [
+        #TODO: use envvars instead as this doesnt work :(
+        "-X github.com/nyiyui/qrystal/mio.CommandBash=${pkgs.bash}/bin/bash"
+        "-X github.com/nyiyui/qrystal/mio.CommandWg=${pkgs.wireguard-tools}/bin/wg"
+        "-X github.com/nyiyui/qrystal/mio.CommandWgQuick=${pkgs.wireguard-tools}/bin/wg-quick"
+        "-X github.com/nyiyui/qrystal/node.CommandIp=${pkgs.iproute2}/bin/ip"
+        "-X github.com/nyiyui/qrystal/node.CommandIptables=${pkgs.iptables}/bin/iptables"
+      ];
     in rec {
       devShells = let pkgs = nixpkgsFor.${system}; in { default = pkgs.mkShell {
           buildInputs = with pkgs; [
@@ -48,10 +56,7 @@
           inherit version;
           src = ./.;
 
-          ldflags = [
-            "-X github.com/nyiyui/qrystal/node.CommandIp=${pkgs.iproute2}/bin/ip"
-            "-X github.com/nyiyui/qrystal/node.CommandIptables=${pkgs.iptables}/bin/iptables"
-          ];
+          ldflags = ldflags pkgs;
 
           tags = [ "nix" "sdnotify" ];
 
@@ -61,28 +66,34 @@
         };
       in
       {
-        runner = pkgs.buildGoModule (lib.recursiveUpdate common {
+        runner = pkgs.buildGoModule (common // {
           pname = "runner";
           subPackages = [ "cmd/runner" "cmd/runner-mio" "cmd/runner-node" ];
-          ldflags = [
+          ldflags = (ldflags pkgs) ++ [
             "-X github.com/nyiyui/qrystal/runner.nodeUser=qrystal-node"
           ];
+          postInstall = ''
+            mkdir $out/lib
+            cp $src/mio/dev-add.sh $out/lib
+            cp $src/mio/dev-remove.sh $out/lib
+          '';
         });
-        cs = pkgs.buildGoModule (lib.recursiveUpdate common {
+        cs = pkgs.buildGoModule (common // {
           pname = "cs";
           subPackages = [ "cmd/cs" ];
         });
-        etc = pkgs.buildGoModule (lib.recursiveUpdate common {
+        etc = pkgs.buildGoModule (common // {
           name = "etc";
-          subPackages = [ "cmd/cs-push" "cmd/gen-keys" "cmd/tray" ];
+          #subPackages = [ "cmd/cs-push" "cmd/gen-keys" "cmd/tray" ];
+          # NOTE: specifying subPackages makes buildGoModule not test other packages :(
         });
-        sd-notify-test = pkgs.buildGoModule (lib.recursiveUpdate common {
+        sd-notify-test = pkgs.buildGoModule (common // {
           pname = "sd-notify-test";
           subPackages = [ "cmd/sd-notify-test" ];
         });
       };
       checks = (import ./test.nix) {
-        inherit self system nixpkgsFor nixosLibFor;
+        inherit self system nixpkgsFor libFor nixosLibFor ldflags;
       };
       nixosModules.node = { config, lib, pkgs, ... }:
         with lib;
@@ -145,9 +156,11 @@
               serviceConfig = {
                 Restart = "on-failure";
                 Type = "notify";
+                NotifyAccess = "all";
                 ExecStart = "${pkg}/bin/runner";
                 StateDirectory = "qrystal-node";
                 StateDirectoryMode = "0700";
+                WorkingDirectory = "${pkg}/lib";
               };
             };
           };

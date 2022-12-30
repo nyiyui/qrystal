@@ -10,38 +10,20 @@ import (
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"gopkg.in/yaml.v3"
 )
 
 func (n *Node) setupClient(cl *rpc2.Client) {
-	cl.Handle("generate", func(cl *rpc2.Client, q *api.GenerateQ, s *api.GenerateS) error {
-		n.ccLock.Lock()
-		defer n.ccLock.Unlock()
-		s.PubKeys = make([]wgtypes.Key, len(q.CNNs), len(q.CNNs))
-		for i, cnn := range q.CNNs {
-			cn, ok := n.cc.Networks[cnn]
-			if !ok {
-				return fmt.Errorf("%d: unknown CN %s", i, cnn)
-			}
-			key, err := wgtypes.GeneratePrivateKey()
-			if err != nil {
-				return fmt.Errorf("%d: GeneratePrivateKey: %w", i, err)
-			}
-			cn.MyPrivKey = &key
-			n.cc.Networks[cnn] = cn
-			s.PubKeys[i] = key
-		}
-		return nil
-	})
 	cl.Handle("push", func(cl *rpc2.Client, q *api.PushQ, s *api.PushS) error {
+		var err error
 		n.ccLock.Lock()
 		defer n.ccLock.Unlock()
 		i := q.I
 		cc := q.CC
 		csc := n.cs[i]
 
-		ccy, _ := yaml.Marshal(cc)
-		util.S.Infof("新たなCCを受信: %s", ccy)
+		for cnn, cn := range cc.Networks {
+			util.S.Debugf("新たなCCを受信: net %s: %s", cnn, cn)
+		}
 
 		// NetworksAllowed
 		cc2 := map[string]*central.Network{}
@@ -53,20 +35,34 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 			}
 		}
 		cc.Networks = cc2
-		util.S.Info("NetworksAllowed")
 
 		for cnn := range cc.Networks {
 			n.csNets[cnn] = i
 		}
 		toRemove := cs.MissingFromFirst(cc.Networks, n.cc.Networks)
-		util.S.Info("removeDevices")
-		err := n.removeDevices(toRemove)
+		n.Kiriyama.SetCSReady(i, false)
+		err = n.removeDevices(toRemove)
 		if err != nil {
 			return fmt.Errorf("rm devs: %w", err)
 		}
-		util.S.Infof("apply and reify")
 		n.applyCC(&cc)
-		n.reify()
+		s.PubKeys = map[string]wgtypes.Key{}
+		for cnn, cn := range n.cc.Networks {
+			if cn.MyPrivKey == nil {
+				key, err := wgtypes.GeneratePrivateKey()
+				if err != nil {
+					return fmt.Errorf("%d: GeneratePrivateKey: %w", i, err)
+				}
+				cn.MyPrivKey = &key
+				n.cc.Networks[cnn] = cn
+			}
+			s.PubKeys[cnn] = cn.MyPrivKey.PublicKey()
+			util.S.Infof("net %s: my PublicKey is %s", cnn, s.PubKeys[cnn])
+		}
+		err = n.reify()
+		if err != nil {
+			return fmt.Errorf("reify: %w", err)
+		}
 		n.Kiriyama.SetCSReady(i, true)
 		return nil
 	})

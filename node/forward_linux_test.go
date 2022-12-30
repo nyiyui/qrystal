@@ -1,13 +1,12 @@
-//go:build !nix
-
 package node
 
 import "testing"
 
-func TestGetOutbound(t *testing.T) {
-	outbound, err := getOutbound()
-	if err != nil {
-		t.Fatal(err)
+func TestCommands(t *testing.T) {
+	if CommandIp == "" {
+		t.Fatal("CommandIp is blank")
 	}
-	t.Log(outbound)
+	if CommandIptables == "" {
+		t.Fatal("CommandIptables is blank")
+	}
 }

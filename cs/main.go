@@ -27,8 +27,10 @@ type CentralSource struct {
 	backportLock sync.Mutex
 	// keep it simple (RWMutex might be more appropriate but we're not writing
 	// backports simultaneously (I hope))
-	backportPath string
-	handler      *rpc2.Server
+	backportPath  string
+	handler       *rpc2.Server
+	notifyChsLock sync.Mutex
+	notifyChs     []chan change
 }
 
 func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource, error) {
@@ -58,11 +60,6 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 
 func (s *CentralSource) serve(conn io.ReadWriteCloser) {
 	s.handler.ServeConn(conn)
-}
-
-type change struct {
-	reason string
-	except string
 }
 
 var _ api.CentralSourceServer = new(CentralSource)

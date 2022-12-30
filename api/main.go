@@ -13,11 +13,16 @@ type PullQ struct {
 type PullS struct{}
 
 type PushQ struct {
-	I  int
+	I int
+	// I is the index of the CS in this specific Node. This is required
+	// to get allowed networks etc.
+	// TODO: perhaps some way to prevent the CS from spoofing this
 	CC central.Config
 }
 
-type PushS struct{}
+type PushS struct {
+	PubKeys map[string]wgtypes.Key
+}
 
 type GenerateQ struct {
 	CNNs []string

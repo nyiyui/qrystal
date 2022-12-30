@@ -37,11 +37,7 @@ func (n *Node) ListenCS() {
 func (n *Node) listenCS(i int) error {
 	n.Kiriyama.SetCS(i, "初期")
 	return util.Backoff(func() (resetBackoff bool, err error) {
-		resetBackoff, err = n.listenCSOnce(i)
-		if err == nil {
-			err = util.ErrEndBackoff
-		}
-		return
+		return n.listenCSOnce(i)
 	}, func(backoff time.Duration, err error) error {
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
@@ -54,7 +50,6 @@ func (n *Node) listenCS(i int) error {
 }
 
 func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
-	defer n.Kiriyama.SetCSReady(i, resetBackoff)
 	// Setup
 	util.S.Debug("newClient…")
 	cl, _, err := n.newClient(i)
@@ -79,14 +74,15 @@ func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
 		err = fmt.Errorf("ping: %w", err)
 		return
 	}
-	var s api.PullS
-	n.Kiriyama.SetCS(i, "引き")
-	err = cl.Call("sync", &api.PullQ{I: i, CentralToken: csc.Token}, &s)
-	if err != nil {
-		err = fmt.Errorf("sync init: %w", err)
-		return
+	for {
+		var s api.PullS
+		n.Kiriyama.SetCS(i, "引き")
+		err = cl.Call("sync", &api.PullQ{I: i, CentralToken: csc.Token}, &s)
+		if err != nil {
+			err = fmt.Errorf("sync init: %w", err)
+			return
+		}
 	}
-	return
 }
 
 func (c *Node) removeDevices(devices []string) error {
@@ -130,6 +126,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			peer, ok := cn.Peers[pn2]
 			if !ok {
 				// new peer
+				peer2.Name = pn2
 				cn.Peers[pn2] = peer2
 				continue
 			}
@@ -143,8 +140,6 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			if !central.Same(peer.AllowedIPs, peer2.AllowedIPs) {
 				peer.Desynced |= central.DIPs
 			}
-			util.S.Debugf("LOOP net %s peer %s ForwardingPeers1 %s", cnn2, pn2, peer.ForwardingPeers)
-			util.S.Debugf("LOOP net %s peer %s ForwardingPeers2 %s", cnn2, pn2, peer2.ForwardingPeers)
 			peer.ForwardingPeers = []string{}
 			for _, forwardingPeer := range peer2.ForwardingPeers {
 				if forwardingPeer == cn.Me {
@@ -157,6 +152,11 @@ func (n *Node) applyCC(cc2 *central.Config) {
 				}
 			}
 			peer.CanSee = peer2.CanSee
+			if peer.Internal == nil {
+				peer.Internal = new(central.PeerInternal)
+			}
+			peer.Internal.PubKey = peer2.Internal.PubKey
+			cn.Peers[pn2] = peer
 		}
 		for pn := range cn.Peers {
 			_, ok := cn2.Peers[pn]
@@ -168,6 +168,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 		cn.Me = cn2.Me
 		cn.Keepalive = cn2.Keepalive
 		cn.ListenPort = cn2.ListenPort
+		n.cc.Networks[cnn2] = cn
 	}
 	for cnn := range n.cc.Networks {
 		_, ok := cc2.Networks[cnn]

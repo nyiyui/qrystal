@@ -22,7 +22,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Some code borrowed/stolen from <https://github.com/okzk/sdnotify/blob/d9becc38acbd785892af7637319e2c5e101057f7/notify_linux.go> .
+// Some code borrowed/stolen from <https://github.com/okzk/sdnotify/blob/d9becc38acbd785892af7637319e2c5e101057f7/notify_linux.go>.
 
 package util
 

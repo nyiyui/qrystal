@@ -2,6 +2,7 @@
 package central
 
 import (
+	"bytes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -43,6 +44,11 @@ type Network struct {
 	MyPrivKey *wgtypes.Key
 }
 
+func (cn *Network) String() string {
+	out, _ := json.Marshal(cn)
+	return string(out)
+}
+
 // Peer configures a peer.
 type Peer struct {
 	Desynced        int
@@ -54,6 +60,11 @@ type Peer struct {
 	// If CanSee is nil, this Peer can see all peers.
 
 	Internal *PeerInternal `yaml:"-"`
+}
+
+func (p *Peer) String() string {
+	out, _ := json.Marshal(p)
+	return string(out)
 }
 
 func NewPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *Peer, err error) {
@@ -81,21 +92,31 @@ type PeerInternal struct {
 
 	Lock       sync.RWMutex
 	LatestSync time.Time
-	Accessible bool
-	// accessible represents whether this peer is accessible in the latest sync.
-	PubKey *wgtypes.Key
-	Creds  credentials.TransportCredentials
+	PubKey     *wgtypes.Key
+	Creds      credentials.TransportCredentials
 	// creds for this specific peer.
+}
+
+type PeerInternalProxy struct {
+	PubKey *wgtypes.Key
 }
 
 var _ gob.GobEncoder = new(PeerInternal)
 var _ gob.GobDecoder = new(PeerInternal)
 
 func (pi *PeerInternal) GobEncode() ([]byte, error) {
-	return []byte{}, nil
+	buf := new(bytes.Buffer)
+	err := gob.NewEncoder(buf).Encode(PeerInternalProxy{PubKey: pi.PubKey})
+	return buf.Bytes(), err
 }
 
-func (pi *PeerInternal) GobDecode([]byte) error {
+func (pi *PeerInternal) GobDecode(data []byte) error {
+	var proxy PeerInternalProxy
+	err := gob.NewDecoder(bytes.NewBuffer(data)).Decode(&proxy)
+	if err != nil {
+		return err
+	}
+	pi.PubKey = proxy.PubKey
 	return nil
 }
 
