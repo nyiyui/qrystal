@@ -1,23 +1,28 @@
 src=.
 path=${shell pwd}
-define ldflags
+define ldflags-mio
 -X github.com/nyiyui/qrystal/mio.CommandBash=${shell which bash}
 -X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
 -X github.com/nyiyui/qrystal/mio.CommandWgQuick=${shell which wg-quick}
+endef
+define ldflags-node
 -X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
 -X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
+endef
+define ldflags-runner
+-X github.com/nyiyui/qrystal/runner.nodeUser=qrystal-node
 endef
 
 all: runner-mio runner-node runner gen-keys cs
 
 runner-mio:
-	cd ${src} && go build -o ${path}/runner-mio ${src}/cmd/runner-mio
+	cd ${src} && go build -ldflags ${ldflags-mio} -o ${path}/runner-mio ${src}/cmd/runner-mio
 
 runner-node:
-	cd ${src} && go build -o ${path}/runner-node ${src}/cmd/runner-node
+	cd ${src} && go build -ldflags ${ldflags-node} -o ${path}/runner-node ${src}/cmd/runner-node
 
 runner:
-	cd ${src} && go build -o ${path}/runner ${src}/cmd/runner
+	cd ${src} && go build -ldflags ${ldflags-runner} -o ${path}/runner ${src}/cmd/runner
 
 gen-keys:
 	cd ${src} && go build -o ${path}/gen-keys ${src}/cmd/gen-keys
