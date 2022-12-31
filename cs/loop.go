@@ -18,7 +18,7 @@ func (c *CentralSource) Handle(addr string, tlsCfg TLS) error {
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
-	util.S.Info("Listen ok")
+	util.S.Infof("listen on %s", listener.Addr())
 	go func() {
 		for {
 			conn, err := listener.Accept()

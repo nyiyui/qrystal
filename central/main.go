@@ -73,12 +73,11 @@ func NewPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *Peer, err error) {
 		return nil, fmt.Errorf("ToIPNets: %w", err)
 	}
 	return &Peer{
-		Name:            pn,
-		Host:            peer.Host,
-		AllowedIPs:      FromIPNets(ipNets),
-		ForwardingPeers: peer.ForwardingPeers,
-		CanSee:          NewCanSeeFromAPI(peer.CanSee),
-		Internal:        new(PeerInternal),
+		Name:       pn,
+		Host:       peer.Host,
+		AllowedIPs: FromIPNets(ipNets),
+		CanSee:     NewCanSeeFromAPI(peer.CanSee),
+		Internal:   new(PeerInternal),
 	}, nil
 }
 
@@ -128,10 +127,9 @@ func (pi *PeerInternal) GobDecode(data []byte) error {
 
 func (p *Peer) ToAPI() *api.CentralPeer {
 	return &api.CentralPeer{
-		Host:            p.Host,
-		AllowedIPs:      FromIPNetsToAPI(ToIPNets(p.AllowedIPs)),
-		ForwardingPeers: p.ForwardingPeers,
-		CanSee:          p.CanSee.ToAPI(),
+		Host:       p.Host,
+		AllowedIPs: FromIPNetsToAPI(ToIPNets(p.AllowedIPs)),
+		CanSee:     p.CanSee.ToAPI(),
 	}
 }
 

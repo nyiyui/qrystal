@@ -77,6 +77,110 @@ in
         cs.wait_for_unit("qrystal-cs.service")
       '';
     };
+  push = let
+    networkName = "testnet";
+    base = { # TODO
+      virtualisation.vlans = [ 1 ];
+      environment.systemPackages = with pkgs; [ wireguard-tools ];
+    };
+  in let
+    node = ({ token }: { pkgs, ... }: base // {
+      imports = [ self.outputs.nixosModules.${system}.node ];
+      qrystal.services.node = {
+        enable = true;
+        config.css = [
+          {
+            comment = "cs";
+            endpoint = "cs:39252";
+            tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
+            networks = [ networkName ];
+            inherit token;
+          }
+        ];
+      };
+      systemd.services.qrystal-node.wantedBy = [];
+    });
+  in
+  lib.runTest ({
+    name = "push";
+    hostPkgs = pkgs;
+    nodes = {
+      node1 = node { token = node1Token; }; # pushing for node1
+      node2 = node { token = node2Token; };
+      pusher = { pkgs, ... }: base // {
+        environment.systemPackages = [ self.outputs.packages.${system}.etc ];
+      };
+      cs = { pkgs, ... }: base // {
+        imports = [ self.outputs.nixosModules.${system}.cs ];
+
+        networking.firewall.allowedTCPPorts = [ 39252 39253 ];
+        qrystal.services.cs = {
+          enable = true;
+          config = {
+            tls.certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
+            tls.keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
+            tokens = [
+              {
+                name = "node2";
+                hash = node2Hash;
+                canPull = true;
+                networks.${networkName} = "node2";
+                canPush.any = true;
+                canPush.networks.${networkName} = "node1";
+                canAddTokens = { canPull = true; };
+              }
+            ];
+            central.networks.${networkName} = {
+              keepalive = "10s";
+              listenPort = 58120;
+              ips = [ "10.123.0.1/16" ];
+              peers.node2 = { host = "node2:58120"; allowedIPs = [ "10.123.0.2/32" ]; canSee.only = [ "node1" ]; };
+            };
+          };
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      import json
+
+      nodes = [node1, node2]
+      addrs = ["10.123.0.2", "10.123.0.1"]
+      cs.start()
+      cs.wait_for_unit("qrystal-cs.service")
+      node2.start()
+      node2.wait_for_unit("qrystal-node.service")
+      config = dict(
+        overwrite=False,
+        name="node1",
+        tokenHash="${node1Hash}",
+        networks=dict(
+          ${networkName}=dict(
+            name="node1",
+            ips=["10.123.0.1/32"],
+            host="node1:58120",
+            canSee=["node2"],
+          ),
+        ),
+      )
+      pusher.start()
+      print(pusher.succeed(f"""${self.outputs.packages.${system}.etc}/bin/cs-push -server 'cs:39253' -token '${node2Token}' -cert <(echo '${rootCert + "\n" + csCert}') -tmp-config <(echo '{json.dumps(config)}')"""))
+      print("pushed for node1")
+      node1.start()
+      node1.wait_for_unit("qrystal-node.service")
+      print("all nodes started")
+      # NOTE: there is a race condition where the peers' pubkeys could not be
+      # set yet when pinged (so that's why we're using wait_until_*
+      for i, node in enumerate(nodes):
+        print(node.wait_until_succeeds("wg show ${networkName}"))
+        print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
+        print(node.execute("ip route show")[1])
+        for addr in addrs:
+          print(node.execute(f"ip route get {addr}")[1])
+      for i, node in enumerate(nodes):
+        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
+        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+    '';
+  });
   all = let
     networkName = "testnet";
     base = { # TODO

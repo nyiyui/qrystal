@@ -20,6 +20,7 @@ type TLS struct {
 
 type Config struct {
 	Addr         string          `yaml:"addr"`
+	HarukaAddr   string          `yaml:"harukaAddr"`
 	TLS          TLS             `yaml:"tls"`
 	CC           *central.Config `yaml:"central"`
 	Tokens       *TokensConfig   `yaml:"tokens"`

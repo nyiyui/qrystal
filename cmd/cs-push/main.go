@@ -26,14 +26,15 @@ type TmpConfig struct {
 	Name      string                   `yaml:"name"`
 	Networks  map[string]NetworkConfig `yaml:"networks"`
 
-	TokenHash util.HexBytes `yaml:"token-hash"`
+	TokenHash util.HexBytes `yaml:"tokenHash"`
 }
 
 type NetworkConfig struct {
 	Name    string   `yaml:"name"`
 	IPs     []string `yaml:"ips"`
 	Host    string   `yaml:"host"`
-	CanPush bool     `yaml:"can-push"`
+	CanPush bool     `yaml:"canPush"`
+	CanSee  []string `yaml:"canSee"`
 }
 
 var tcPath string
@@ -41,11 +42,13 @@ var cfg Config
 var cfgServer string
 var cfgCT string
 var tc TmpConfig
+var certPath string
 
 func main() {
 	flag.StringVar(&cfgServer, "server", "", "server address")
 	flag.StringVar(&cfgCT, "token", "", "central token")
 	flag.StringVar(&tcPath, "tmp-config", "", "path to tmp config file")
+	flag.StringVar(&certPath, "cert", "", "path to server cert")
 	flag.Parse()
 
 	raw, err := os.ReadFile(tcPath)
@@ -60,7 +63,10 @@ func main() {
 	cfg.Server = cfgServer
 	cfg.CentralToken = cfgCT
 
-	creds := credentials.NewTLS(nil)
+	creds, err := credentials.NewClientTLSFromFile(certPath, "")
+	if err != nil {
+		log.Fatalf("load cert: %s", err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -108,6 +114,7 @@ func main() {
 			Peer: &api.CentralPeer{
 				Host:       nc.Host,
 				AllowedIPs: cs.FromIPNets(allowedIPs),
+				CanSee:     &api.CanSee{Only: nc.CanSee},
 			},
 		})
 		if err != nil {

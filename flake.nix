@@ -61,7 +61,6 @@
           tags = [ "nix" "sdnotify" ];
 
           #vendorSha256 = pkgs.lib.fakeSha256;
-          #vendorSha256 = "528ddce7783a6d0fad1d2fdebf6f99deb778aec1a8b0c46f8e84b348448a4ff2";
           vendorSha256 = "a35aca9c155e9994766bad5c56d67db85476a30bd7b0864fd3191df72f340387";
         };
       in
@@ -84,7 +83,6 @@
         });
         etc = pkgs.buildGoModule (common // {
           name = "etc";
-          #subPackages = [ "cmd/cs-push" "cmd/gen-keys" "cmd/tray" ];
           # NOTE: specifying subPackages makes buildGoModule not test other packages :(
         });
         sd-notify-test = pkgs.buildGoModule (common // {
@@ -189,33 +187,31 @@
                     type = str;
                     default = ":39252";
                   };
+                  harukaAddr = mkOption {
+                    type = str;
+                    default = ":39253";
+                  };
                   tokens = mkOption {
                     type = listOf (submodule {
                       options = {
                         name = mkOption { type = str; };
                         hash = mkOption { type = str; };
-                        networks = mkOption { type = attrsOf str; };
+                        networks = mkOption { type = nullOr (attrsOf str); };
                         canPull = mkOption { type = bool; default = false; };
                         canPush = mkOption {
-                          type = nullOr (either
-                            (submodule {
-                              options = {
-                                any = mkOption { type = bool; default = false; };
-                              };
-                            })
-                            (submodule {
-                              options = {
-                                networks = mkOption { type = attrsOf str; };
-                              };
-                            })
-                          );
+                          type = nullOr (submodule {
+                            options = {
+                              any = mkOption { type = bool; default = false; };
+                              networks = mkOption { type = attrsOf str; };
+                            };
+                          });
                           default = null;
                         };
                         canAddTokens = mkOption {
                           type = nullOr (submodule {
                             options = {
-                              canPull = mkOption { type = bool; };
-                              canPush = mkOption { type = bool; };
+                              canPull = mkOption { type = bool; default = false; };
+                              canPush = mkOption { type = bool; default = false; };
                             };
                           });
                           default = null;

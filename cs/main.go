@@ -191,6 +191,7 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	if n != len(hash) {
 		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
 	}
+	util.S.Infof("add token %s: %s", q.Name, q)
 	err = s.Tokens.AddToken(hash, TokenInfo{
 		Name:     q.Name,
 		Networks: q.Networks,

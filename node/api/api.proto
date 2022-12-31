@@ -53,20 +53,11 @@ message CentralNetwork {
 message CentralPeer {
   string host = 1;
   repeated IPNet allowedIPs = 2;
-  repeated string forwardingPeers = 4;
-  // forwardingPeers lists the allowedIPs this peer can forward for.
-  // forwardingPeers may overlap (i.e. duplicate IPs may appear in other
-  // CentralPeers), so nodes must choose one for their WireGuard config.
-  WGPubKey wgPubKey = 3;
   CanSee canSee = 5;
 }
 
 message CanSee {
   repeated string only = 1;
-}
-
-message WGPubKey {
-  bytes raw = 1;
 }
 
 message IPNet {
