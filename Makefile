@@ -16,13 +16,13 @@ endef
 all: runner-mio runner-node runner gen-keys cs
 
 runner-mio:
-	cd ${src} && go build -ldflags ${ldflags-mio} -o ${path}/runner-mio ${src}/cmd/runner-mio
+	cd ${src} && go build -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
 
 runner-node:
-	cd ${src} && go build -ldflags ${ldflags-node} -o ${path}/runner-node ${src}/cmd/runner-node
+	cd ${src} && go build -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
 
 runner:
-	cd ${src} && go build -ldflags ${ldflags-runner} -o ${path}/runner ${src}/cmd/runner
+	cd ${src} && go build -ldflags "${ldflags-runner}" -o ${path}/runner ${src}/cmd/runner
 
 gen-keys:
 	cd ${src} && go build -o ${path}/gen-keys ${src}/cmd/gen-keys
