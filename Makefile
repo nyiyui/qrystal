@@ -8,6 +8,8 @@ define ldflags
 -X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
 endef
 
+all: runner-mio runner-node runner gen-keys cs
+
 runner-mio:
 	cd ${src} && go build -o ${path}/runner-mio ${src}/cmd/runner-mio
 
@@ -86,4 +88,4 @@ uninstall:
 		"${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
 	systemctl daemon-reload
 
-.PHONY: install uninstall
+.PHONY: install uninstall all
