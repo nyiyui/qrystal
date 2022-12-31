@@ -31,7 +31,6 @@
         inherit system;
       };
       ldflags = pkgs: [
-        #TODO: use envvars instead as this doesnt work :(
         "-X github.com/nyiyui/qrystal/mio.CommandBash=${pkgs.bash}/bin/bash"
         "-X github.com/nyiyui/qrystal/mio.CommandWg=${pkgs.wireguard-tools}/bin/wg"
         "-X github.com/nyiyui/qrystal/mio.CommandWgQuick=${pkgs.wireguard-tools}/bin/wg-quick"
@@ -254,6 +253,7 @@
                                             only = mkOption { type = listOf str; };
                                           };
                                         })
+                                        (enum [ "any" ]) # TODO: any option is not yet supported in cs config
                                       ]);
                                       default = null;
                                     };

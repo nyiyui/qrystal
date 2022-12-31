@@ -1,13 +1,18 @@
 [Unit]
-Description=Run Qrystal Node using Runner.
 Wants=network-online.target
 After=network.target network-online.target
 
 [Service]
-Type=simple
-ExecStart=qrystal-runner -config /etc/qrystal/runner-config.yml
-WorkingDirectory=/opt/qrystal
+Type=notify
+NotifyAccess=all
+ExecStart=qrystal-runner
 Environment=QRYSTAL_PROFILE_PATH=/tmp/qrystal-profile.pprof
+Environment=RUNNER_MIO_PATH=/opt/qrystal/runner-mio
+Environment=RUNNER_NODE_PATH=/opt/qrystal/runner-node
+Environment=RUNNER_NODE_CONFIG_PATH=/etc/qrystal/node-config.yml
+StateDirectory=qrystal-node
+StateDirectorymode=0700
+WorkingDirectory=/opt/qrystal
 
 [Install]
 WantedBy=multi-user.target

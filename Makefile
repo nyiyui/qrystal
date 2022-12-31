@@ -1,5 +1,12 @@
 src=.
 path=${shell pwd}
+define ldflags
+-X github.com/nyiyui/qrystal/mio.CommandBash=${shell which bash}
+-X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
+-X github.com/nyiyui/qrystal/mio.CommandWgQuick=${shell which wg-quick}
+-X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
+-X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
+endef
 
 build2:
 	mkdir -p build2
