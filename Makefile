@@ -1,17 +1,11 @@
 src=.
 path=${shell pwd}
-define ldflags-mio
--X github.com/nyiyui/qrystal/mio.CommandBash=${shell which bash}
--X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
--X github.com/nyiyui/qrystal/mio.CommandWgQuick=${shell which wg-quick}
-endef
-define ldflags-node
--X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
--X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
-endef
-define ldflags-runner
--X github.com/nyiyui/qrystal/runner.nodeUser=qrystal-node
-endef
+ldflags-mio = -X github.com/nyiyui/qrystal/mio.CommandBash=${shell which bash}
+ldflags-mio += -X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
+ldflags-mio += -X github.com/nyiyui/qrystal/mio.CommandWgQuick=${shell which wg-quick}
+ldflags-node = -X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
+ldflags-node += -X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
+ldflags-runner = -X github.com/nyiyui/qrystal/runner.nodeUser=qrystal-node
 
 all: runner-mio runner-node runner gen-keys cs
 
