@@ -125,7 +125,7 @@
                         networks = mkOption {
                           type = listOf str;
                         };
-                        token = mkOption {
+                        tokenPath = mkOption {
                           type = str;
                         };
                       };

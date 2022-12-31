@@ -22,25 +22,22 @@ type config struct {
 }
 
 type csConfig struct {
-	Comment     string `yaml:"comment"`
-	TLSCertPath string `yaml:"tls-cert-path"`
-	TLS         struct {
+	Comment string `yaml:"comment"`
+	TLS     struct {
 		CertPath string `yaml:"certPath"`
 	} `yaml:"tls"`
 	AllowedNets []string `yaml:"networks"`
 	Host        string   `yaml:"endpoint"`
 	Token       string   `yaml:"token"`
+	TokenPath   string   `yaml:"tokenPath"`
 }
 
 func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 	var err error
 	var cert []byte
-	if cfg.TLSCertPath == "" {
-		cfg.TLSCertPath = cfg.TLS.CertPath
-	}
 	var tlsCfg *tls.Config
-	if cfg.TLSCertPath != "" {
-		cert, err = os.ReadFile(cfg.TLSCertPath)
+	if cfg.TLS.CertPath != "" {
+		cert, err = os.ReadFile(cfg.TLS.CertPath)
 		if err != nil {
 			return nil, fmt.Errorf("read tls cert: %w", err)
 		}
@@ -56,6 +53,13 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("network %d: %w", i, err)
 		}
+	}
+	if cfg.Token == "" {
+		token, err := os.ReadFile(cfg.TokenPath)
+		if err != nil {
+			return nil, fmt.Errorf("load tokenPath %s: %s", cfg.TokenPath, err)
+		}
+		cfg.Token = string(token)
 	}
 	return &node.CSConfig{
 		Comment:         cfg.Comment,

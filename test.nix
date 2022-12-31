@@ -94,7 +94,7 @@ in
             endpoint = "cs:39252";
             tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
             networks = [ networkName ];
-            inherit token;
+            tokenPath = builtins.toFile "token" token;
           }
         ];
       };
@@ -200,7 +200,7 @@ in
             endpoint = "cs:39252";
             tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
             networks = [ networkName ];
-            inherit token;
+            tokenPath = builtins.toFile "token" token;
           }
         ];
       };
