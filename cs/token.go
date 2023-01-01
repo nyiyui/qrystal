@@ -147,8 +147,13 @@ type CanAddTokens struct {
 }
 
 type CanPush struct {
-	Any      bool              `yaml:"any"`
-	Networks map[string]string `yaml:"networks"`
+	Any      bool                      `yaml:"any"`
+	Networks map[string]CanPushNetwork `yaml:"networks"`
+}
+
+type CanPushNetwork struct {
+	Name          string   `yaml:"name"`
+	CanSeeElement []string `yaml:"canSeeElement"`
 }
 
 type Token struct {

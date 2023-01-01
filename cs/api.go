@@ -13,6 +13,7 @@ import (
 func (c *CentralSource) newHandler() {
 	h := rpc2.NewServer()
 	h.Handle("sync", c.sync)
+	h.Handle("azusa", c.azusa)
 	c.handler = h
 }
 

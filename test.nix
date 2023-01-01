@@ -125,8 +125,8 @@ in
                 hash = node2Hash;
                 canPull = true;
                 networks.${networkName} = "node2";
-                canPush.any = true;
-                canPush.networks.${networkName} = "node1";
+                #canPush.any = true;
+                canPush.networks.${networkName} = { name = "node1"; canSeeElement = [ "node2" ]; };
                 canAddTokens = { canPull = true; };
               }
             ];

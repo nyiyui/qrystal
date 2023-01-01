@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
@@ -30,6 +31,9 @@ type csConfig struct {
 	Host        string   `yaml:"endpoint"`
 	Token       string   `yaml:"token"`
 	TokenPath   string   `yaml:"tokenPath"`
+	Azusa       struct {
+		Networks map[string]central.Peer
+	} `yaml:"azusa"`
 }
 
 func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
@@ -67,6 +71,7 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 		Host:            cfg.Host,
 		Token:           cfg.Token,
 		NetworksAllowed: netsAllowed,
+		Azusa:           cfg.Azusa.Networks,
 	}, err
 }
 
@@ -88,7 +93,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("load config: %s", err)
 	}
-	log.Printf("config loaded from %s: %s", configPath, c)
+	log.Printf("config loaded from %s: %#v", configPath, c)
 
 	// CS
 	ncscs := make([]node.CSConfig, 0, len(c.CSs))

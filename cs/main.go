@@ -117,12 +117,19 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 		return nil, errors.New("cannot push")
 	}
 	if !ti.CanPush.Any {
-		pattern, ok := ti.CanPush.Networks[q.Cnn]
+		cpn, ok := ti.CanPush.Networks[q.Cnn]
 		if !ok {
 			return nil, fmt.Errorf("cannot push to net %s", q.Cnn)
 		}
-		if q.PeerName != pattern {
+		if q.PeerName != cpn.Name {
 			return nil, fmt.Errorf("cannot push to net %s peer %s", q.Cnn, q.PeerName)
+		}
+		if cpn.CanSeeElement != nil {
+			if q.Peer.CanSee == nil {
+				return nil, fmt.Errorf("cannot push to net %s as peer violates CanSeeElement any", q.Cnn)
+			} else if len(MissingFromFirst(SliceToMap(cpn.CanSeeElement), SliceToMap(q.Peer.CanSee.Only))) != 0 {
+				return nil, fmt.Errorf("cannot push to net %s as peer violates CanSeeElement %s", q.Cnn, cpn.CanSeeElement)
+			}
 		}
 	}
 
@@ -208,8 +215,12 @@ func convCanPush(c *api.CanPush) *CanPush {
 	if c == nil {
 		return nil
 	}
+	networks := map[string]CanPushNetwork{}
+	for key, name := range c.Networks {
+		networks[key] = CanPushNetwork{Name: name}
+	}
 	return &CanPush{
-		Networks: c.Networks,
+		Networks: networks,
 	}
 }
 

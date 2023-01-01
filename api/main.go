@@ -31,3 +31,10 @@ type GenerateQ struct {
 type GenerateS struct {
 	PubKeys []wgtypes.Key
 }
+
+type AzusaQ struct {
+	Networks     map[string]central.Peer
+	CentralToken string
+}
+
+type AzusaS struct{}

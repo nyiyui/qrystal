@@ -52,7 +52,7 @@ func (cn *Network) String() string {
 // Peer configures a peer.
 type Peer struct {
 	Desynced        int
-	Name            string
+	Name            string   `yaml:"name"`
 	Host            string   `yaml:"host"`
 	AllowedIPs      []IPNet  `yaml:"allowedIPs"`
 	ForwardingPeers []string `yaml:"forwardingPeers"`

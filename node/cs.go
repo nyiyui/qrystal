@@ -3,6 +3,8 @@ package node
 import (
 	"crypto/tls"
 	"regexp"
+
+	"github.com/nyiyui/qrystal/central"
 )
 
 type CSConfig struct {
@@ -11,6 +13,7 @@ type CSConfig struct {
 	Host            string
 	Token           string
 	NetworksAllowed []*regexp.Regexp
+	Azusa           map[string]central.Peer
 }
 
 func (csc *CSConfig) netAllowed(cnn string) bool {
