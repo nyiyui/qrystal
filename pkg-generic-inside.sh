@@ -11,7 +11,7 @@ current=$(cd /source && git rev-parse @)
 
 mkdir /build
 cd /build
-make -f $prefix/Makefile src=/source pkgdir=/build build2 cs-push
+make -f $prefix/Makefile src=/source pkgdir=/build all cs-push
 cp -r $prefix/config .
 mkdir ./mio
 cp $prefix/mio/dev-*.sh ./mio/
