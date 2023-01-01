@@ -1,9 +1,0 @@
-Source: qrystal
-Maintainer: nyiyui <+@nyiyui.ca>
-Priority: optional
-Depends: wireguard-tools
-
-Package: qrystal
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: TODO

@@ -1,8 +1,0 @@
-#!/usr/bin/make -f
-
-%:
-	dh $@
-override_dh_auto_build:
-	$(MAKE) build2 cs-push
-override_dh_auto_install:
-	$(MAKE) src='/source' pkgdir=${DESTDIR} install install-cs-push
