@@ -4,7 +4,6 @@ After=network.target network-online.target
 
 [Service]
 User=qrystal-cs
-Type=notify
 ExecStart=qrystal-cs -config /etc/qrystal/cs-config.yml
 Environment=QRYSTAL_PROFILE_PATH=/tmp/qrystal-profile.pprof
 RuntimeDirectory=qrystal-cs
