@@ -189,6 +189,11 @@ func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
 	return err
 }
 
+// MarshalYAML implements yaml.Marshaler.
+func (d *Duration) MarshalYAML() (interface{}, error) {
+	return time.Duration(*d).String(), nil
+}
+
 // IPNet is a YAML-friendly net.IPNet.
 // TODO: move to package util
 type IPNet net.IPNet

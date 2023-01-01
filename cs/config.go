@@ -30,7 +30,7 @@ type Config struct {
 
 func (c *Config) apply() {
 	if c.BackportPath == "" {
-		c.BackportPath = filepath.Join(os.Getenv("RUNTIME_DIRECTORY"), "cs-backport.yml")
+		c.BackportPath = filepath.Join(os.Getenv("STATE_DIRECTORY"), "cs-backport.yml")
 	}
 	if c.DBPath == "" {
 		c.DBPath = filepath.Join(os.Getenv("STATE_DIRECTORY"), "db")

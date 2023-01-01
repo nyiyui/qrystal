@@ -53,12 +53,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("add tokens: %s", err)
 	}
-	if config.BackportPath != "" && false {
+	if config.BackportPath != "" {
 		err = cs2.ReadBackport()
 		if err != nil {
-			log.Fatalf("read backport: %s", err)
+			util.S.Warnf("read backport: %s", err)
+		} else {
+			util.S.Infof("read backport from %s", config.BackportPath)
 		}
-		log.Printf("read backport from %s", config.BackportPath)
 	}
 	err = cs2.Handle(config.Addr, config.TLS)
 	if err != nil {
