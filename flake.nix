@@ -96,20 +96,26 @@
           options = (if name then {
             name = mkOption {
               type = str;
+              description = "name of the peer";
             };
           } else {}) // {
             host = mkOption {
               type = str;
               default = "";
+              description = "Endpoint= in wg-quick(8) config";
             };
             allowedIPs = mkOption {
               type = listOf str;
+              description = "AllowedIPs= in wg-quick(8) config";
             };
             canSee = mkOption {
               type = nullOr (oneOf [
                 (submodule {
                   options = {
-                    only = mkOption { type = listOf str; };
+                    only = mkOption {
+                      type = listOf str;
+                      description = "peer can only see these peers";
+                    };
                   };
                 })
                 (enum [ "any" ]) # TODO: any option is not yet supported in cs config
@@ -134,32 +140,44 @@
                         options = {
                           comment = mkOption {
                             type = str;
+                            example = "main";
+                            description = "Friendly name for CS";
                           };
                           endpoint = mkOption {
                             type = str;
+                            example = "cs.qrystal.example.net:39252";
+                            description = "Endpoint to CS";
                           };
                           tls = mkOption {
                             type = submodule {
                               options = {
                                 certPath = mkOption {
                                   type = path;
+                                  description = "Path to TLS certificate.";
                                 };
                               };
                             };
                           };
                           networks = mkOption {
                             type = listOf str;
+                            description = "Networks to pull from CS";
                           };
                           tokenPath = mkOption {
                             type = str;
+                            example = "/run/secrets/qrystal-central-token-main";
+                            description = "Path to file containing Central Token.";
                           };
-                          azusa = mkOption { type = nullOr (submodule {
-                            options = {
-                              networks = mkOption {
-                                type = attrsOf (peerOption { inherit lib; } { name = true; });
+                          azusa = mkOption {
+                            type = nullOr (submodule {
+                              options = {
+                                networks = mkOption {
+                                  type = attrsOf (peerOption { inherit lib; } { name = true; });
+                                };
                               };
-                            };
-                          }); default = null; };
+                            });
+                            default = null;
+                            description = "Push peer to net before pulling.";
+                          };
                         };
                       });
                     };
@@ -209,50 +227,81 @@
                       tls = mkOption {
                         type = submodule {
                           options = {
-                            certPath = mkOption { type = path; };
-                            keyPath = mkOption { type = path; };
+                            certPath = mkOption {
+                              type = path;
+                              description = "PEM-encoded TLS certificate";
+                            };
+                            keyPath = mkOption {
+                              type = path;
+                              description = "PEM-encoded TLS private key";
+                            };
                           };
                         };
                       };
                       addr = mkOption {
                         type = str;
                         default = ":39252";
+                        description = "Bind address of Node API";
                       };
                       harukaAddr = mkOption {
                         type = str;
                         default = ":39253";
+                        description = "Bind address of Haruka API";
                       };
-                      tokens = mkOption {
-                        type = listOf (submodule {
-                          options = {
-                            name = mkOption { type = str; };
-                            hash = mkOption { type = str; };
-                            networks = mkOption { type = nullOr (attrsOf str); };
-                            canPull = mkOption { type = bool; default = false; };
-                            canPush = mkOption {
-                              type = nullOr (submodule {
-                                options = {
-                                  any = mkOption { type = bool; default = false; };
-                                  networks = mkOption { type = attrsOf (submodule { options = {
-                                    name = mkOption { type = str; };
-                                    canSeeElement = mkOption { type = listOf str; };
-                                  }; }); };
-                                };
-                              });
-                              default = null;
-                            };
-                            canAddTokens = mkOption {
-                              type = nullOr (submodule {
-                                options = {
-                                  canPull = mkOption { type = bool; default = false; };
-                                  canPush = mkOption { type = bool; default = false; };
-                                };
-                              });
-                              default = null;
-                            };
+                      tokens = mkOption { type = listOf (submodule {
+                        options = {
+                          name = mkOption {
+                            type = str;
+                            description = "Friendly name of token.";
                           };
-                        });
-                      };
+                          hash = mkOption {
+                            type = str;
+                            description = "Hash of the token (use qrystal-gen-keys).";
+                          };
+                          networks = mkOption {
+                            type = nullOr (attrsOf str);
+                            description = "Nets this token can pull from and the corresponding peer names.";
+                          };
+                          canPull = mkOption {
+                            type = bool;
+                            default = false;
+                            description = "Allow token to pull peers (see networks)";
+                          };
+                          canPush = mkOption {
+                            type = nullOr (submodule {
+                              options = {
+                                any = mkOption {
+                                  type = bool;
+                                  default = false;
+                                  description = "Can push to any peer in any net.";
+                                };
+                                networks = mkOption { type = attrsOf (submodule { options = {
+                                  name = mkOption {
+                                    type = str;
+                                    description = "Peer name.";
+                                  };
+                                  canSeeElement = mkOption {
+                                    type = listOf str;
+                                    description = "Pushed peers' canSee must be an element of canSeeElement.";
+                                  };
+                                }; }); };
+                              };
+                            });
+                            default = null;
+                            description = "Allow token to push peers.";
+                          };
+                          canAddTokens = mkOption {
+                            type = nullOr (submodule {
+                              options = {
+                                canPull = mkOption { type = bool; default = false; description = "Tokens added by this token can arbitrarily pull."; };
+                                canPush = mkOption { type = bool; default = false; description = "Tokens added by this token can arbitrarily pull."; };
+                              };
+                            });
+                            default = null;
+                            description = "Allow token to add more tokens.";
+                          };
+                        };
+                      }); };
                       central = mkOption {
                         type = submodule {
                           options = {
@@ -262,17 +311,21 @@
                                   keepalive = mkOption {
                                     type = nullOr str;
                                     default = null;
+                                    description = "PersistentKeepalive= in wg-quick(8) config";
                                   };
                                   listenPort = mkOption {
                                     type = port;
                                     default = 39390;
+                                    description = "ListenPort= in wg-quick(8) config";
                                   };
                                   ips = mkOption {
                                     type = listOf str;
                                     default = [ "10.39.0/16" ];
+                                    description = "Endpoint= in wg-quick(8) config";
                                   };
                                   peers = mkOption {
                                     type = attrsOf (peerOption { inherit lib; } { name = false; });
+                                    description = "All peers in the net.  Note that more can be added using cs-push, for example.";
                                   };
                                 };
                               });

@@ -1,37 +1,62 @@
-tls-cert-path:
-tls-key-path:
+# NOTE: options not commented out are required.
+tls:
+  # path to pem-encoded tls certificate and key
+  certPath:
+  keyPath:
+# bind address for node API (node)
 addr: :39252
-backport-path: /etc/qrystal/cs-backport.yml
-db-path: /etc/qrystal/db
+# bind address for haruka API (cs-push etc)
+harukaAddr: :39253
+# path to backport file
+backportPath: $STATE_DIRECTORY/cs-backport.yml
+# path to db
+dbPath: $STATE_DIRECTORY/db
+# tokens for node and haruka APIs
 tokens:
-  - name: master
-    hash: …
-    can-add-tokens:
-      can-pull: true # required to add tokens with can-pull: true
-  - name: phone0
-    hash: …
-    can-pull: true
+  - # friendly name (used in e.g. errors)
+    name: 
+    # hash of the token (use qrystal-gen-keys)
+    hash:
+    # allow token to pull (bool)
+    canPull:
+    # networks the token can pull from
     networks:
-      examplenet: phone
-  - name: desktop0
-    hash: …
-    can-pull: true
-    # if can-push: true and networks is not blank, can-push can only push e.g.
-    # peer desktop to network examplenet.
-    can-push: true
-    networks:
-      examplenet: desktop
+      <net name>: <peer name>
+    # allow token to push new peer configs
+    canPush:
+      # can push to any peer in any net (bool)
+      any:
+      # can pish to the following nets (overridden by any: true)
+      networks:
+        <net name>: 
+          # can push a peer with this name
+          name: <peer name>
+          # can push a peer with canSee element of canSeeElement
+          canSeeElement: [ <peer name>… ]
+    # allow token to add tokens
+    canAddTokens:
+      # tokens added by this token may arbitrarily pull (bool)
+      canPull:
+      # tokens added by this token may arbitrarily push (bool)
+      canPush:
 central:
   networks:
-    examplenet:
+    <net name>:
+      # PersistentKeepalive= in wg-quick config
       keepalive: 10s
-      listen-port: 58120
+      # ListenPort = in wg-quick config
+      listenPort: 58120
+      # all IP addresses (IPv4 only) in the net
       ips:
         - 10.123.0.1/16
+      # list of peers (more can be added with canPush tokens)
       peers:
-        phone:
+        <peer name>:
+          # Endpoint= in wg-quick config
+          host:
+          # AllowedIPs= in wg-quick config
           allowed-ips:
             - 10.123.0.1/32
-        desktop:
-          allowed-ips:
-            - 10.123.0.2/32
+          # peer can only see the following peers
+          canSee:
+            only: [ <peer name>… ]
