@@ -4,6 +4,7 @@ set -eux
 
 apt-get -qq update
 apt-get -qq install -y make
+git config --global --add safe.directory /source
 
 prefix=/source
 
