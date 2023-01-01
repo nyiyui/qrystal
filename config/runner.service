@@ -3,8 +3,6 @@ Wants=network-online.target
 After=network.target network-online.target
 
 [Service]
-Type=notify
-NotifyAccess=all
 ExecStart=qrystal-runner
 Environment=QRYSTAL_PROFILE_PATH=/tmp/qrystal-profile.pprof
 Environment=RUNNER_MIO_PATH=/opt/qrystal/runner-mio
