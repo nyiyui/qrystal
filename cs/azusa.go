@@ -60,9 +60,11 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	for cnn, peer := range q.Networks {
 		cn := c.cc.Networks[cnn]
 		cn.Peers[peer.Name] = &central.Peer{
+			Name:       peer.Name,
 			Host:       peer.Host,
 			AllowedIPs: peer.AllowedIPs,
 			CanSee:     peer.CanSee,
+			Internal:   new(central.PeerInternal),
 		}
 	}
 	return nil
