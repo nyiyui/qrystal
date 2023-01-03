@@ -14,6 +14,7 @@ import (
 	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
+	"gopkg.in/yaml.v3"
 )
 
 var configPath string
@@ -34,6 +35,8 @@ func main() {
 	log.Print("config file loaded")
 	util.S.Debugf("config: %#v", config)
 	util.S.Debugf("config cc: %#v", config.CC)
+	ccy, _ := yaml.Marshal(config.CC)
+	util.S.Debugf("config yaml: %#v", ccy)
 
 	db, err := buntdb.Open(config.DBPath)
 	if err != nil {
