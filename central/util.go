@@ -52,7 +52,7 @@ func (cn *Network) Assign() (err error) {
 
 func (cn *Network) EnsureAssignPeer(pn string) (err error) {
 	peer := cn.Peers[pn]
-	if peer.AllowedIPs != nil {
+	if len(peer.AllowedIPs) == 0 {
 		return nil
 	}
 	var ip net.IP
