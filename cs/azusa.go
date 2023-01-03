@@ -40,9 +40,9 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 		if !ok {
 			return fmt.Errorf("net %s no exist :(", cnn)
 		}
-		fmt.Fprintf(&desc, "\n- net %s peer %s", cnn, peer.Name)
+		fmt.Fprintf(&desc, "\n- net %s peer %s: %#v", cnn, peer.Name, peer)
 	}
-	util.S.Infof("azusa from token %s to push\n%s", ti.Name, desc)
+	util.S.Infof("azusa from token %s to push\n%s", ti.Name, &desc)
 	ti.StartUse()
 	err = c.Tokens.UpdateToken(ti)
 	if err != nil {
