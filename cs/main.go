@@ -46,10 +46,6 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 
 	cs.cc = cc
 	cs.backportPath = backportPath
-	err = cs.cc.Assign()
-	if err != nil {
-		return nil, fmt.Errorf("assign: %w", err)
-	}
 	cs.newHandler()
 	return cs, nil
 }
