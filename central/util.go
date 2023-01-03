@@ -45,31 +45,20 @@ func (cn *Network) Assign() (err error) {
 		if len(peer.AllowedIPs) == 0 {
 			continue
 		}
-		err := cn.AssignPeer(pn)
-		if err != nil {
-			return err
+		var ip net.IP
+		for _, ipNet := range cn.IPs {
+			var usedIPs []net.IPNet
+			for _, peer := range cn.Peers {
+				usedIPs = append(usedIPs, ToIPNets(peer.AllowedIPs)...)
+			}
+			ip, err = util.AssignAddress((*net.IPNet)(&ipNet), usedIPs)
+			if err != nil {
+				err = fmt.Errorf("peer %s: %w", pn, err)
+				return
+			}
 		}
+		cn.Peers[pn].AllowedIPs = []IPNet{IPNet(net.IPNet{IP: ip})}
 	}
-	return
-}
-
-func (cn *Network) AssignPeer(pn string) (err error) {
-	var ip net.IP
-	for _, ipNet := range cn.IPs {
-		var usedIPs []net.IPNet
-		for _, peer := range cn.Peers {
-			usedIPs = append(usedIPs, ToIPNets(peer.AllowedIPs)...)
-		}
-		ip, err = util.AssignAddress((*net.IPNet)(&ipNet), usedIPs)
-		if err != nil {
-			err = fmt.Errorf("peer %s: %w", pn, err)
-			return
-		}
-		if ip != nil {
-			break
-		}
-	}
-	cn.Peers[pn].AllowedIPs = []IPNet{IPNet(net.IPNet{IP: ip})}
 	return
 }
 
