@@ -70,7 +70,7 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			if err != nil {
 				return err
 			}
-			util.S.Infof("azusa from token %s to push net %s peer %s: assign IP %s", ti.Name, cnn, peer.Name, peer.AllowedIPs)
+			util.S.Infof("azusa from token %s to push net %s peer %s: assign IP %#v", ti.Name, cnn, peer.Name, peer.AllowedIPs)
 		}
 	}
 	return nil

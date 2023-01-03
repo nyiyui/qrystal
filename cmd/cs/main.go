@@ -32,6 +32,8 @@ func main() {
 		log.Fatalf("load config: %s", err)
 	}
 	log.Print("config file loaded")
+	util.S.Debugf("config: %#v", config)
+	util.S.Debugf("config cc: %#v", config.CC)
 
 	db, err := buntdb.Open(config.DBPath)
 	if err != nil {

@@ -65,6 +65,9 @@ func (cn *Network) AssignPeer(pn string) (err error) {
 			err = fmt.Errorf("peer %s: %w", pn, err)
 			return
 		}
+		if ip != nil {
+			break
+		}
 	}
 	cn.Peers[pn].AllowedIPs = []IPNet{IPNet(net.IPNet{IP: ip})}
 	return
