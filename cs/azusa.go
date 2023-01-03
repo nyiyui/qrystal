@@ -65,6 +65,12 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			CanSee:     peer.CanSee,
 			Internal:   new(central.PeerInternal),
 		}
+		if len(peer.AllowedIPs) == 0 {
+			err := cn.EnsureAssignPeer(peer.Name)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

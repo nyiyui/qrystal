@@ -41,23 +41,32 @@ func (cc *Config) Assign() (err error) {
 }
 
 func (cn *Network) Assign() (err error) {
-	for pn, peer := range cn.Peers {
-		if peer.AllowedIPs != nil {
-			continue
+	for pn := range cn.Peers {
+		err := cn.EnsureAssignPeer(pn)
+		if err != nil {
+			return err
 		}
-		var ip net.IP
-		for _, ipNet := range cn.IPs {
-			var usedIPs []net.IPNet
-			for _, peer := range cn.Peers {
-				usedIPs = append(usedIPs, ToIPNets(peer.AllowedIPs)...)
-			}
-			ip, err = util.AssignAddress((*net.IPNet)(&ipNet), usedIPs)
-			if err != nil {
-				err = fmt.Errorf("peer %s: %w", pn, err)
-				return
-			}
-		}
-		cn.Peers[pn].AllowedIPs = []IPNet{IPNet(net.IPNet{IP: ip})}
 	}
+	return
+}
+
+func (cn *Network) EnsureAssignPeer(pn string) (err error) {
+	peer := cn.Peers[pn]
+	if peer.AllowedIPs != nil {
+		return nil
+	}
+	var ip net.IP
+	for _, ipNet := range cn.IPs {
+		var usedIPs []net.IPNet
+		for _, peer := range cn.Peers {
+			usedIPs = append(usedIPs, ToIPNets(peer.AllowedIPs)...)
+		}
+		ip, err = util.AssignAddress((*net.IPNet)(&ipNet), usedIPs)
+		if err != nil {
+			err = fmt.Errorf("peer %s: %w", pn, err)
+			return
+		}
+	}
+	cn.Peers[pn].AllowedIPs = []IPNet{IPNet(net.IPNet{IP: ip})}
 	return
 }
