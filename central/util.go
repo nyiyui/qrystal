@@ -41,7 +41,7 @@ func (cc *Config) Assign() (err error) {
 }
 
 func (cn *Network) Assign() (err error) {
-	for pn := range cn.Peers {
+	for pn, peer := range cn.Peers {
 		if len(peer.AllowedIPs) == 0 {
 			continue
 		}
@@ -54,7 +54,6 @@ func (cn *Network) Assign() (err error) {
 }
 
 func (cn *Network) AssignPeer(pn string) (err error) {
-	peer := cn.Peers[pn]
 	var ip net.IP
 	for _, ipNet := range cn.IPs {
 		var usedIPs []net.IPNet
