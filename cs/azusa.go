@@ -59,18 +59,21 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	defer c.ccLock.Unlock()
 	for cnn, peer := range q.Networks {
 		cn := c.cc.Networks[cnn]
+		if peer.AllowedIPs == nil || len(peer.AllowedIPs) == 0 {
+			ipNet, err := cn.AssignAddr()
+			if err != nil {
+				return err
+			}
+			util.S.Infof("azusa from token %s to push net %s peer %s: assign IP %#v", ti.Name, cnn, peer.Name, peer.AllowedIPs)
+			peer.AllowedIPs = []central.IPNet{
+				central.IPNet(ipNet),
+			}
+		}
 		cn.Peers[peer.Name] = &central.Peer{
 			Host:       peer.Host,
 			AllowedIPs: peer.AllowedIPs,
 			CanSee:     peer.CanSee,
 			Internal:   new(central.PeerInternal),
-		}
-		if peer.AllowedIPs == nil || len(peer.AllowedIPs) == 0 {
-			err := cn.AssignPeer(peer.Name)
-			if err != nil {
-				return err
-			}
-			util.S.Infof("azusa from token %s to push net %s peer %s: assign IP %#v", ti.Name, cnn, peer.Name, peer.AllowedIPs)
 		}
 	}
 	return nil
