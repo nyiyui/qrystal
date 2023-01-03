@@ -144,6 +144,7 @@ func (s *CentralSource) backportSilentInternal() {
 	}()
 	if s == nil {
 		util.S.Errorf("backportSilent: CentralSource is nil!")
+		return
 	}
 	err := s.backport()
 	if err != nil {

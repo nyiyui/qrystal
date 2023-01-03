@@ -31,10 +31,12 @@ type CentralSource struct {
 }
 
 func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource, error) {
-	ts, err := newTokenStore(db)
+	cs := new(CentralSource)
+	ts, err := newTokenStore(db, cs)
 	if err != nil {
 		return nil, err
 	}
+	cs.Tokens = ts
 
 	for _, cn := range cc.Networks {
 		for _, peer := range cn.Peers {
@@ -42,12 +44,8 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 		}
 	}
 
-	cs := &CentralSource{
-		cc:           cc,
-		Tokens:       ts,
-		backportPath: backportPath,
-	}
-	ts.cs = cs
+	cs.cc = cc
+	cs.backportPath = backportPath
 	err = cs.cc.Assign()
 	if err != nil {
 		return nil, fmt.Errorf("assign: %w", err)

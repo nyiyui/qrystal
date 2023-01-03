@@ -65,11 +65,12 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			CanSee:     peer.CanSee,
 			Internal:   new(central.PeerInternal),
 		}
-		if len(peer.AllowedIPs) == 0 {
+		if peer.AllowedIPs == nil || len(peer.AllowedIPs) == 0 {
 			err := cn.EnsureAssignPeer(peer.Name)
 			if err != nil {
 				return err
 			}
+			util.S.Infof("azusa from token %s to push net %s peer %s: assign IP %s", ti.Name, cnn, peer.Name, peer.AllowedIPs)
 		}
 	}
 	return nil

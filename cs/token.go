@@ -20,10 +20,11 @@ type TokenStore struct {
 	cs *CentralSource
 }
 
-func newTokenStore(db *buntdb.DB) (TokenStore, error) {
+func newTokenStore(db *buntdb.DB, cs *CentralSource) (TokenStore, error) {
 	err := db.CreateIndex("tokens", "token:*", buntdb.IndexString)
 	return TokenStore{
 		db: db,
+		cs: cs,
 	}, err
 }
 
