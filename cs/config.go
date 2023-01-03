@@ -130,6 +130,27 @@ type Backport struct {
 	Tokens map[string]string `yaml:"tokens"`
 }
 
+func (s *CentralSource) backportSilent() {
+	go s.backportSilentInternal()
+}
+
+func (s *CentralSource) backportSilentInternal() {
+	// TODO: perhaps prevent many backports from piling up
+	defer func() {
+		r := recover()
+		if r != nil {
+			util.S.Errorf("backportSilent: recover: %s", r)
+		}
+	}()
+	if s == nil {
+		util.S.Errorf("backportSilent: CentralSource is nil!")
+	}
+	err := s.backport()
+	if err != nil {
+		util.S.Errorf("backportSilent: error: %s", err)
+	}
+}
+
 func (s *CentralSource) backport() error {
 	s.backportLock.Lock()
 	defer s.backportLock.Unlock()

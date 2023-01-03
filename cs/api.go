@@ -142,8 +142,5 @@ func (c *CentralSource) notify(chg change) {
 		case <-t.C:
 		}
 	}
-	err := c.backport()
-	if err != nil {
-		util.S.Errorf("backport: %s", err)
-	}
+	c.backportSilent()
 }

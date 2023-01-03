@@ -17,6 +17,7 @@ type sha256Sum = [sha256.Size]byte
 
 type TokenStore struct {
 	db *buntdb.DB
+	cs *CentralSource
 }
 
 func newTokenStore(db *buntdb.DB) (TokenStore, error) {
@@ -38,6 +39,7 @@ func (s *TokenStore) UpdateToken(info TokenInfo) (err error) {
 		_, _, err = tx.Set(key, string(encoded), nil)
 		return
 	})
+	s.cs.backportSilent()
 	return
 }
 
@@ -65,6 +67,7 @@ func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (er
 		_, _, err = tx.Set(key, string(encoded), nil)
 		return
 	})
+	s.cs.backportSilent()
 	return
 }
 

@@ -47,6 +47,7 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 		Tokens:       ts,
 		backportPath: backportPath,
 	}
+	ts.cs = cs
 	err = cs.cc.Assign()
 	if err != nil {
 		return nil, fmt.Errorf("assign: %w", err)
