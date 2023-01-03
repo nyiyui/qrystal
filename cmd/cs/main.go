@@ -36,7 +36,7 @@ func main() {
 	util.S.Debugf("config: %#v", config)
 	util.S.Debugf("config cc: %#v", config.CC)
 	ccy, _ := yaml.Marshal(config.CC)
-	util.S.Debugf("config yaml: %#v", ccy)
+	util.S.Debugf("config yaml: %s", ccy)
 
 	db, err := buntdb.Open(config.DBPath)
 	if err != nil {
