@@ -72,6 +72,11 @@ message AddTokenQ {
   map<string, string> networks = 5;
   bool canPull = 6;
   CanPush canPush = 7;
+  map<string, LString> canPushNetworksCanSeeElement = 8;
+}
+
+message LString {
+  repeated string inner = 1;
 }
 
 message CanPush {

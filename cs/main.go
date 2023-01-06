@@ -198,7 +198,7 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 		Name:     q.Name,
 		Networks: q.Networks,
 		CanPull:  q.CanPull,
-		CanPush:  convCanPush(q.CanPush),
+		CanPush:  convCanPush(q.CanPush, q.CanPushNetworksCanSeeElement),
 	}, q.Overwrite)
 	if err != nil {
 		return nil, err
@@ -206,13 +206,17 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	return &api.AddTokenS{}, nil
 }
 
-func convCanPush(c *api.CanPush) *CanPush {
+func convCanPush(c *api.CanPush, ncse map[string]*api.LString) *CanPush {
 	if c == nil {
 		return nil
 	}
 	networks := map[string]CanPushNetwork{}
 	for key, name := range c.Networks {
-		networks[key] = CanPushNetwork{Name: name}
+		cpn := CanPushNetwork{Name: name}
+		if cse := ncse[key]; cse != nil {
+			cpn.CanSeeElement = cse.Inner
+		}
+		networks[key] = cpn
 	}
 	return &CanPush{
 		Networks: networks,

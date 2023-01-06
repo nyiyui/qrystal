@@ -22,8 +22,13 @@ type AddTokenQ struct {
 		Networks map[string]string `json:"networks"`
 	} `json:"canPull"`
 	CanPush *struct {
-		Networks map[string]string `json:"networks"`
+		Networks map[string]Peer `json:"networks"`
 	} `json:"canPush"`
+}
+
+type Peer struct {
+	Name          string   `json:"name"`
+	CanSeeElement []string `json:"canSeeElement"`
 }
 
 var cfgServer string
@@ -65,9 +70,16 @@ func main() {
 		q2.Networks = q.CanPull.Networks
 	}
 	if q.CanPush != nil {
-		q2.CanPush = &api.CanPush{
-			Networks: q.CanPush.Networks,
+		networks := map[string]string{}
+		ncse := map[string]*api.LString{}
+		for key, peer := range q.CanPush.Networks {
+			networks[key] = peer.Name
+			ncse[key] = &api.LString{Inner: peer.CanSeeElement}
 		}
+		q2.CanPush = &api.CanPush{
+			Networks: networks,
+		}
+		q2.CanPushNetworksCanSeeElement = ncse
 	}
 	_, err = cl.AddToken(context.Background(), &q2)
 	if err != nil {
