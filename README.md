@@ -1,13 +1,29 @@
 # Qrystal
 
-![Jekyll CD Status](https://github.com/nyiyui/qrystal/workflows/Jekyll/badge.svg)
-![makepkg CI Status](https://github.com/nyiyui/qrystal/workflows/makepkg/badge.svg)
-![Build CI Status](https://github.com/nyiyui/qrystal/workflows/Build/badge.svg)
+[Website/Docs](https://nyiyui.ca/qrystal) /
+[Github.com](https://github.com/nyiyui/qrystal)
 
-[Website and Docs](https://nyiyui.ca/qrystal) /
-[On Github.com](https://github.com/nyiyui/qrystal)
+Qrystal sets up several WireGuard tunnels between servers.
+In addition, it provides centralised configuration management.
 
-Qrystal sets up several WireGuard tunnels between servers. In addition, it provides centralised configuration management.
+## Installation
+
+### Most Linux distros
+
+```sh
+$ git clone https://github.com/nyiyui/qrystal
+$ cd qrystal
+$ mkdir build && cd build
+$ make src=.. -f ../Makefile
+# make src=.. -f ../Makefile install
+```
+
+Then, enable/start `qrystal-runner.service` and/or `qrystal-cs.service`
+(depending on what you want to run).
+
+### NixOS
+
+Flakes are recommended. See `flake.nix` for options.
 
 ## Installation from Generic Archive
 
