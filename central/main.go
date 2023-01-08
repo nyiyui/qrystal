@@ -21,6 +21,7 @@ const (
 	DNone    = 0x0
 	DNetwork = 0x1
 	DIPs     = 0x2
+	DKeys    = 0x8
 	DPeer    = 0x4
 )
 

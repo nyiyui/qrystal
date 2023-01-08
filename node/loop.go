@@ -115,6 +115,9 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			cn.Peers = map[string]*central.Peer{}
 			cn.Desynced |= central.DIPs
 		}
+		if !central.Same(cn.IPs, cn2.IPs) || !central.Same2(cn.Peers, cn2.Peers) {
+			cn.Desynced |= central.DIPs
+		}
 		for pn2, peer2 := range cn2.Peers {
 			peer, ok := cn.Peers[pn2]
 			if !ok {
@@ -148,6 +151,9 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			peer.CanSee = peer2.CanSee
 			if peer.Internal == nil {
 				peer.Internal = new(central.PeerInternal)
+			}
+			if peer.Internal.PubKey != peer2.Internal.PubKey {
+				peer.Desynced |= central.DKeys
 			}
 			peer.Internal.PubKey = peer2.Internal.PubKey
 			cn.Peers[pn2] = peer
