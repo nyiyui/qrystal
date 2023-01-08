@@ -46,6 +46,9 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 			return fmt.Errorf("rm devs: %w", err)
 		}
 		n.applyCC(&cc)
+		for cnn, cn := range cc.Networks {
+			util.S.Debugf("after applyCC: net %s: %s", cnn, cn)
+		}
 		s.PubKeys = map[string]wgtypes.Key{}
 		for cnn, cn := range n.cc.Networks {
 			if cn.MyPrivKey == nil {

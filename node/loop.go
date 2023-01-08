@@ -97,7 +97,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 	// NOTE: shouldn't have to lock any more since ccLock is supposed to override all inner locks
 	if n.cc.Networks == nil {
 		n.cc.Networks = map[string]*central.Network{}
-		n.cc.Desynced = central.DNetwork
+		n.cc.Desynced |= central.DNetwork
 	}
 	for cnn2, cn2 := range cc2.Networks {
 		cn, ok := n.cc.Networks[cnn2]
@@ -105,16 +105,15 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			// new cn
 			n.cc.Networks[cnn2] = &central.Network{}
 			cn = n.cc.Networks[cnn2]
+			n.cc.Desynced |= central.DNetwork
 		}
 		cn.Desynced = 0
-		if !central.Same(cn.IPs, cn2.IPs) || !central.Same2(cn.Peers, cn2.Peers) {
-			cn.Desynced |= central.DIPs
-		}
 		cn.Name = cnn2
 		cn.IPs = cn2.IPs
 		forwardingPeers := map[string]struct{}{}
 		if cn.Peers == nil {
 			cn.Peers = map[string]*central.Peer{}
+			cn.Desynced |= central.DIPs
 		}
 		for pn2, peer2 := range cn2.Peers {
 			peer, ok := cn.Peers[pn2]
@@ -122,6 +121,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 				// new peer
 				peer2.Name = pn2
 				cn.Peers[pn2] = peer2
+				cn.Desynced |= central.DIPs
 				continue
 			}
 			peer.Desynced = 0
@@ -153,6 +153,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			cn.Peers[pn2] = peer
 		}
 		for pn := range cn.Peers {
+			cn.Desynced |= central.DIPs
 			_, ok := cn2.Peers[pn]
 			if !ok {
 				// removed
@@ -170,6 +171,6 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			// removed
 			delete(n.cc.Networks, cnn)
 		}
-		n.cc.Desynced = central.DNetwork
+		n.cc.Desynced |= central.DNetwork
 	}
 }
