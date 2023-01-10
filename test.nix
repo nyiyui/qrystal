@@ -10,6 +10,39 @@ let
   rootKey = builtins.readFile ./cert/minica-key.pem;
   csCert = builtins.readFile ./cert/cs/cert.pem;
   csKey = builtins.readFile ./cert/cs/key.pem;
+in let
+  base = { # TODO
+    virtualisation.vlans = [ 1 ];
+    environment.systemPackages = with pkgs; [ wireguard-tools ];
+  };
+  networkBase = {
+    keepalive = "10s";
+    listenPort = 58120;
+    ips = [ "10.123.0.1/16" ];
+  };
+  nodeToken = name: hash: networkName: {
+    inherit name;
+    inherit hash;
+    canPull = true;
+    networks.${networkName} = name;
+  };
+  csTls = {
+    certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
+    keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
+  };
+in let
+  csConfig = networkName: token: {
+    enable = true;
+    config.css = [
+      {
+        comment = "cs";
+        endpoint = "cs:39252";
+        tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
+        networks = [ networkName ];
+        tokenPath = builtins.toFile "token" token;
+      }
+    ];
+  };
 in
 {
   sd-notify-baseline = lib.runTest ({
@@ -56,16 +89,12 @@ in
           qrystal.services.cs = {
             enable = true;
             config = {
-              tls.certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
-              tls.keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
+              tls = csTls;
               tokens = [
-                { name = "node1"; hash = node1Hash; canPull = true; networks.testnet = "node1"; }
-                { name = "node2"; hash = node2Hash; canPull = true; networks.testnet = "node2"; }
+                (nodeToken "node1" node1Hash "testnet")
+                (nodeToken "node2" node2Hash "testnet")
               ];
-              central.networks.testnet = {
-                keepalive = "10s";
-                listenPort = 58120;
-                ips = [ "10.123.0.1/16" ];
+              central.networks.testnet = networkBase // {
                 peers.node1 = { allowedIPs = [ "10.123.0.1/16" ]; };
               };
             };
@@ -79,25 +108,10 @@ in
     };
   push = let
     networkName = "testnet";
-    base = { # TODO
-      virtualisation.vlans = [ 1 ];
-      environment.systemPackages = with pkgs; [ wireguard-tools ];
-    };
   in let
     node = ({ token }: { pkgs, ... }: base // {
       imports = [ self.outputs.nixosModules.${system}.node ];
-      qrystal.services.node = {
-        enable = true;
-        config.css = [
-          {
-            comment = "cs";
-            endpoint = "cs:39252";
-            tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
-            networks = [ networkName ];
-            tokenPath = builtins.toFile "token" token;
-          }
-        ];
-      };
+      qrystal.services.node = csConfig networkName token;
       systemd.services.qrystal-node.wantedBy = [];
     });
   in
@@ -117,23 +131,14 @@ in
         qrystal.services.cs = {
           enable = true;
           config = {
-            tls.certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
-            tls.keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
+            tls = csTls;
             tokens = [
-              {
-                name = "node2";
-                hash = node2Hash;
-                canPull = true;
-                networks.${networkName} = "node2";
-                #canPush.any = true;
+              ((nodeToken "node2" node2Hash networkName) // {
                 canPush.networks.${networkName} = { name = "node1"; canSeeElement = [ "node2" ]; };
                 canAddTokens = { canPull = true; };
-              }
+              })
             ];
-            central.networks.${networkName} = {
-              keepalive = "10s";
-              listenPort = 58120;
-              ips = [ "10.123.0.1/16" ];
+            central.networks.${networkName} = networkBase // {
               peers.node2 = { host = "node2:58120"; allowedIPs = [ "10.123.0.2/32" ]; canSee.only = [ "node1" ]; };
             };
           };
@@ -183,27 +188,12 @@ in
   });
   all = let
     networkName = "testnet";
-    base = { # TODO
-      virtualisation.vlans = [ 1 ];
-      environment.systemPackages = with pkgs; [ wireguard-tools ];
-    };
   in let
     node = ({ token }: { pkgs, ... }: base // {
       imports = [ self.outputs.nixosModules.${system}.node ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
-      qrystal.services.node = {
-        enable = true;
-        config.css = [
-          {
-            comment = "cs";
-            endpoint = "cs:39252";
-            tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
-            networks = [ networkName ];
-            tokenPath = builtins.toFile "token" token;
-          }
-        ];
-      };
+      qrystal.services.node = csConfig networkName token;
       systemd.services.qrystal-node.wantedBy = [];
     });
   in
@@ -220,19 +210,99 @@ in
         qrystal.services.cs = {
           enable = true;
           config = {
-            tls.certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
-            tls.keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
+            tls = csTls;
             tokens = [
-              { name = "node1"; hash = node1Hash; canPull = true; networks.${networkName} = "node1"; }
-              { name = "node2"; hash = node2Hash; canPull = true; networks.${networkName} = "node2"; }
+              (nodeToken "node1" node1Hash networkName)
+              (nodeToken "node2" node2Hash networkName)
             ];
-            central.networks.${networkName} = {
-              keepalive = "10s";
-              listenPort = 58120;
-              ips = [ "10.123.0.1/16" ];
+            central.networks.${networkName} = networkBase // {
               peers.node1 = { host = "node1:58120"; allowedIPs = [ "10.123.0.1/32" ]; canSee.only = [ "node2" ]; };
               peers.node2 = { host = "node2:58120"; allowedIPs = [ "10.123.0.2/32" ]; canSee.only = [ "node1" ]; };
             };
+          };
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      nodes = [node1, node2]
+      addrs = ["10.123.0.2", "10.123.0.1"]
+      cs.start()
+      cs.wait_for_unit("qrystal-cs.service")
+      for node in nodes:
+        node.start()
+        node.systemctl("start qrystal-node.service")
+        node.wait_for_unit("qrystal-node.service", timeout=20)
+      print("all nodes started")
+      # NOTE: there is a race condition where the peers' pubkeys could not be
+      # set yet when pinged (so that's why we're using wait_until_*
+      for i, node in enumerate(nodes):
+        print(node.wait_until_succeeds("wg show ${networkName}"))
+        print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
+        print(node.execute("ip route show")[1])
+        for addr in addrs:
+          print(node.execute(f"ip route get {addr}")[1])
+      for i, node in enumerate(nodes):
+        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
+        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+    '';
+  });
+  all-push = let
+    networkName = "testnet";
+  in let
+    node = ({ name, token, allowedIPs, canSee }: { pkgs, ... }: base // {
+      imports = [ self.outputs.nixosModules.${system}.node ];
+
+      networking.firewall.allowedTCPPorts = [ 39251 ];
+      qrystal.services.node = {
+        enable = true;
+        config.css = [
+          {
+            comment = "cs";
+            endpoint = "cs:39252";
+            tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
+            networks = [ networkName ];
+            tokenPath = builtins.toFile "token" token;
+            azusa.networks.${networkName} = {
+              inherit name;
+              host = name;
+              inherit allowedIPs;
+              canSee.only = canSee;
+            };
+          }
+        ];
+      };
+      systemd.services.qrystal-node.wantedBy = [];
+    });
+  in
+  lib.runTest ({
+    name = "all-push";
+    hostPkgs = pkgs;
+    nodes = {
+      node1 = node {
+        name = "node1";
+        token = node1Token;
+        allowedIPs = [ "10.123.0.1/32" ];
+        canSee = [ "node2" ];
+      };
+      node2 = node {
+        name = "node2";
+        token = node2Token;
+        allowedIPs = [ "10.123.0.2/32" ];
+        canSee = [ "node2" ];
+      };
+      cs = { pkgs, ... }: base // {
+        imports = [ self.outputs.nixosModules.${system}.cs ];
+
+        networking.firewall.allowedTCPPorts = [ 39252 ];
+        qrystal.services.cs = {
+          enable = true;
+          config = {
+            tls = csTls;
+            tokens = [
+              (nodeToken "node1" node1Hash networkName)
+              (nodeToken "node2" node2Hash networkName)
+            ];
+            central.networks.${networkName} = networkBase;
           };
         };
       };

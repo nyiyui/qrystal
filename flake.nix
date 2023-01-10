@@ -326,6 +326,7 @@
                                   peers = mkOption {
                                     type = attrsOf (peerOption { inherit lib; } { name = false; });
                                     description = "All peers in the net.  Note that more can be added using cs-push, for example.";
+                                    default = {};
                                   };
                                 };
                               });
