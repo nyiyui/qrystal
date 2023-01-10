@@ -84,5 +84,10 @@ func (n *Node) newClient(i int) (*rpc2.Client, *tls.Conn, error) {
 	}
 	cl := rpc2.NewClient(conn)
 	n.setupClient(cl)
+	var b bool
+	err = cl.Call("ping", true, &b)
+	if err != nil {
+		return cl, conn, fmt.Errorf("ping: %s", err)
+	}
 	return cl, conn, nil
 }

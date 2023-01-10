@@ -14,7 +14,7 @@ func (n *Node) azusa(i int, networks map[string]central.Peer, cl *rpc2.Client) (
 	n.Kiriyama.SetCS(i, "梓")
 	err = cl.Call("azusa", &api.AzusaQ{Networks: networks, CentralToken: csc.Token}, &s)
 	if err != nil {
-		err = fmt.Errorf("azusa: %w", err)
+		err = fmt.Errorf("call: %w", err)
 		return
 	}
 	return

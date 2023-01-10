@@ -12,9 +12,14 @@ import (
 
 func (c *CentralSource) newHandler() {
 	h := rpc2.NewServer()
+	h.Handle("ping", c.ping)
 	h.Handle("sync", c.sync)
 	h.Handle("azusa", c.azusa)
 	c.handler = h
+}
+
+func (c *CentralSource) ping(cl *rpc2.Client, q *bool, s *bool) error {
+	return nil
 }
 
 func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error {
