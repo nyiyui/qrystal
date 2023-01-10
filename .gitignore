@@ -6,3 +6,4 @@ qrystal-*.pkg*
 /tmp-config.yml
 /cs-push
 /build.tar.zst
+.direnv
