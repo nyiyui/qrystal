@@ -20,6 +20,9 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	}
 	var desc strings.Builder
 	for cnn, peer := range q.Networks {
+		if ti.CanPush == nil {
+			return fmt.Errorf("token %s cannot push at all", ti.Name)
+		}
 		if !ti.CanPush.Any {
 			cpn, ok := ti.CanPush.Networks[cnn]
 			if !ok {
