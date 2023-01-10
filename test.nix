@@ -264,7 +264,7 @@ in
             tokenPath = builtins.toFile "token" token;
             azusa.networks.${networkName} = {
               inherit name;
-              host = name;
+              host = "${name}:39251}";
               inherit allowedIPs;
               canSee.only = canSee;
             };
@@ -299,8 +299,14 @@ in
           config = {
             tls = csTls;
             tokens = [
-              (nodeToken "node1" node1Hash networkName)
-              (nodeToken "node2" node2Hash networkName)
+              ((nodeToken "node1" node1Hash networkName) // {
+                canPush.networks.${networkName} = { name = "node1"; canSeeElement = [ "node2" ]; };
+                canAddTokens = { canPull = true; };
+              })
+              ((nodeToken "node2" node2Hash networkName) // {
+                canPush.networks.${networkName} = { name = "node2"; canSeeElement = [ "node2" ]; };
+                canAddTokens = { canPull = true; };
+              })
             ];
             central.networks.${networkName} = networkBase;
           };
