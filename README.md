@@ -3,7 +3,7 @@
 [Website/Docs](https://nyiyui.ca/qrystal) /
 [Github.com](https://github.com/nyiyui/qrystal)
 
-Qrystal sets up several WireGuard tunnels between servers.
+Qrystal /kristl/ sets up several WireGuard tunnels between servers.
 In addition, it provides centralised configuration management.
 
 ## Installation
