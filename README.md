@@ -8,6 +8,10 @@ In addition, it provides centralised configuration management.
 
 ## Installation
 
+Make sure to open the appropriate ports (defaults listed below):
+- CS: 39252/tcp for Nodes and 39253 for utilities
+- The WireGuard ports for UDP (from the expected peers)
+
 ### Most Linux distros
 
 ```sh
