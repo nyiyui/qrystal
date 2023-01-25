@@ -37,3 +37,8 @@ Flakes are recommended. See `flake.nix` for options.
 # systemctl start qrystal-runner # for Node
 # systemctl start qrystal-cs # for CS
 ```
+
+## TODO
+
+- confine qrystal-node and qrystal-cs (using systemd's options)
+- configure existing interfaces without disrupting connections (as much as possible)
