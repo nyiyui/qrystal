@@ -18,8 +18,8 @@ import (
 )
 
 type Config struct {
-	Server       string           `yaml:"server"`
-	CentralToken util.Base64Bytes `yaml:"token"`
+	Server       string `yaml:"server"`
+	CentralToken []byte `yaml:"token"`
 }
 
 type TmpConfig struct {

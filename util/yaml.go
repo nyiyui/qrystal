@@ -31,27 +31,6 @@ func (b *Base64Bytes) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-// MarshalJSON implements json.Marshaler.
-func (b *Base64Bytes) MarshalJSON() ([]byte, error) {
-	s := base64.StdEncoding.EncodeToString(*b)
-	return json.Marshal(s)
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (b *Base64Bytes) UnmarshalJSON(data []byte) error {
-	var raw string
-	err := json.Unmarshal(data, &raw)
-	if err != nil {
-		return err
-	}
-	bytes, err := base64.StdEncoding.DecodeString(raw)
-	if err != nil {
-		return err
-	}
-	*b = bytes
-	return nil
-}
-
 // HexBytes is a byte slice with methods for (un)marshalling to YAML (using hex).
 type HexBytes []byte
 
