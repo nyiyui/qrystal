@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 
 	"gopkg.in/yaml.v3"
 )
@@ -42,6 +43,27 @@ func (b *HexBytes) MarshalYAML() (interface{}, error) {
 func (b *HexBytes) UnmarshalYAML(value *yaml.Node) error {
 	var raw string
 	err := value.Decode(&raw)
+	if err != nil {
+		return err
+	}
+	bytes, err := hex.DecodeString(raw)
+	if err != nil {
+		return err
+	}
+	*b = bytes
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler.
+func (b *HexBytes) MarshalJSON() ([]byte, error) {
+	s := hex.EncodeToString(*b)
+	return json.Marshal(s)
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (b *HexBytes) UnmarshalJSON(data []byte) error {
+	var raw string
+	err := json.Unmarshal(data, &raw)
 	if err != nil {
 		return err
 	}
