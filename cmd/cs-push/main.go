@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"flag"
 	"log"
 	"net"
@@ -18,7 +19,7 @@ import (
 
 type Config struct {
 	Server       string `yaml:"server"`
-	CentralToken string `yaml:"token"`
+	CentralToken []byte `yaml:"token"`
 }
 
 type TmpConfig struct {
@@ -61,7 +62,10 @@ func main() {
 	}
 
 	cfg.Server = cfgServer
-	cfg.CentralToken = cfgCT
+	cfg.CentralToken, err = base64.StdEncoding.DecodeString(cfgCT)
+	if err != nil {
+		log.Fatalf("decode token: %s", err)
+	}
 
 	creds, err := credentials.NewClientTLSFromFile(certPath, "")
 	if err != nil {

@@ -11,7 +11,7 @@ type CSConfig struct {
 	Comment         string
 	TLSConfig       *tls.Config
 	Host            string
-	Token           string
+	Token           []byte
 	NetworksAllowed []*regexp.Regexp
 	Azusa           map[string]central.Peer
 }

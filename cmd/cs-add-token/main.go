@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"log"
@@ -41,8 +42,13 @@ func main() {
 	flag.StringVar(&certPath, "cert", "", "path to server cert")
 	flag.Parse()
 
+	ct, err := base64.StdEncoding.DecodeString(cfgCT)
+	if err != nil {
+		log.Fatalf("decode token: %s", err)
+	}
+
 	var q AddTokenQ
-	err := json.NewDecoder(os.Stdin).Decode(&q)
+	err = json.NewDecoder(os.Stdin).Decode(&q)
 	if err != nil {
 		log.Fatalf("unmarshal config: %s", err)
 	}
@@ -60,7 +66,7 @@ func main() {
 	}
 	cl := api.NewCentralSourceClient(conn)
 	q2 := api.AddTokenQ{
-		CentralToken: cfgCT,
+		CentralToken: ct,
 		Overwrite:    q.Overwrite,
 		Hash:         q.Hash,
 		Name:         q.Name,
