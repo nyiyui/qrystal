@@ -22,7 +22,7 @@ service Kiriyama {
 message PingQS {}
 
 message PushQ {
-  bytes centralToken = 1;
+  string centralToken = 1;
   string cnn = 2;
   string peerName = 3;
   CentralPeer peer = 4;
@@ -65,7 +65,7 @@ message IPNet {
 }
 
 message AddTokenQ {
-  bytes centralToken = 1;
+  string centralToken = 1;
   bool overwrite = 2;
   bytes hash = 3;
   string name = 4;

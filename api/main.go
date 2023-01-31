@@ -7,7 +7,7 @@ import (
 
 type SyncQ struct {
 	I            int
-	CentralToken []byte
+	CentralToken string
 }
 
 type SyncS struct{}
@@ -34,7 +34,7 @@ type GenerateS struct {
 
 type AzusaQ struct {
 	Networks     map[string]central.Peer
-	CentralToken []byte
+	CentralToken string
 }
 
 type AzusaS struct{}

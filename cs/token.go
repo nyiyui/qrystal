@@ -89,7 +89,7 @@ func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, er
 	ok = true
 	return
 }
-func (s *TokenStore) getToken(token []byte) (info TokenInfo, ok bool, err error) {
+func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error) {
 	sum := sha256.Sum256([]byte(token))
 	key := tokenPrefix + hex.EncodeToString(sum[:])
 	var encoded string
@@ -165,7 +165,7 @@ type Token struct {
 	Info TokenInfo
 }
 
-func newTokenAuthError(token []byte) error {
-	sum := sha256.Sum256(token)
+func newTokenAuthError(token string) error {
+	sum := sha256.Sum256([]byte(token))
 	return fmt.Errorf("token auth failed with hash %x", sum)
 }
