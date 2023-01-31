@@ -41,6 +41,6 @@ func genHash() (token string, hash [sha256.Size]byte, err error) {
 		return
 	}
 	token = base64.StdEncoding.EncodeToString(token2)
-	hash = sha256.Sum256([]byte(token2))
+	hash = sha256.Sum256([]byte(token))
 	return
 }
