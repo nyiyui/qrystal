@@ -101,12 +101,16 @@ func MissingFromFirst[T any](m1 map[string]T, m2 map[string]T) []string {
 }
 
 func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, error) {
-	ti, ok, err := s.Tokens.getToken(q.CentralToken)
+	ct, err := util.ParseToken(q.CentralToken)
+	if err != nil {
+		return nil, errors.New("invalid token")
+	}
+	ti, ok, err := s.Tokens.getToken(ct)
 	if err != nil {
 		return &api.PushS{S: &api.PushS_Other{Other: fmt.Sprint(err)}}, err
 	}
 	if !ok {
-		return nil, newTokenAuthError(q.CentralToken)
+		return nil, newTokenAuthError(*ct)
 	}
 	if ti.CanPush == nil {
 		return nil, errors.New("cannot push")
@@ -173,12 +177,16 @@ func (s *CentralSource) Push(ctx context.Context, q *api.PushQ) (*api.PushS, err
 }
 
 func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.AddTokenS, error) {
-	ti, ok, err := s.Tokens.getToken(q.CentralToken)
+	ct, err := util.ParseToken(q.CentralToken)
+	if err != nil {
+		return nil, errors.New("invalid token")
+	}
+	ti, ok, err := s.Tokens.getToken(ct)
 	if err != nil {
 		return nil, err
 	}
 	if !ok {
-		return nil, newTokenAuthError(q.CentralToken)
+		return nil, newTokenAuthError(*ct)
 	}
 	ti.Use()
 	err = s.Tokens.UpdateToken(ti)
@@ -188,13 +196,12 @@ func (s *CentralSource) AddToken(ctx context.Context, q *api.AddTokenQ) (*api.Ad
 	if ti.CanAddTokens == nil {
 		return nil, errors.New("cannot add tokens")
 	}
-	var hash sha256Sum
-	n := copy(hash[:], q.Hash)
-	if n != len(hash) {
-		return nil, fmt.Errorf("hash %d length invalid (expected %d)", n, len(hash))
-	}
 	util.S.Infof("add token %s: %s", q.Name, q)
-	err = s.Tokens.AddToken(hash, TokenInfo{
+	hash, err := util.ParseTokenHash(q.Hash)
+	if err != nil {
+		return nil, err
+	}
+	err = s.Tokens.AddToken(*hash, TokenInfo{
 		Name:     q.Name,
 		Networks: q.Networks,
 		CanPull:  q.CanPull,

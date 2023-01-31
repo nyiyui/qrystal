@@ -26,7 +26,7 @@ type TmpConfig struct {
 	Name      string                   `yaml:"name"`
 	Networks  map[string]NetworkConfig `yaml:"networks"`
 
-	TokenHash util.HexBytes `yaml:"tokenHash"`
+	TokenHash string `yaml:"tokenHash"`
 }
 
 type NetworkConfig struct {
@@ -40,16 +40,20 @@ type NetworkConfig struct {
 var tcPath string
 var cfg Config
 var cfgServer string
-var cfgCT string
 var tc TmpConfig
 var certPath string
 
 func main() {
 	flag.StringVar(&cfgServer, "server", "", "server address")
-	flag.StringVar(&cfgCT, "token", "", "central token")
+	ctRaw := flag.String("token", "", "central token")
 	flag.StringVar(&tcPath, "tmp-config", "", "path to tmp config file")
 	flag.StringVar(&certPath, "cert", "", "path to server cert")
 	flag.Parse()
+
+	ct, err := util.ParseToken(*ctRaw)
+	if err != nil {
+		log.Fatalf("parse token: %s", err)
+	}
 
 	raw, err := os.ReadFile(tcPath)
 	if err != nil {
@@ -61,7 +65,7 @@ func main() {
 	}
 
 	cfg.Server = cfgServer
-	cfg.CentralToken = cfgCT
+	cfg.CentralToken = ct.String()
 
 	creds, err := credentials.NewClientTLSFromFile(certPath, "")
 	if err != nil {

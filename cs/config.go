@@ -1,7 +1,6 @@
 package cs
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -71,7 +70,7 @@ func (t *TokensConfig) UnmarshalYAML(value *yaml.Node) error {
 
 type TokenConfig struct {
 	Name         string            `yaml:"name" json:"name"`
-	Hash         *util.HexBytes    `yaml:"hash" json:"hash"`
+	Hash         *util.TokenHash   `yaml:"hash" json:"hash"`
 	Networks     map[string]string `yaml:"networks" json:"networks"`
 	CanPull      bool              `yaml:"canPull"`
 	CanPush      *CanPush          `yaml:"canPush"`
@@ -81,13 +80,8 @@ type TokenConfig struct {
 func convertTokens2(tokens []TokenConfig) ([]Token, error) {
 	res := make([]Token, len(tokens))
 	for i, token := range tokens {
-		var hash [sha256.Size]byte
-		n := copy(hash[:], *token.Hash)
-		if n != len(hash) {
-			return nil, fmt.Errorf("token %d: invalid length (%d) hash", i, n)
-		}
 		res[i] = Token{
-			Hash: hash,
+			Hash: *token.Hash,
 			Info: TokenInfo{
 				Name:         token.Name,
 				Networks:     token.Networks,

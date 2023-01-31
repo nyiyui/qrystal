@@ -11,7 +11,7 @@ import (
 )
 
 func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) error {
-	ti, ok, err := c.Tokens.getToken(q.CentralToken)
+	ti, ok, err := c.Tokens.getToken(&q.CentralToken)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 		ti.StopUse()
 		err = c.Tokens.UpdateToken(ti)
 		if err != nil {
-			util.S.Errorf("UpdateToken %s: %s", ti.sum, err)
+			util.S.Errorf("UpdateToken %s: %s", ti.key, err)
 		}
 	}()
 	c.ccLock.Lock()

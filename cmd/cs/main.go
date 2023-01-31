@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -79,23 +78,23 @@ func main() {
 // warnDivergentTokens warns for any divergent tokens.
 func warnDivergentTokens(config *cs.Config, server *cs.CentralSource) error {
 	for _, tr := range config.Tokens.Raw {
-		already, ok, err := server.Tokens.GetTokenByHash(hex.EncodeToString(tr.Hash[:]))
+		already, ok, err := server.Tokens.GetTokenByHash(tr.Hash.String())
 		if err != nil {
-			return fmt.Errorf("get token %x: %s", tr.Hash[:], err)
+			return fmt.Errorf("get token %s: %s", tr.Hash, err)
 		}
 		if !ok {
 			continue
 		}
 		info2, err := json.Marshal(tr.Info)
 		if err != nil {
-			return fmt.Errorf("marshal token2 %x: %s", tr.Hash[:], err)
+			return fmt.Errorf("marshal token2 %s: %s", tr.Hash, err)
 		}
 		already2, err := json.Marshal(already)
 		if err != nil {
-			return fmt.Errorf("marshal token2 %x: %s", tr.Hash[:], err)
+			return fmt.Errorf("marshal token2 %s: %s", tr.Hash, err)
 		}
 		if !bytes.Equal(info2, already2) {
-			util.S.Warnf("token %x diverges from db", tr.Hash[:])
+			util.S.Warnf("token %s diverges from db", tr.Hash)
 		}
 	}
 	return nil

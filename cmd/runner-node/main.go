@@ -27,10 +27,10 @@ type csConfig struct {
 	TLS     struct {
 		CertPath string `yaml:"certPath"`
 	} `yaml:"tls"`
-	AllowedNets []string `yaml:"networks"`
-	Host        string   `yaml:"endpoint"`
-	Token       string   `yaml:"token"`
-	TokenPath   string   `yaml:"tokenPath"`
+	AllowedNets []string   `yaml:"networks"`
+	Host        string     `yaml:"endpoint"`
+	Token       util.Token `yaml:"token"`
+	TokenPath   string     `yaml:"tokenPath"`
 	Azusa       struct {
 		Networks map[string]central.Peer
 	} `yaml:"azusa"`
@@ -58,12 +58,16 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 			return nil, fmt.Errorf("network %d: %w", i, err)
 		}
 	}
-	if cfg.Token == "" {
+	if cfg.Token.Empty() {
 		token, err := os.ReadFile(cfg.TokenPath)
 		if err != nil {
 			return nil, fmt.Errorf("load tokenPath %s: %s", cfg.TokenPath, err)
 		}
-		cfg.Token = string(token)
+		tok, err := util.ParseToken(string(token))
+		if err != nil {
+			return nil, fmt.Errorf("parse token: %s", err)
+		}
+		cfg.Token = *tok
 	}
 	return &node.CSConfig{
 		Comment:         cfg.Comment,

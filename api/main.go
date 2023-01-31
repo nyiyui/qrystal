@@ -2,12 +2,13 @@ package api
 
 import (
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 type SyncQ struct {
 	I            int
-	CentralToken string
+	CentralToken util.Token
 }
 
 type SyncS struct{}
@@ -34,7 +35,7 @@ type GenerateS struct {
 
 type AzusaQ struct {
 	Networks     map[string]central.Peer
-	CentralToken string
+	CentralToken util.Token
 }
 
 type AzusaS struct{}

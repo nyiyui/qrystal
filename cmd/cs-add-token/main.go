@@ -15,9 +15,9 @@ import (
 )
 
 type AddTokenQ struct {
-	Overwrite bool          `json:"overwrite"`
-	Name      string        `json:"name"`
-	Hash      util.HexBytes `json:"hash"`
+	Overwrite bool           `json:"overwrite"`
+	Name      string         `json:"name"`
+	Hash      util.TokenHash `json:"hash"`
 	CanPull   *struct {
 		Networks map[string]string `json:"networks"`
 	} `json:"canPull"`
@@ -32,17 +32,21 @@ type Peer struct {
 }
 
 var cfgServer string
-var cfgCT string
 var certPath string
 
 func main() {
 	flag.StringVar(&cfgServer, "server", "", "server address")
-	flag.StringVar(&cfgCT, "token", "", "central token")
+	ctRaw := flag.String("token", "", "central token")
 	flag.StringVar(&certPath, "cert", "", "path to server cert")
 	flag.Parse()
 
+	ct, err := util.ParseToken(*ctRaw)
+	if err != nil {
+		log.Fatalf("parse token: %s", err)
+	}
+
 	var q AddTokenQ
-	err := json.NewDecoder(os.Stdin).Decode(&q)
+	err = json.NewDecoder(os.Stdin).Decode(&q)
 	if err != nil {
 		log.Fatalf("unmarshal config: %s", err)
 	}
@@ -60,9 +64,9 @@ func main() {
 	}
 	cl := api.NewCentralSourceClient(conn)
 	q2 := api.AddTokenQ{
-		CentralToken: cfgCT,
+		CentralToken: ct.String(),
 		Overwrite:    q.Overwrite,
-		Hash:         q.Hash,
+		Hash:         q.Hash.String(),
 		Name:         q.Name,
 	}
 	if q.CanPull != nil {

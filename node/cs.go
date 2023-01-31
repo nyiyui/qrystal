@@ -5,13 +5,14 @@ import (
 	"regexp"
 
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/util"
 )
 
 type CSConfig struct {
 	Comment         string
 	TLSConfig       *tls.Config
 	Host            string
-	Token           string
+	Token           util.Token
 	NetworksAllowed []*regexp.Regexp
 	Azusa           map[string]central.Peer
 }

@@ -23,7 +23,7 @@ func (c *CentralSource) ping(cl *rpc2.Client, q *bool, s *bool) error {
 }
 
 func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error {
-	ti, ok, err := c.Tokens.getToken(q.CentralToken)
+	ti, ok, err := c.Tokens.getToken(&q.CentralToken)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 		ti.StopUse()
 		err = c.Tokens.UpdateToken(ti)
 		if err != nil {
-			util.S.Errorf("UpdateToken %s: %s", ti.sum, err)
+			util.S.Errorf("UpdateToken %s: %s", ti.key, err)
 		}
 	}()
 	util.S.Infof("%sから新たな認証済プル", ti.Name)

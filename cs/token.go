@@ -1,19 +1,16 @@
 package cs
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
 )
 
 const tokenPrefix = "token:"
-
-type sha256Sum = [sha256.Size]byte
 
 type TokenStore struct {
 	db *buntdb.DB
@@ -35,21 +32,20 @@ func (s *TokenStore) UpdateToken(info TokenInfo) (err error) {
 	if err != nil {
 		return
 	}
-	key := tokenPrefix + info.sum
 	err = s.db.Update(func(tx *buntdb.Tx) (err error) {
-		_, _, err = tx.Set(key, string(encoded), nil)
+		_, _, err = tx.Set(info.key, string(encoded), nil)
 		return
 	})
 	s.cs.backportSilent()
 	return
 }
 
-func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (err error) {
+func (s *TokenStore) AddToken(hash util.TokenHash, info TokenInfo, overwrite bool) (err error) {
 	encoded, err := json.Marshal(info)
 	if err != nil {
 		return
 	}
-	key := tokenPrefix + hex.EncodeToString(sum[:])
+	key := tokenPrefix + hash.String()
 	err = s.db.Update(func(tx *buntdb.Tx) (err error) {
 		_, err = tx.Get(key)
 		switch err {
@@ -72,8 +68,8 @@ func (s *TokenStore) AddToken(sum sha256Sum, info TokenInfo, overwrite bool) (er
 	return
 }
 
-func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, err error) {
-	key := tokenPrefix + hashHex
+func (s *TokenStore) GetTokenByHash(hashString string) (info TokenInfo, ok bool, err error) {
+	key := tokenPrefix + hashString
 	var encoded string
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		encoded, err = tx.Get(key)
@@ -85,13 +81,12 @@ func (s *TokenStore) GetTokenByHash(hashHex string) (info TokenInfo, ok bool, er
 		return
 	}
 	err = json.Unmarshal([]byte(encoded), &info)
-	info.sum = hashHex
+	info.key = key
 	ok = true
 	return
 }
-func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error) {
-	sum := sha256.Sum256([]byte(token))
-	key := tokenPrefix + hex.EncodeToString(sum[:])
+func (s *TokenStore) getToken(token *util.Token) (info TokenInfo, ok bool, err error) {
+	key := tokenPrefix + token.Hash().String()
 	var encoded string
 	err = s.db.View(func(tx *buntdb.Tx) error {
 		encoded, err = tx.Get(key)
@@ -103,7 +98,7 @@ func (s *TokenStore) getToken(token string) (info TokenInfo, ok bool, err error)
 		return
 	}
 	err = json.Unmarshal([]byte(encoded), &info)
-	info.sum = hex.EncodeToString(sum[:])
+	info.key = key
 	ok = true
 	return
 }
@@ -120,7 +115,7 @@ func (s *TokenStore) convertToMap() (m map[string]string, err error) {
 }
 
 type TokenInfo struct {
-	sum          string `json:"-"`
+	key          string `json:"-"`
 	Name         string
 	Networks     map[string]string
 	CanPull      bool
@@ -161,11 +156,10 @@ type CanPushNetwork struct {
 }
 
 type Token struct {
-	Hash [sha256.Size]byte
+	Hash util.TokenHash
 	Info TokenInfo
 }
 
-func newTokenAuthError(token string) error {
-	sum := sha256.Sum256([]byte(token))
-	return fmt.Errorf("token auth failed with hash %x", sum)
+func newTokenAuthError(token util.Token) error {
+	return fmt.Errorf("token auth failed with hash %s", token.Hash())
 }
