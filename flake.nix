@@ -248,6 +248,11 @@
                         default = ":39253";
                         description = "Bind address of Haruka API";
                       };
+                      ryoAddr = mkOption {
+                        type = str;
+                        default = ":39254";
+                        description = "Bind address of Ryo (HTTP) API";
+                      };
                       tokens = mkOption { type = listOf (submodule {
                         options = {
                           name = mkOption {
