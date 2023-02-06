@@ -14,6 +14,5 @@ func SetupLog() {
 	if err != nil {
 		log.Fatalf("zap: %s", err)
 	}
-	defer L.Sync()
 	S = L.Sugar()
 }

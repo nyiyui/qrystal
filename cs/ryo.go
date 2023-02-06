@@ -10,6 +10,7 @@ import (
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/util"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type tokenInfoKeyType struct{}
@@ -17,15 +18,22 @@ type tokenInfoKeyType struct{}
 var tokenInfoKey = tokenInfoKeyType{}
 
 func (c *CentralSource) HandleRyo(addr string, tlsCfg TLS) error {
+	if addr == "" {
+		return nil
+	}
 	mux := http.NewServeMux()
 	// TODO: only POST
 	mux.Handle("/push", c.ryoToken(http.HandlerFunc(c.ryoPush)))
 	mux.Handle("/add-token", c.ryoToken(http.HandlerFunc(c.ryoAddToken)))
+	el, err := zap.NewStdLogAt(util.L, zapcore.ErrorLevel)
+	if err != nil {
+		panic(err)
+	}
 	s := &http.Server{
 		Addr:        addr,
 		Handler:     mux,
 		ReadTimeout: 1 * time.Second,
-		ErrorLog:    zap.NewStdLog(util.L),
+		ErrorLog:    el,
 	}
 	go func() {
 		err := s.ListenAndServeTLS(tlsCfg.CertPath, tlsCfg.KeyPath)
