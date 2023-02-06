@@ -67,6 +67,10 @@ func (c *CentralSource) ryoToken(h http.Handler) http.Handler {
 }
 
 func (c *CentralSource) ryoPush(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "only POST", 405)
+		return
+	}
 	var q api.HPushQ
 	err := json.NewDecoder(r.Body).Decode(&q)
 	if err != nil {
@@ -132,6 +136,10 @@ func (c *CentralSource) ryoPush(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "only POST", 405)
+		return
+	}
 	var q api.HAddTokenQ
 	err := json.NewDecoder(r.Body).Decode(&q)
 	if err != nil {
