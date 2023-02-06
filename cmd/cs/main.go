@@ -67,6 +67,10 @@ func main() {
 	if err != nil {
 		log.Printf("HandleHaruka: %s", err)
 	}
+	err = cs2.HandleRyo(config.RyoAddr, config.TLS)
+	if err != nil {
+		log.Printf("HandleRyo: %s", err)
+	}
 	err = util.Notify("READY=1\nSTATUS=serving…")
 	if err != nil {
 		log.Printf("Notify: %s", err)
