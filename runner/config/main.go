@@ -20,6 +20,7 @@ type Node struct {
 
 // Root is configured by the config file.
 type Root struct {
-	Mio  Mio  `yaml:"mio"`
-	Node Node `yaml:"node"`
+	Mio    Mio  `yaml:"mio"`
+	Hokuto Mio  `yaml:"hokuto"`
+	Node   Node `yaml:"node"`
 }

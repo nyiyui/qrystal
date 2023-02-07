@@ -16,7 +16,7 @@ type nodeHandle struct {
 	Port uint16
 }
 
-func newNode(cfg *config.Node, mh *mioHandle) (*nodeHandle, error) {
+func newNode(cfg *config.Node, mh, hh *mioHandle) (*nodeHandle, error) {
 	cmd, err := newSubprocess(cfg.Subprocess)
 	if err != nil {
 		return nil, fmt.Errorf("subprocess: %w", err)
@@ -30,6 +30,12 @@ func newNode(cfg *config.Node, mh *mioHandle) (*nodeHandle, error) {
 		fmt.Sprintf("MIO_ADDR=%s", mh.Addr),
 		fmt.Sprintf("MIO_TOKEN=%s", mh.TokenBase64),
 	}...)
+	if hh != nil {
+		cmd.Env = append(cmd.Env, []string{
+			fmt.Sprintf("HOKUTO_ADDR=%s", hh.Addr),
+			fmt.Sprintf("HOKUTO_TOKEN=%s", hh.TokenBase64),
+		}...)
+	}
 	err = cmd.Start()
 	if err != nil {
 		return nil, fmt.Errorf("start: %w", err)

@@ -5,7 +5,7 @@ ldflags-mio += -X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
 ldflags-mio += -X github.com/nyiyui/qrystal/mio.CommandWgQuick=${shell which wg-quick}
 ldflags-node = -X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
 ldflags-node += -X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
-ldflags-runner = -X github.com/nyiyui/qrystal/runner.nodeUser=qrystal-node
+ldflags-runner = -X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node
 
 all: runner-mio runner-node runner gen-keys cs
 

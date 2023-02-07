@@ -11,3 +11,4 @@ Returns `A` records per-peers' allowed IPs, and `TXT` records for other metadata
 - Initial protocol to fetch networks from qrystal-node.
 - Restrict returned domains to only which the client can see.
 - Forward DNS requests.
+- Reverse lookups.

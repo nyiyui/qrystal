@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func listen() (lis net.Listener, addr string, err error) {
+func Listen() (lis net.Listener, addr string, err error) {
 	lis, err = net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return
@@ -20,13 +20,13 @@ func listen() (lis net.Listener, addr string, err error) {
 	return
 }
 
-// guard aborts connections from hosts that are not localhost.
+// Guard aborts connections from hosts that are not localhost.
 //
 // This is intended to be a last resort; it should not be relied on for
 // security.
 //
 // Note: Server should be listening on 127.0.0.1, not 0.0.0.0.
-func guard(handler http.Handler) http.Handler {
+func Guard(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
 			log.Printf("blocked request from %s", r.RemoteAddr)

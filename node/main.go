@@ -9,16 +9,25 @@ import (
 )
 
 type NodeConfig struct {
-	CC       central.Config
-	MioAddr  string
-	MioToken []byte
-	CS       []CSConfig
+	CC          central.Config
+	MioAddr     string
+	MioToken    []byte
+	HokutoAddr  string
+	HokutoToken []byte
+	CS          []CSConfig
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
 	mh, err := newMio(cfg.MioAddr, cfg.MioToken)
 	if err != nil {
 		return nil, fmt.Errorf("new mio: %w", err)
+	}
+	var hh *mioHandle
+	if cfg.HokutoAddr != "" {
+		hh, err = newMio(cfg.HokutoAddr, cfg.HokutoToken)
+		if err != nil {
+			return nil, fmt.Errorf("new hokuto: %w", err)
+		}
 	}
 
 	node := &Node{
@@ -28,7 +37,8 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		csNets: map[string]int{},
 		csCls:  make([]api.CentralSourceClient, len(cfg.CS)),
 
-		mio: mh,
+		mio:    mh,
+		hokuto: hh,
 
 		Kiriyama: nil, // set below
 	}
@@ -47,7 +57,8 @@ type Node struct {
 	csNets map[string]int
 	csCls  []api.CentralSourceClient
 
-	mio *mioHandle
+	mio    *mioHandle
+	hokuto *mioHandle
 
 	Kiriyama *Kiriyama
 }

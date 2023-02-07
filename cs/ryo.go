@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/util"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type tokenInfoKeyType struct{}
@@ -18,6 +18,7 @@ type tokenInfoKeyType struct{}
 var tokenInfoKey = tokenInfoKeyType{}
 
 func (c *CentralSource) HandleRyo(addr string, tlsCfg TLS) error {
+	util.S.Info("ryo: starting…")
 	if addr == "" {
 		return nil
 	}
@@ -25,15 +26,11 @@ func (c *CentralSource) HandleRyo(addr string, tlsCfg TLS) error {
 	// TODO: only POST
 	mux.Handle("/push", c.ryoToken(http.HandlerFunc(c.ryoPush)))
 	mux.Handle("/add-token", c.ryoToken(http.HandlerFunc(c.ryoAddToken)))
-	el, err := zap.NewStdLogAt(util.L, zapcore.ErrorLevel)
-	if err != nil {
-		panic(err)
-	}
 	s := &http.Server{
 		Addr:        addr,
 		Handler:     mux,
 		ReadTimeout: 1 * time.Second,
-		ErrorLog:    el,
+		ErrorLog:    log.New(os.Stderr, "ryo server: ", log.Lmsgprefix|log.LstdFlags|log.Lshortfile),
 	}
 	go func() {
 		err := s.ListenAndServeTLS(tlsCfg.CertPath, tlsCfg.KeyPath)
@@ -41,7 +38,7 @@ func (c *CentralSource) HandleRyo(addr string, tlsCfg TLS) error {
 			util.S.Fatalf("ryo: serve failed: %s", err)
 		}
 	}()
-	util.S.Info("ryo: serving…")
+	util.S.Info("ryo: serving")
 	return nil
 }
 

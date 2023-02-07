@@ -86,6 +86,10 @@ in
         cs = { pkgs, ... }: {
           imports = [ self.outputs.nixosModules.${system}.cs ];
 
+          environment.systemPackages = with pkgs; [
+            host
+          ];
+
           qrystal.services.cs = {
             enable = true;
             config = {
@@ -244,6 +248,10 @@ in
       for i, node in enumerate(nodes):
         print(node.execute(f"ping -c 1 {addrs[i]}")[1])
         node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in node1.succeed("host node2.testnet.qrystal.internal")
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in node2.succeed("host node1.testnet.qrystal.internal")
+      # TODO: test network level queries
+      # TODO: test NXDOMAIN
     '';
   });
   all-push = let

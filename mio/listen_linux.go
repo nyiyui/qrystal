@@ -1,25 +1,27 @@
 package mio
 
 import (
-	"errors"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 
 	"github.com/nyiyui/qrystal/runner"
 )
 
-const sockPath = "/tmp/qrystal-mio.sock"
-
-func listen() (lis net.Listener, addr string, err error) {
-	err = os.Remove(sockPath)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		err = fmt.Errorf("削除: %w", err)
+func Listen() (lis net.Listener, addr string, err error) {
+	b := make([]byte, 16)
+	_, err = rand.Read(b)
+	if err != nil {
+		err = fmt.Errorf("rand: %w", err)
 		return
 	}
+	sockPath := filepath.Join(os.TempDir(), hex.EncodeToString(b)) + ".sock"
 	lis, err = net.Listen("unix", sockPath)
 	if err != nil {
 		err = fmt.Errorf("バインド: %w", err)
@@ -59,7 +61,7 @@ func getUid() (uid int64, err error) {
 }
 
 func getGid() (gid int64, err error) {
-	u, err := user.Lookup(runner.QrystalNodeUsername)
+	u, err := user.Lookup(runner.NodeUser)
 	if err != nil {
 		return
 	}
@@ -67,4 +69,5 @@ func getGid() (gid int64, err error) {
 	return
 }
 
-func guard(h http.Handler) http.Handler { return h }
+// Guard does nothing in linux as the connection is a socket, not via IP.
+func Guard(h http.Handler) http.Handler { return h }

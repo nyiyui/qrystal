@@ -66,6 +66,10 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 		if err != nil {
 			return fmt.Errorf("reify: %w", err)
 		}
+		err = n.updateHokutoCC()
+		if err != nil {
+			return fmt.Errorf("updateHokutoCC: %w", err)
+		}
 		n.Kiriyama.SetCSReady(i, true)
 		return nil
 	})

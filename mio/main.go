@@ -22,7 +22,7 @@ type Server struct {
 	handler http.Handler
 }
 
-func genToken() ([]byte, string, error) {
+func GenToken() ([]byte, string, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -43,7 +43,7 @@ func Main() error {
 		return fmt.Errorf("WGクライントテスト: %w", err)
 	}
 
-	token, tokenBase64, err := genToken()
+	token, tokenBase64, err := GenToken()
 	if err != nil {
 		util.S.Fatalf("トークン生成: %s", err)
 	}
@@ -55,9 +55,9 @@ func Main() error {
 		return err
 	}
 
-	handler := guard(rs)
+	handler := Guard(rs)
 
-	lis, addr, err := listen()
+	lis, addr, err := Listen()
 	if err != nil {
 		util.S.Fatalf("バインド: %s", err)
 	}

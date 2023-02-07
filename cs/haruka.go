@@ -10,6 +10,7 @@ import (
 )
 
 func (c *CentralSource) HandleHaruka(addr string, tlsCfg TLS) error {
+	util.S.Info("haruka: starting…")
 	cert, err := tls.LoadX509KeyPair(tlsCfg.CertPath, tlsCfg.KeyPath)
 	if err != nil {
 		return fmt.Errorf("loading cert or key: %w", err)
@@ -29,6 +30,6 @@ func (c *CentralSource) HandleHaruka(addr string, tlsCfg TLS) error {
 			util.S.Fatalf("haruka: serve failed: %s", err)
 		}
 	}()
-	util.S.Info("haruka: serving…")
+	util.S.Info("haruka: serving")
 	return nil
 }

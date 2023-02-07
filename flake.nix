@@ -66,9 +66,9 @@
       {
         runner = pkgs.buildGoModule (common // {
           pname = "runner";
-          subPackages = [ "cmd/runner" "cmd/runner-mio" "cmd/runner-node" ];
+          subPackages = [ "cmd/runner" "cmd/runner-mio" "cmd/runner-node" ]; # "cmd/runner-hokuto" ];
           ldflags = (ldflags pkgs) ++ [
-            "-X github.com/nyiyui/qrystal/runner.nodeUser=qrystal-node"
+            "-X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node"
           ];
           postInstall = ''
             mkdir $out/lib
@@ -135,6 +135,23 @@
               config = mkOption {
                 type = submodule {
                   options = {
+                    hokuto = mkOption {
+                      type = submodule {
+                        options = {
+                          enable = mkOption {
+                            type = bool;
+                            default = true;
+                            description = "Enable DNS";
+                          };
+                          parent = mkOption {
+                            type = str;
+                            default = ".qrystal.internal";
+                            description = "All domains inside networks will be of the format <peer>.<network>.<parent>";
+                          };
+                        };
+                      };
+                      default = {};
+                    };
                     css = mkOption {
                       type = listOf (submodule {
                         options = {
@@ -196,6 +213,7 @@
                 wantedBy = [ "network-online.target" ];
                 environment = {
                   "RUNNER_MIO_PATH" = "${pkg}/bin/runner-mio";
+                  #"RUNNER_HOKUTO_PATH" = "${pkg}/bin/runner-hokuto";
                   "RUNNER_NODE_PATH" = "${pkg}/bin/runner-node";
                   "RUNNER_NODE_CONFIG_PATH" = mkConfigFile cfg;
                 };

@@ -114,11 +114,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
-	n, err := node.NewNode(node.NodeConfig{
+	nc := node.NodeConfig{
 		MioAddr:  mioAddr,
 		MioToken: mioToken,
 		CS:       ncscs,
-	})
+	}
+	if os.Getenv("HOKUTO_ADDR") != "" {
+		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")
+		nc.HokutoToken, err = base64.StdEncoding.DecodeString(os.Getenv("HOKUTO_TOKEN"))
+		if err != nil {
+			util.S.Fatalf("parse HOKUTO_TOKEN: %s", err)
+		}
+	}
+	n, err := node.NewNode(nc)
 	if err != nil {
 		panic(err)
 	}

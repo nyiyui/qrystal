@@ -16,7 +16,7 @@ func Main() {
 	termCh := make(chan os.Signal, 2)
 	signal.Notify(termCh, syscall.SIGINT, syscall.SIGTERM)
 
-	mh, nh, err := main2()
+	mh, hh, nh, err := main2()
 	if err != nil {
 		log.Printf("error: %s", err)
 		termCh <- syscall.SIGTERM
@@ -31,6 +31,14 @@ func Main() {
 		}
 		log.Print("stopped mio")
 	}
+	if hh != nil {
+		log.Print("stopping hokuto")
+		err = hh.Cmd.Process.Signal(syscall.SIGTERM)
+		if err != nil {
+			log.Printf("hokuto: %s", err)
+		}
+		log.Print("stopped hokuto")
+	}
 	if nh != nil {
 		log.Print("stopping node")
 		err = nh.Cmd.Process.Signal(syscall.SIGTERM)
@@ -41,19 +49,26 @@ func Main() {
 	}
 }
 
-func main2() (mh *mioHandle, nh *nodeHandle, err error) {
+func main2() (mh, hh *mioHandle, nh *nodeHandle, err error) {
 	cfg := newConfig()
 	log.Printf("%#v", cfg)
 	mh, err = newMio(&cfg.Mio)
 	if err != nil {
-		return nil, nil, fmt.Errorf("mio: %s", err)
+		return nil, nil, nil, fmt.Errorf("mio: %s", err)
 	}
 	log.Print("mio started")
-	nh, err = newNode(&cfg.Node, mh)
+	/*
+		hh, err = newMio(&cfg.Hokuto)
+		if err != nil {
+			return mh, nil, nil, fmt.Errorf("hokuto: %s", err)
+		}
+		log.Print("hokuto started")
+	*/
+	nh, err = newNode(&cfg.Node, mh, hh)
 	if err != nil {
-		return mh, nil, fmt.Errorf("mio: %s", err)
+		return mh, hh, nil, fmt.Errorf("node: %s", err)
 	}
 	_ = nh
 	log.Print("node started")
-	return mh, nh, nil
+	return mh, hh, nh, nil
 }

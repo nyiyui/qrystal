@@ -7,9 +7,7 @@ import (
 	"github.com/nyiyui/qrystal/runner/config"
 )
 
-const QrystalNodeUsername = "qrystal-node"
-
-var nodeUser string
+var NodeUser string
 
 func newConfig() config.Root {
 	return config.Root{
@@ -22,11 +20,20 @@ func newConfig() config.Root {
 				Path: os.Getenv("RUNNER_MIO_PATH"),
 			},
 		},
+		Hokuto: config.Mio{
+			Subprocess: config.Subprocess{
+				Credential: config.Credential{
+					User:  "root",
+					Group: "root",
+				},
+				Path: os.Getenv("RUNNER_HOKUTO_PATH"),
+			},
+		},
 		Node: config.Node{
 			Subprocess: config.Subprocess{
 				Credential: config.Credential{
-					User:  nodeUser,
-					Group: nodeUser,
+					User:  NodeUser,
+					Group: NodeUser,
 				},
 				Path: os.Getenv("RUNNER_NODE_PATH"),
 			},
