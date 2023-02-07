@@ -63,10 +63,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Handle: %s", err)
 	}
-	err = cs2.HandleHaruka(config.HarukaAddr, config.TLS)
-	if err != nil {
-		log.Printf("HandleHaruka: %s", err)
-	}
 	err = cs2.HandleRyo(config.RyoAddr, config.TLS)
 	if err != nil {
 		log.Printf("HandleRyo: %s", err)

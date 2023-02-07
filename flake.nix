@@ -261,14 +261,9 @@
                         default = ":39252";
                         description = "Bind address of Node API";
                       };
-                      harukaAddr = mkOption {
-                        type = str;
-                        default = ":39253";
-                        description = "Bind address of Haruka API";
-                      };
                       ryoAddr = mkOption {
                         type = str;
-                        default = ":39254";
+                        default = ":39253";
                         description = "Bind address of Ryo (HTTP) API";
                       };
                       tokens = mkOption { type = listOf (submodule {
@@ -348,7 +343,7 @@
                                   };
                                   peers = mkOption {
                                     type = attrsOf (peerOption { inherit lib; } { name = false; });
-                                    description = "All peers in the net.  Note that more can be added using cs-push, for example.";
+                                    description = "All peers in the net.  Note that more can be added later.";
                                     default = {};
                                   };
                                 };

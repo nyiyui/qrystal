@@ -1,17 +1,21 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"time"
 
-	"github.com/nyiyui/qrystal/node/api"
+	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/util"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type AddTokenQ struct {
@@ -31,13 +35,48 @@ type Peer struct {
 	CanSeeElement []string `json:"canSeeElement"`
 }
 
-var cfgServer string
-var certPath string
+func newTLSTransport(certPath string) *http.Transport {
+	pool := x509.NewCertPool()
+	cert, err := os.ReadFile(certPath)
+	if err != nil {
+		log.Fatalf("read cert: %s", err)
+	}
+	ok := pool.AppendCertsFromPEM(cert)
+	if !ok {
+		log.Fatal("append certs failed")
+	}
+	return &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: pool,
+		},
+	}
+}
+
+func convQ(q AddTokenQ) api.HAddTokenQ {
+	q2 := api.HAddTokenQ{
+		Overwrite: q.Overwrite,
+		Hash:      q.Hash,
+		Name:      q.Name,
+	}
+	if q.CanPull != nil {
+		q2.CanPull = q.CanPull.Networks
+	}
+	if q.CanPush != nil {
+		q2.CanPush = map[string]api.CanNetwork{}
+		for cnn, nc := range q.CanPush.Networks {
+			q2.CanPush[cnn] = api.CanNetwork{
+				PeerName:        nc.Name,
+				CanSeeElementOf: nc.CanSeeElement,
+			}
+		}
+	}
+	return q2
+}
 
 func main() {
-	flag.StringVar(&cfgServer, "server", "", "server address")
+	serverAddr := flag.String("server", "", "server address")
 	ctRaw := flag.String("token", "", "central token")
-	flag.StringVar(&certPath, "cert", "", "path to server cert")
+	certPath := flag.String("cert", "", "path to server cert")
 	flag.Parse()
 
 	ct, err := util.ParseToken(*ctRaw)
@@ -51,42 +90,35 @@ func main() {
 		log.Fatalf("unmarshal config: %s", err)
 	}
 
-	creds, err := credentials.NewClientTLSFromFile(certPath, "")
+	buf := new(bytes.Buffer)
+	err = json.NewEncoder(buf).Encode(convQ(q))
 	if err != nil {
-		log.Fatalf("load cert: %s", err)
+		panic(fmt.Sprintf("json marshal failed: %s", err))
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, cfgServer, grpc.WithTransportCredentials(creds))
+	u := url.URL{
+		Scheme: "https",
+		Host:   *serverAddr,
+		Path:   "/add-token",
+	}
+	hq, err := http.NewRequest("POST", u.String(), buf)
 	if err != nil {
-		log.Fatalf("dial: %s", err)
+		panic(fmt.Sprintf("NewRequest: %s", err))
 	}
-	cl := api.NewCentralSourceClient(conn)
-	q2 := api.AddTokenQ{
-		CentralToken: ct.String(),
-		Overwrite:    q.Overwrite,
-		Hash:         q.Hash.String(),
-		Name:         q.Name,
+	hq.Header.Set("X-Qrystal-CentralToken", ct.String())
+	cl := &http.Client{
+		Transport: newTLSTransport(*certPath),
+		Timeout:   5 * time.Second,
 	}
-	if q.CanPull != nil {
-		q2.CanPull = true
-		q2.Networks = q.CanPull.Networks
-	}
-	if q.CanPush != nil {
-		networks := map[string]string{}
-		ncse := map[string]*api.LString{}
-		for key, peer := range q.CanPush.Networks {
-			networks[key] = peer.Name
-			ncse[key] = &api.LString{Inner: peer.CanSeeElement}
-		}
-		q2.CanPush = &api.CanPush{
-			Networks: networks,
-		}
-		q2.CanPushNetworksCanSeeElement = ncse
-	}
-	_, err = cl.AddToken(context.Background(), &q2)
+	hs, err := cl.Do(hq)
 	if err != nil {
-		log.Fatalf("add token: %s", err)
+		log.Fatalf("request: %s", err)
 	}
+	if hs.StatusCode != 200 {
+		log.Fatalf("response status: %s", hs.Status)
+	}
+	body, err := ioutil.ReadAll(hs.Body)
+	if err != nil {
+		log.Fatalf("response body read: %s", err)
+	}
+	log.Printf("response: %s", body)
 }

@@ -5,12 +5,10 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/nyiyui/qrystal/node/api"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc/credentials"
@@ -68,20 +66,6 @@ func (p *Peer) String() string {
 	return string(out)
 }
 
-func NewPeerFromAPI(pn string, peer *api.CentralPeer) (peer2 *Peer, err error) {
-	ipNets, err := FromAPIToIPNets(peer.AllowedIPs)
-	if err != nil {
-		return nil, fmt.Errorf("ToIPNets: %w", err)
-	}
-	return &Peer{
-		Name:       pn,
-		Host:       peer.Host,
-		AllowedIPs: FromIPNets(ipNets),
-		CanSee:     NewCanSeeFromAPI(peer.CanSee),
-		Internal:   new(PeerInternal),
-	}, nil
-}
-
 func (p *Peer) Same(p2 *Peer) bool {
 	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee)
 }
@@ -126,28 +110,9 @@ func (pi *PeerInternal) GobDecode(data []byte) error {
 	return nil
 }
 
-func (p *Peer) ToAPI() *api.CentralPeer {
-	return &api.CentralPeer{
-		Host:       p.Host,
-		AllowedIPs: FromIPNetsToAPI(ToIPNets(p.AllowedIPs)),
-		CanSee:     p.CanSee.ToAPI(),
-	}
-}
-
 type CanSee struct {
 	Only []string `yaml:"only"`
 	// Only means that this peer can see itself and only the listed peers.
-}
-
-func NewCanSeeFromAPI(c2 *api.CanSee) *CanSee {
-	if c2 == nil {
-		return nil
-	}
-	return &CanSee{Only: c2.Only}
-}
-
-func (c *CanSee) ToAPI() *api.CanSee {
-	return &api.CanSee{Only: c.Only}
 }
 
 func (c *CanSee) Same(c2 *CanSee) bool {

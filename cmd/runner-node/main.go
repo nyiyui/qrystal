@@ -134,9 +134,5 @@ func main() {
 	if c.CSs != nil {
 		go n.ListenCS()
 	}
-	if c.Kiriyama != "" {
-		n.Kiriyama.Addr = c.Kiriyama
-		go n.Kiriyama.Loop()
-	}
 	select {}
 }

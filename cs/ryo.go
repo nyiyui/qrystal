@@ -178,5 +178,6 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 		util.S.Errorf("AddToken: %s", err)
 		return
 	}
+	w.Write([]byte("ok"))
 	return
 }

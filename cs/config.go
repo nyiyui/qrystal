@@ -19,7 +19,6 @@ type TLS struct {
 
 type Config struct {
 	Addr         string          `yaml:"addr"`
-	HarukaAddr   string          `yaml:"harukaAddr"`
 	RyoAddr      string          `yaml:"ryoAddr"`
 	TLS          TLS             `yaml:"tls"`
 	CC           *central.Config `yaml:"central"`

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/nyiyui/qrystal/central"
-	"github.com/nyiyui/qrystal/node/api"
 )
 
 type NodeConfig struct {
@@ -35,16 +34,9 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 
 		cs:     cfg.CS,
 		csNets: map[string]int{},
-		csCls:  make([]api.CentralSourceClient, len(cfg.CS)),
 
 		mio:    mh,
 		hokuto: hh,
-
-		Kiriyama: nil, // set below
-	}
-	node.Kiriyama = newKiriyama(node)
-	for i := 0; i < len(cfg.CS); i++ {
-		node.Kiriyama.SetCSReady(i, false)
 	}
 	return node, nil
 }
@@ -55,10 +47,7 @@ type Node struct {
 
 	cs     []CSConfig
 	csNets map[string]int
-	csCls  []api.CentralSourceClient
 
 	mio    *mioHandle
 	hokuto *mioHandle
-
-	Kiriyama *Kiriyama
 }

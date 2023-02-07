@@ -31,7 +31,6 @@ func (n *Node) ListenCS() {
 }
 
 func (n *Node) listenCS(i int) error {
-	n.Kiriyama.SetCS(i, "初期")
 	return util.Backoff(func() (resetBackoff bool, err error) {
 		return n.listenCSOnce(i)
 	}, func(backoff time.Duration, err error) error {
@@ -40,7 +39,6 @@ func (n *Node) listenCS(i int) error {
 			"err", err,
 			"backoff", backoff,
 		)
-		n.Kiriyama.SetCS(i, fmt.Sprintf("%sで再試行", backoff))
 		return nil
 	})
 }
@@ -70,7 +68,6 @@ func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
 	}
 	for {
 		var s api.SyncS
-		n.Kiriyama.SetCS(i, "引き")
 		err = cl.Call("sync", &api.SyncQ{I: i, CentralToken: csc.Token}, &s)
 		if err != nil {
 			err = fmt.Errorf("sync: %w", err)
