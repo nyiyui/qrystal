@@ -129,7 +129,6 @@ func (c *CentralSource) ryoPush(w http.ResponseWriter, r *http.Request) {
 	}()
 	util.S.Infof("push net %s peer %s: notify change", q.CNN, q.PeerName)
 	w.Write([]byte("ok"))
-	return
 }
 
 func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
@@ -179,5 +178,4 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("ok"))
-	return
 }

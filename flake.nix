@@ -60,7 +60,7 @@
           tags = [ "nix" "sdnotify" ];
 
           #vendorSha256 = pkgs.lib.fakeSha256;
-          vendorSha256 = "14e602c1a1feb405f54d538f034558e67da8cd272b776f6f80cbbe8bd3f5ab25";
+          vendorSha256 = "5ae633d952a61d47608bd2a1a25e1baa0a3705646f0cd5b2f2bba8874620786b";
         };
       in
       {

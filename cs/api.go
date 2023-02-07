@@ -88,7 +88,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 		affectsYou := func(chg change) bool {
 			c.ccLock.RLock()
 			defer c.ccLock.RUnlock()
-			for cnn, _ := range ti.Networks {
+			for cnn := range ti.Networks {
 				peers := chg.Changed[cnn]
 				cn, ok := newCC.Networks[cnn]
 				if !ok {

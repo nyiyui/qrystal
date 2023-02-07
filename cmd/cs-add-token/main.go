@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -116,7 +116,7 @@ func main() {
 	if hs.StatusCode != 200 {
 		log.Fatalf("response status: %s", hs.Status)
 	}
-	body, err := ioutil.ReadAll(hs.Body)
+	body, err := io.ReadAll(hs.Body)
 	if err != nil {
 		log.Fatalf("response body read: %s", err)
 	}
