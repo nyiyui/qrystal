@@ -87,4 +87,9 @@ uninstall:
 		"${pkgdir}/usr/lib/systemd/system/qrystal-cs.service"
 	systemctl daemon-reload
 
-.PHONY: install uninstall all
+test:
+	go test ./...
+	go vet ./...
+	nix flake check
+
+.PHONY: install uninstall all test

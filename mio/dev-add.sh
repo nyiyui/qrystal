@@ -38,6 +38,5 @@ if [[ " ${ifaces[*]} " =~ " $name " ]]; then
 	$wg_quick down "$name" 2> $log || 1>&2 cat $log
 fi
 
-#$wg_quick up "$name" 2> $log || 1>&2 cat $log
-$wg_quick up "$name"
+$wg_quick up "$name" 2> $log || 1>&2 cat $log
 rm $log

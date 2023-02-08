@@ -138,10 +138,10 @@
                     hokuto = mkOption {
                       type = submodule {
                         options = {
-                          enable = mkOption {
-                            type = bool;
-                            default = true;
-                            description = "Enable DNS";
+                          addr = mkOption {
+                            type = str;
+                            default = "127.0.0.1:53";
+                            description = "All domains inside networks will be of the format <peer>.<network>.<parent>";
                           };
                           parent = mkOption {
                             type = str;

@@ -8,12 +8,14 @@ import (
 )
 
 type NodeConfig struct {
-	CC          central.Config
-	MioAddr     string
-	MioToken    []byte
-	HokutoAddr  string
-	HokutoToken []byte
-	CS          []CSConfig
+	CC              central.Config
+	MioAddr         string
+	MioToken        []byte
+	HokutoAddr      string
+	HokutoToken     []byte
+	HokutoDNSAddr   string
+	HokutoDNSParent string
+	CS              []CSConfig
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -32,11 +34,17 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 	node := &Node{
 		cc: cfg.CC,
 
+		ready: make([]bool, len(cfg.CS)),
+
 		cs:     cfg.CS,
 		csNets: map[string]int{},
 
 		mio:    mh,
 		hokuto: hh,
+	}
+	err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr)
+	if err != nil {
+		return nil, fmt.Errorf("hokuto init: %w", err)
 	}
 	return node, nil
 }
@@ -44,6 +52,8 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 type Node struct {
 	ccLock sync.RWMutex
 	cc     central.Config
+
+	ready []bool
 
 	cs     []CSConfig
 	csNets map[string]int

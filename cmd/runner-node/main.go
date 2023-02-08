@@ -18,8 +18,13 @@ import (
 )
 
 type config struct {
-	CSs      []csConfig `yaml:"css"`
-	Kiriyama string     `yaml:"kiriyama"`
+	CSs    []csConfig   `yaml:"css"`
+	Hokuto hokutoConfig `yaml:"hokuto"`
+}
+
+type hokutoConfig struct {
+	Parent string `yaml:"parent"`
+	Addr   string `yaml:"addr"`
 }
 
 type csConfig struct {
@@ -115,9 +120,11 @@ func main() {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
 	nc := node.NodeConfig{
-		MioAddr:  mioAddr,
-		MioToken: mioToken,
-		CS:       ncscs,
+		MioAddr:         mioAddr,
+		MioToken:        mioToken,
+		CS:              ncscs,
+		HokutoDNSAddr:   c.Hokuto.Addr,
+		HokutoDNSParent: c.Hokuto.Parent,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")

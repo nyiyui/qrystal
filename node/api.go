@@ -40,6 +40,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 			n.csNets[cnn] = i
 		}
 		toRemove := cs.MissingFromFirst(cc.Networks, n.cc.Networks)
+		n.csReady(i, false)
 		err = n.removeDevices(toRemove)
 		if err != nil {
 			return fmt.Errorf("rm devs: %w", err)
@@ -69,6 +70,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 		if err != nil {
 			return fmt.Errorf("updateHokutoCC: %w", err)
 		}
+		n.csReady(i, true)
 		return nil
 	})
 	go cl.Run()

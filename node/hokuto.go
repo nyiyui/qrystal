@@ -20,3 +20,16 @@ func (n *Node) updateHokutoCC() error {
 	}
 	return nil
 }
+
+func (n *Node) hokutoInit(parent, addr string) error {
+	var dummy bool
+	q := hokuto.InitQ{
+		Parent: parent,
+		Addr:   addr,
+	}
+	err := n.hokuto.client.Call("Hokuto.Init", q, &dummy)
+	if err != nil {
+		return fmt.Errorf("call: %w", err)
+	}
+	return nil
+}

@@ -2,11 +2,8 @@ package hokuto
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -27,13 +24,11 @@ var ccLock sync.Mutex
 
 var mask32 = net.CIDRMask(32, 32)
 
-var c Config
 var token []byte
 var suffix string
 
-type Config struct {
-	Parent string `json:"parent"`
-}
+var inited bool
+var initedLock sync.Mutex
 
 func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
 	for _, in := range peer.AllowedIPs {
@@ -50,7 +45,7 @@ func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
 
 func handleQuery(m *dns.Msg) (nxdomain bool) {
 	for _, q := range m.Question {
-		log.Printf("Query for %s\n", q.Name)
+		util.S.Debugf("handleQuery: %s", q.Name)
 
 		switch q.Qtype {
 		case dns.TypeA:
@@ -59,24 +54,29 @@ func handleQuery(m *dns.Msg) (nxdomain bool) {
 				defer ccLock.Unlock()
 				parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
 				if len(parts) == 0 {
+					util.S.Debugf("handleQuery nx no parts")
 					nxdomain = true
 					return
 				}
+				reverse(parts)
 				cnn := parts[0]
 				cn := cc.Networks[cnn]
 				if cn == nil {
+					util.S.Debugf("handleQuery nx net %s", cnn)
 					nxdomain = true
 					return
 				}
 				switch len(parts) {
 				case 1:
+					util.S.Debugf("handleQuery net %s", cnn)
 					for _, peer := range cn.Peers {
 						returnPeer(m, q, peer)
 					}
 				case 2:
 					pn := parts[1]
 					peer := cn.Peers[pn]
-					if cn == nil {
+					if peer == nil {
+						util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
 						nxdomain = true
 						return
 					}
@@ -105,33 +105,6 @@ func handle(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func main2() {
-	configPath := flag.String("config", "", "config path")
-	addr := flag.String("addr", "", "dns bind address")
-	flag.Parse()
-
-	buf, err := os.ReadFile(*configPath)
-	if err != nil {
-		util.S.Fatalf("read config: %s", err)
-	}
-	err = json.Unmarshal(buf, &c)
-	if err != nil {
-		util.S.Fatalf("parse config: %s", err)
-	}
-	suffix = c.Parent + "."
-	util.S.Infof("config parsed from %s", *configPath)
-
-	dns.HandleFunc(".", handle)
-
-	server := &dns.Server{Addr: *addr, Net: "udp"}
-	util.S.Infof("listening on %s", server.Addr)
-	err = server.ListenAndServe()
-	if err != nil {
-		util.S.Fatalf("listen failed: %s\n ", err.Error())
-	}
-	defer server.Shutdown()
-}
-
 type Hokuto struct{}
 
 type UpdateCCQ struct {
@@ -149,6 +122,32 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 	ccLock.Lock()
 	defer ccLock.Unlock()
 	cc = q.CC
+	util.S.Debugf("UpdateCC: %s", cc)
+	return nil
+}
+
+type InitQ struct {
+	Addr   string
+	Parent string
+}
+
+func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
+	initedLock.Lock()
+	defer initedLock.Unlock()
+	if inited {
+		return errors.New("already inited")
+	}
+	suffix = q.Parent + "."
+	dns.HandleFunc(".", handle)
+	server := &dns.Server{Addr: q.Addr, Net: "udp"}
+	util.S.Infof("listening on %s", server.Addr)
+	inited = true
+	go func() {
+		err = server.ListenAndServe()
+		if err != nil {
+			util.S.Fatalf("listen failed: %s\n ", err.Error())
+		}
+	}()
 	return nil
 }
 
@@ -186,4 +185,16 @@ func Main() error {
 		util.S.Fatalf("serve: %s", err)
 	}
 	return nil
+}
+
+func reverse(s []string) {
+	switch len(s) {
+	case 1:
+	case 2:
+		s[0], s[1] = s[1], s[0]
+	default:
+		for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+			s[i], s[j] = s[j], s[i]
+		}
+	}
 }

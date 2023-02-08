@@ -110,86 +110,6 @@ in
         cs.wait_for_unit("qrystal-cs.service")
       '';
     };
-  push = let
-    networkName = "testnet";
-  in let
-    node = ({ token }: { pkgs, ... }: base // {
-      imports = [ self.outputs.nixosModules.${system}.node ];
-      qrystal.services.node = csConfig networkName token;
-      systemd.services.qrystal-node.wantedBy = [];
-    });
-  in
-  lib.runTest ({
-    name = "push";
-    hostPkgs = pkgs;
-    nodes = {
-      node1 = node { token = node1Token; }; # pushing for node1
-      node2 = node { token = node2Token; };
-      pusher = { pkgs, ... }: base // {
-        environment.systemPackages = [ self.outputs.packages.${system}.etc ];
-      };
-      cs = { pkgs, ... }: base // {
-        imports = [ self.outputs.nixosModules.${system}.cs ];
-
-        networking.firewall.allowedTCPPorts = [ 39252 39253 ];
-        qrystal.services.cs = {
-          enable = true;
-          config = {
-            tls = csTls;
-            tokens = [
-              ((nodeToken "node2" node2Hash networkName) // {
-                canPush.networks.${networkName} = { name = "node1"; canSeeElement = [ "node2" ]; };
-                canAddTokens = { canPull = true; };
-              })
-            ];
-            central.networks.${networkName} = networkBase // {
-              peers.node2 = { host = "node2:58120"; allowedIPs = [ "10.123.0.2/32" ]; canSee.only = [ "node1" ]; };
-            };
-          };
-        };
-      };
-    };
-    testScript = { nodes, ... }: ''
-      import json
-
-      nodes = [node1, node2]
-      addrs = ["10.123.0.2", "10.123.0.1"]
-      cs.start()
-      cs.wait_for_unit("qrystal-cs.service")
-      node2.start()
-      node2.wait_for_unit("qrystal-node.service")
-      config = dict(
-        overwrite=False,
-        name="node1",
-        tokenHash="${node1Hash}",
-        networks=dict(
-          ${networkName}=dict(
-            name="node1",
-            ips=["10.123.0.1/32"],
-            host="node1:58120",
-            canSee=["node2"],
-          ),
-        ),
-      )
-      pusher.start()
-      print(pusher.succeed(f"""${self.outputs.packages.${system}.etc}/bin/cs-push -server 'cs:39253' -token '${node2Token}' -cert <(echo '${rootCert + "\n" + csCert}') -tmp-config <(echo '{json.dumps(config)}')"""))
-      print("pushed for node1")
-      node1.start()
-      node1.wait_for_unit("qrystal-node.service")
-      print("all nodes started")
-      # NOTE: there is a race condition where the peers' pubkeys could not be
-      # set yet when pinged (so that's why we're using wait_until_*
-      for i, node in enumerate(nodes):
-        print(node.wait_until_succeeds("wg show ${networkName}"))
-        print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
-        print(node.execute("ip route show")[1])
-        for addr in addrs:
-          print(node.execute(f"ip route get {addr}")[1])
-      for i, node in enumerate(nodes):
-        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
-        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
-    '';
-  });
   all = let
     networkName = "testnet";
   in let
@@ -248,13 +168,18 @@ in
       for i, node in enumerate(nodes):
         print(node.execute(f"ping -c 1 {addrs[i]}")[1])
         node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
-      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in node1.succeed("host node2.testnet.qrystal.internal")
-      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in node2.succeed("host node1.testnet.qrystal.internal")
+      def pp(value):
+          print("pp", value)
+          return value
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal 127.0.0.1"))
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal 127.0.0.1"))
+      for node in nodes:
+        assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.1"))[0] == 1
+        assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.1"))[0] == 1
       # TODO: test network level queries
-      # TODO: test NXDOMAIN
     '';
   });
-  all-push = let
+  azusa = let
     networkName = "testnet";
   in let
     node = ({ name, token, allowedIPs, canSee }: { pkgs, ... }: base // {
@@ -283,7 +208,7 @@ in
     });
   in
   lib.runTest ({
-    name = "all-push";
+    name = "azusa";
     hostPkgs = pkgs;
     nodes = {
       node1 = node {
@@ -309,11 +234,13 @@ in
             tokens = [
               ((nodeToken "node1" node1Hash networkName) // {
                 canPush.networks.${networkName} = { name = "node1"; canSeeElement = [ "node2" ]; };
-                canAddTokens = { canPull = true; };
+                canPull = true;
+                networks.${networkName} = "node1";
               })
               ((nodeToken "node2" node2Hash networkName) // {
                 canPush.networks.${networkName} = { name = "node2"; canSeeElement = [ "node2" ]; };
-                canAddTokens = { canPull = true; };
+                canPull = true;
+                networks.${networkName} = "node2";
               })
             ];
             central.networks.${networkName} = networkBase;
@@ -329,6 +256,7 @@ in
       for node in nodes:
         node.start()
         node.systemctl("start qrystal-node.service")
+      for node in nodes:
         node.wait_for_unit("qrystal-node.service", timeout=20)
       print("all nodes started")
       # NOTE: there is a race condition where the peers' pubkeys could not be

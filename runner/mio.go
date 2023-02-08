@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -48,31 +49,9 @@ func newMio(cfg *config.Mio) (*mioHandle, error) {
 		log.Print("mio exited")
 		panic("mio failed")
 	}()
-	reader := bufio.NewReader(stdout)
-
-	addrRaw, err := reader.ReadString('\n')
+	addr, tokenRaw, token, err := readTokenAddr(stdout)
 	if err != nil {
-		return nil, fmt.Errorf("read addr: %w", err)
-	}
-	if !strings.HasPrefix(addrRaw, "addr:") {
-		return nil, fmt.Errorf("rawPort doesn't have prefix: %s", strconv.Quote(addrRaw))
-	}
-	addr := strings.TrimSpace(addrRaw[5:])
-	if err != nil {
-		return nil, fmt.Errorf("parse addr: %w", err)
-	}
-
-	tokenRaw, err := reader.ReadString('\n')
-	if err != nil {
-		return nil, fmt.Errorf("read token: %w", err)
-	}
-	if !strings.HasPrefix(tokenRaw, "token:") {
-		return nil, fmt.Errorf("rawToken doesn't have prefix: %s", strconv.Quote(tokenRaw))
-	}
-	tokenRaw = strings.TrimSpace(tokenRaw[6:])
-	token, err := base64.StdEncoding.DecodeString(tokenRaw)
-	if err != nil {
-		return nil, fmt.Errorf("parse token: %w", err)
+		return nil, fmt.Errorf("read token addr: %w", err)
 	}
 
 	return &mioHandle{
@@ -81,4 +60,34 @@ func newMio(cfg *config.Mio) (*mioHandle, error) {
 		TokenBase64: tokenRaw,
 		Cmd:         cmd,
 	}, nil
+}
+
+func readTokenAddr(stdout io.Reader) (addr, tokenBase64 string, token []byte, err error) {
+	reader := bufio.NewReader(stdout)
+
+	addrRaw, err := reader.ReadString('\n')
+	if err != nil {
+		return "", "", nil, fmt.Errorf("read addr: %w", err)
+	}
+	if !strings.HasPrefix(addrRaw, "addr:") {
+		return "", "", nil, fmt.Errorf("rawPort doesn't have prefix: %s", strconv.Quote(addrRaw))
+	}
+	addr = strings.TrimSpace(addrRaw[5:])
+	if err != nil {
+		return "", "", nil, fmt.Errorf("parse addr: %w", err)
+	}
+
+	tokenRaw, err := reader.ReadString('\n')
+	if err != nil {
+		return "", "", nil, fmt.Errorf("read token: %w", err)
+	}
+	if !strings.HasPrefix(tokenRaw, "token:") {
+		return "", "", nil, fmt.Errorf("rawToken doesn't have prefix: %s", strconv.Quote(tokenRaw))
+	}
+	tokenRaw = strings.TrimSpace(tokenRaw[6:])
+	token, err = base64.StdEncoding.DecodeString(tokenRaw)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("parse token: %w", err)
+	}
+	return addr, tokenRaw, token, nil
 }
