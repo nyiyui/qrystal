@@ -44,8 +44,9 @@ func newMio(cfg *config.Mio) (*mioHandle, error) {
 			if err, ok := err.(*exec.ExitError); ok {
 				log.Printf("mio: Wait stderr:\n%s", err.Stderr)
 			}
-			panic("mio failed")
 		}
+		log.Print("mio exited")
+		panic("mio failed")
 	}()
 	reader := bufio.NewReader(stdout)
 

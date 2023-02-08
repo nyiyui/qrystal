@@ -1,11 +1,23 @@
 package hokuto
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"log"
 	"net"
+	"net/http"
+	"net/rpc"
+	"os"
+	"strings"
 	"sync"
 
-	//"github.com/miekg/dns"
+	"github.com/miekg/dns"
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/mio"
+	"github.com/nyiyui/qrystal/util"
 )
 
 // ~~stolen~~ copied from <https://gist.github.com/walm/0d67b4fb2d5daf3edd4fad3e13b162cb>.
@@ -23,7 +35,6 @@ type Config struct {
 	Parent string `json:"parent"`
 }
 
-/*
 func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
 	for _, in := range peer.AllowedIPs {
 		if !bytes.Equal(net.IPNet(in).Mask, mask32) {
@@ -121,14 +132,14 @@ func main2() {
 	defer server.Shutdown()
 }
 
-type rpcServer struct{}
+type Hokuto struct{}
 
 type UpdateCCQ struct {
 	Token []byte
 	CC    *central.Config
 }
 
-func (_ rpcServer) updateCC(q *UpdateCCQ, _ *bool) error {
+func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 	if !bytes.Equal(token, q.Token) {
 		return errors.New("token mismatch")
 	}
@@ -138,6 +149,13 @@ func (_ rpcServer) updateCC(q *UpdateCCQ, _ *bool) error {
 	ccLock.Lock()
 	defer ccLock.Unlock()
 	cc = q.CC
+	return nil
+}
+
+type Mio struct{}
+
+func (_ Mio) Ping(q string, r *string) error {
+	*r = "pong"
 	return nil
 }
 
@@ -160,7 +178,8 @@ func Main() error {
 	}
 	util.S.Info("聞きます。")
 	rs := rpc.NewServer()
-	rs.RegisterName("updateCC", rpcServer{})
+	rs.Register(Hokuto{})
+	rs.Register(Mio{})
 	handler := mio.Guard(rs)
 	err = http.Serve(lis, handler)
 	if err != nil {
@@ -168,4 +187,3 @@ func Main() error {
 	}
 	return nil
 }
-*/

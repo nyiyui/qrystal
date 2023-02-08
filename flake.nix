@@ -60,13 +60,13 @@
           tags = [ "nix" "sdnotify" ];
 
           #vendorSha256 = pkgs.lib.fakeSha256;
-          vendorSha256 = "5ae633d952a61d47608bd2a1a25e1baa0a3705646f0cd5b2f2bba8874620786b";
+          vendorSha256 = "16025d3c73da1c3a7f34699d8360869717256a566ea8e1198f1a3983d2294ff3";
         };
       in
       {
         runner = pkgs.buildGoModule (common // {
           pname = "runner";
-          subPackages = [ "cmd/runner" "cmd/runner-mio" "cmd/runner-node" ]; # "cmd/runner-hokuto" ];
+          subPackages = [ "cmd/runner" "cmd/runner-mio" "cmd/runner-node" "cmd/runner-hokuto" ];
           ldflags = (ldflags pkgs) ++ [
             "-X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node"
           ];
@@ -213,7 +213,7 @@
                 wantedBy = [ "network-online.target" ];
                 environment = {
                   "RUNNER_MIO_PATH" = "${pkg}/bin/runner-mio";
-                  #"RUNNER_HOKUTO_PATH" = "${pkg}/bin/runner-hokuto";
+                  "RUNNER_HOKUTO_PATH" = "${pkg}/bin/runner-hokuto";
                   "RUNNER_NODE_PATH" = "${pkg}/bin/runner-node";
                   "RUNNER_NODE_CONFIG_PATH" = mkConfigFile cfg;
                 };

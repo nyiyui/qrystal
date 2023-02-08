@@ -57,13 +57,11 @@ func main2() (mh, hh *mioHandle, nh *nodeHandle, err error) {
 		return nil, nil, nil, fmt.Errorf("mio: %s", err)
 	}
 	log.Print("mio started")
-	/*
-		hh, err = newMio(&cfg.Hokuto)
-		if err != nil {
-			return mh, nil, nil, fmt.Errorf("hokuto: %s", err)
-		}
-		log.Print("hokuto started")
-	*/
+	hh, err = newMio(&cfg.Hokuto)
+	if err != nil {
+		return mh, nil, nil, fmt.Errorf("hokuto: %s", err)
+	}
+	log.Print("hokuto started")
 	nh, err = newNode(&cfg.Node, mh, hh)
 	if err != nil {
 		return mh, hh, nil, fmt.Errorf("node: %s", err)
