@@ -88,6 +88,10 @@
           pname = "sd-notify-test";
           subPackages = [ "cmd/sd-notify-test" ];
         });
+        dns-test = pkgs.buildGoModule (common // {
+          pname = "dns-test";
+          subPackages = [ "cmd/dns-test" ];
+        });
       };
       checks = (import ./test.nix) {
         inherit self system nixpkgsFor libFor nixosLibFor ldflags;
@@ -147,6 +151,11 @@
                             type = str;
                             default = ".qrystal.internal";
                             description = "All domains inside networks will be of the format <peer>.<network>.<parent>";
+                          };
+                          upstream = mkOption {
+                            type = str;
+                            default = "8.8.8.8:53";
+                            description = "Upstream DNS server to forward requests to. Recommended to set to a local resolver.";
                           };
                         };
                       };

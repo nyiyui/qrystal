@@ -21,11 +21,12 @@ func (n *Node) updateHokutoCC() error {
 	return nil
 }
 
-func (n *Node) hokutoInit(parent, addr string) error {
+func (n *Node) hokutoInit(parent, addr, upstream string) error {
 	var dummy bool
 	q := hokuto.InitQ{
-		Parent: parent,
-		Addr:   addr,
+		Parent:   parent,
+		Addr:     addr,
+		Upstream: upstream,
 	}
 	err := n.hokuto.client.Call("Hokuto.Init", q, &dummy)
 	if err != nil {

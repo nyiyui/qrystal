@@ -8,14 +8,15 @@ import (
 )
 
 type NodeConfig struct {
-	CC              central.Config
-	MioAddr         string
-	MioToken        []byte
-	HokutoAddr      string
-	HokutoToken     []byte
-	HokutoDNSAddr   string
-	HokutoDNSParent string
-	CS              []CSConfig
+	CC                central.Config
+	MioAddr           string
+	MioToken          []byte
+	HokutoAddr        string
+	HokutoToken       []byte
+	HokutoDNSAddr     string
+	HokutoDNSParent   string
+	HokutoDNSUpstream string
+	CS                []CSConfig
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -42,7 +43,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		mio:    mh,
 		hokuto: hh,
 	}
-	err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr)
+	err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr, cfg.HokutoDNSUpstream)
 	if err != nil {
 		return nil, fmt.Errorf("hokuto init: %w", err)
 	}

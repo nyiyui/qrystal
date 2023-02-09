@@ -112,14 +112,32 @@ in
     };
   all = let
     networkName = "testnet";
+    testDomain = "example.com";
+    testDNS = "127.0.0.1";
+    testDNSPort = "53530";
   in let
-    node = ({ token }: { pkgs, ... }: base // {
-      imports = [ self.outputs.nixosModules.${system}.node ];
+    dns = { pkgs, ... }: {
+      systemd.services.qrystal-dns-test = {
+        enable = true;
+        description = "DNS server for testing Hokuto DNS forwarding.";
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          ExecStart = "${self.outputs.packages.${system}.dns-test}/bin/dns-test";
+        };
+      };
+    };
+  in let
+    node = { token }: { pkgs, ... }: base // {
+      imports = [
+        self.outputs.nixosModules.${system}.node
+        (_: { qrystal.services.node.config.hokuto.upstream = "${testDNS}:${testDNSPort}"; })
+        dns
+      ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
       qrystal.services.node = csConfig networkName token;
       systemd.services.qrystal-node.wantedBy = [];
-    });
+    };
   in
   lib.runTest ({
     name = "all";
@@ -154,6 +172,8 @@ in
       cs.wait_for_unit("qrystal-cs.service")
       for node in nodes:
         node.start()
+        node.succeed("host -p ${testDNSPort} ${testDomain} ${testDNS}", timeout=5)
+        node.systemctl("start qrystal-dns-test.service")
         node.systemctl("start qrystal-node.service")
         node.wait_for_unit("qrystal-node.service", timeout=20)
       print("all nodes started")
@@ -176,6 +196,9 @@ in
       for node in nodes:
         assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.1"))[0] == 1
         assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.1"))[0] == 1
+        a = pp(node.succeed("host -p ${testDNSPort} ${testDomain} ${testDNS} | grep 'has address'"))
+        b = pp(node.succeed("host ${testDomain} 127.0.0.1 | grep 'has address'"))
+        assert a == b
       # TODO: test network level queries
     '';
   });

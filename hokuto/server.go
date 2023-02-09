@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/rpc"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/miekg/dns"
@@ -17,93 +16,10 @@ import (
 	"github.com/nyiyui/qrystal/util"
 )
 
-// ~~stolen~~ copied from <https://gist.github.com/walm/0d67b4fb2d5daf3edd4fad3e13b162cb>.
-
-var cc *central.Config
-var ccLock sync.Mutex
-
-var mask32 = net.CIDRMask(32, 32)
-
 var token []byte
-var suffix string
 
 var inited bool
 var initedLock sync.Mutex
-
-func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
-	for _, in := range peer.AllowedIPs {
-		if !bytes.Equal(net.IPNet(in).Mask, mask32) {
-			// non-/32s seem very *fun* to deal with...
-			continue
-		}
-		rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, in.IP.String()))
-		if err == nil {
-			m.Answer = append(m.Answer, rr)
-		}
-	}
-}
-
-func handleQuery(m *dns.Msg) (nxdomain bool) {
-	for _, q := range m.Question {
-		util.S.Debugf("handleQuery: %s", q.Name)
-
-		switch q.Qtype {
-		case dns.TypeA:
-			if strings.HasSuffix(q.Name, suffix) {
-				ccLock.Lock()
-				defer ccLock.Unlock()
-				parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
-				if len(parts) == 0 {
-					util.S.Debugf("handleQuery nx no parts")
-					nxdomain = true
-					return
-				}
-				reverse(parts)
-				cnn := parts[0]
-				cn := cc.Networks[cnn]
-				if cn == nil {
-					util.S.Debugf("handleQuery nx net %s", cnn)
-					nxdomain = true
-					return
-				}
-				switch len(parts) {
-				case 1:
-					util.S.Debugf("handleQuery net %s", cnn)
-					for _, peer := range cn.Peers {
-						returnPeer(m, q, peer)
-					}
-				case 2:
-					pn := parts[1]
-					peer := cn.Peers[pn]
-					if peer == nil {
-						util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
-						nxdomain = true
-						return
-					}
-					returnPeer(m, q, peer)
-				}
-			} else {
-				nxdomain = true
-				return
-			}
-		}
-	}
-	return
-}
-
-func handle(w dns.ResponseWriter, r *dns.Msg) {
-	m := new(dns.Msg)
-	m.SetReply(r)
-	m.Compress = false
-	switch r.Opcode {
-	case dns.OpcodeQuery:
-		nxdomain := handleQuery(m)
-		if nxdomain {
-			m.MsgHdr.Rcode = dns.RcodeNameError
-		}
-	}
-	w.WriteMsg(m)
-}
 
 type Hokuto struct{}
 
@@ -127,8 +43,9 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 }
 
 type InitQ struct {
-	Addr   string
-	Parent string
+	Addr     string
+	Parent   string
+	Upstream string
 }
 
 func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
@@ -140,6 +57,11 @@ func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
 	suffix = q.Parent + "."
 	dns.HandleFunc(".", handle)
 	server := &dns.Server{Addr: q.Addr, Net: "udp"}
+	_, _, err = net.SplitHostPort(q.Upstream)
+	if err != nil {
+		return
+	}
+	upstream = q.Upstream
 	util.S.Infof("listening on %s", server.Addr)
 	inited = true
 	go func() {
@@ -180,10 +102,7 @@ func Main() error {
 	rs.Register(Hokuto{})
 	rs.Register(Mio{})
 	handler := mio.Guard(rs)
-	err = http.Serve(lis, handler)
-	if err != nil {
-		util.S.Fatalf("serve: %s", err)
-	}
+	util.S.Fatalf("serve: %s", http.Serve(lis, handler))
 	return nil
 }
 

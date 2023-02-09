@@ -23,8 +23,9 @@ type config struct {
 }
 
 type hokutoConfig struct {
-	Parent string `yaml:"parent"`
-	Addr   string `yaml:"addr"`
+	Parent   string `yaml:"parent"`
+	Addr     string `yaml:"addr"`
+	Upstream string `yaml:"upstream"`
 }
 
 type csConfig struct {
@@ -120,11 +121,12 @@ func main() {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
 	nc := node.NodeConfig{
-		MioAddr:         mioAddr,
-		MioToken:        mioToken,
-		CS:              ncscs,
-		HokutoDNSAddr:   c.Hokuto.Addr,
-		HokutoDNSParent: c.Hokuto.Parent,
+		MioAddr:           mioAddr,
+		MioToken:          mioToken,
+		CS:                ncscs,
+		HokutoDNSAddr:     c.Hokuto.Addr,
+		HokutoDNSParent:   c.Hokuto.Parent,
+		HokutoDNSUpstream: c.Hokuto.Upstream,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")
