@@ -158,7 +158,7 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	util.S.Infof("add token %s: %s", q.Name, q)
-	var canPush *CanPush
+	canPush := new(CanPush)
 	if len(q.CanPush) != 0 {
 		canPush.Networks = map[string]CanPushNetwork{}
 		for cnn, can := range q.CanPush {
