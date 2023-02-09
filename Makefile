@@ -7,7 +7,7 @@ ldflags-node = -X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
 ldflags-node += -X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
 ldflags-runner = -X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node
 
-all: runner-mio runner-node runner gen-keys cs
+all: runner-mio runner-hoktuo runner-node runner gen-keys cs
 
 runner-mio:
 	cd ${src} && go build -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
