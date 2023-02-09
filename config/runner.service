@@ -5,6 +5,7 @@ After=network.target network-online.target
 [Service]
 ExecStart=qrystal-runner
 Environment=QRYSTAL_PROFILE=on
+Environment=RUNNER_HOKUTO_PATH=/opt/qrystal/runner-hokuto
 Environment=RUNNER_MIO_PATH=/opt/qrystal/runner-mio
 Environment=RUNNER_NODE_PATH=/opt/qrystal/runner-node
 Environment=RUNNER_NODE_CONFIG_PATH=/etc/qrystal/node-config.yml

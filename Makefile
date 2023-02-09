@@ -12,6 +12,9 @@ all: runner-mio runner-node runner gen-keys cs
 runner-mio:
 	cd ${src} && go build -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
 
+runner-hokuto:
+	cd ${src} && go build -o ${path}/runner-hokuto ${src}/cmd/runner-hokuto
+
 runner-node:
 	cd ${src} && go build -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
 
@@ -41,7 +44,7 @@ post_install:
 	systemctl start qrystal-runner
 	systemctl start qrystal-cs
 
-install: runner-mio runner-node runner gen-keys cs
+install: runner-mio runner-hokuto runner-node runner gen-keys cs
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	install -m 644 '${src}/config/sysusers.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal.conf"
 	systemctl restart systemd-sysusers
@@ -52,6 +55,7 @@ install: runner-mio runner-node runner gen-keys cs
 	mkdir -p "${pkgdir}/opt/qrystal"
 	install -o root -g root -m 500 \
 		${path}/runner-mio \
+		${path}/runner-hokuto \
 		${src}/mio/dev-add.sh \
 		${src}/mio/dev-remove.sh \
 	  "${pkgdir}/opt/qrystal/"
