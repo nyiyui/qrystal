@@ -164,12 +164,15 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		*r = "nil PrivateKey"
 		return nil
 	}
-	err = devAdd(q.Name, devConfig{
+	dc := devConfig{
 		Address:    q.Address,
 		PrivateKey: q.Config.PrivateKey,
 		Peers:      q.Config.Peers,
-		ListenPort: uint(*q.Config.ListenPort),
-	})
+	}
+	if q.Config.ListenPort != nil {
+		dc.ListenPort = uint(*q.Config.ListenPort)
+	}
+	err = devAdd(q.Name, dc)
 	if err != nil {
 		*r = fmt.Sprintf("devAdd: %s", err)
 		return nil
