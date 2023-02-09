@@ -113,12 +113,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("request: %s", err)
 	}
-	if hs.StatusCode != 200 {
-		log.Fatalf("response status: %s", hs.Status)
-	}
 	body, err := io.ReadAll(hs.Body)
 	if err != nil {
 		log.Fatalf("response body read: %s", err)
+	}
+	if hs.StatusCode != 200 {
+		log.Fatalf("response status: %s %s", hs.Status, body)
 	}
 	log.Printf("response: %s", body)
 }
