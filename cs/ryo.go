@@ -71,6 +71,7 @@ func (c *CentralSource) ryoPush(w http.ResponseWriter, r *http.Request) {
 	var q api.HPushQ
 	err := json.NewDecoder(r.Body).Decode(&q)
 	if err != nil {
+		util.S.Errorf("json decode failed: %s", err)
 		http.Error(w, "json decode failed", 422)
 		return
 	}
@@ -139,6 +140,7 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 	var q api.HAddTokenQ
 	err := json.NewDecoder(r.Body).Decode(&q)
 	if err != nil {
+		util.S.Errorf("json decode failed: %s", err)
 		http.Error(w, "json decode failed", 422)
 		return
 	}
