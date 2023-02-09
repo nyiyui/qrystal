@@ -18,7 +18,7 @@ func (s *CentralSource) copyCC(tokenNetworks map[string]string) (*central.Config
 		}
 		mePeer := cn.Peers[me]
 		if mePeer == nil {
-			panic(fmt.Sprintf("net %s: token's peer %s doesn't exist", cnn, me))
+			return fmt.Errorf("net %s: token's peer %s doesn't exist", cnn, me)
 		}
 		peers := map[string]*central.Peer{}
 		for pn, peer := range cn.Peers {
