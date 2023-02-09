@@ -160,10 +160,6 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 		}
 		util.S.Infof("既存デバイス：%s\n%s", q.Name, wgConfigToString(q.Config))
 	}
-	if q.Config.ListenPort == nil {
-		*r = "nil ListenPort"
-		return nil
-	}
 	if q.Config.PrivateKey == nil {
 		*r = "nil PrivateKey"
 		return nil
