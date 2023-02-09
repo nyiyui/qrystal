@@ -55,7 +55,7 @@ func newTLSTransport(certPath string) *http.Transport {
 func convQ(q AddTokenQ) api.HAddTokenQ {
 	q2 := api.HAddTokenQ{
 		Overwrite: q.Overwrite,
-		Hash:      q.Hash,
+		Hash:      &q.Hash,
 		Name:      q.Name,
 	}
 	if q.CanPull != nil {
@@ -95,6 +95,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("json marshal failed: %s", err))
 	}
+	log.Printf("payload: %s", buf)
 	u := url.URL{
 		Scheme: "https",
 		Host:   *serverAddr,

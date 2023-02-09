@@ -168,7 +168,7 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	err = c.Tokens.AddToken(q.Hash, TokenInfo{
+	err = c.Tokens.AddToken(*q.Hash, TokenInfo{
 		Name:     q.Name,
 		Networks: q.CanPull,
 		CanPull:  len(q.CanPull) != 0,

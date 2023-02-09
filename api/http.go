@@ -13,7 +13,7 @@ type HPushQ struct {
 
 type HAddTokenQ struct {
 	Overwrite bool
-	Hash      util.TokenHash
+	Hash      *util.TokenHash
 	Name      string
 	CanPull   map[string]string
 	CanPush   map[string]CanNetwork
