@@ -44,7 +44,7 @@ func Listen() (lis net.Listener, addr string, err error) {
 	}
 	err = os.Chown(sockPath, int(uid), int(gid))
 	if err != nil {
-		err = fmt.Errorf("chmod: %w", err)
+		err = fmt.Errorf("chown: %w", err)
 		return
 	}
 	addr = "unix:" + sockPath

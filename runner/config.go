@@ -7,7 +7,7 @@ import (
 	"github.com/nyiyui/qrystal/runner/config"
 )
 
-var NodeUser string
+var NodeUser = "qrystal-node"
 
 func newConfig() config.Root {
 	return config.Root{
