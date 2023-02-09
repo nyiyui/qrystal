@@ -109,8 +109,9 @@
               description = "Endpoint= in wg-quick(8) config";
             };
             allowedIPs = mkOption {
-              type = listOf str;
-              description = "AllowedIPs= in wg-quick(8) config";
+              type = nullOr (listOf str);
+              description = "AllowedIPs= in wg-quick(8) config. If null, an available one is automagically allocated.";
+              default = null;
             };
             canSee = mkOption {
               type = nullOr (oneOf [
