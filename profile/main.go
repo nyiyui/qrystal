@@ -5,17 +5,30 @@ import (
 	"os"
 	"runtime/pprof"
 	"time"
+
+	"github.com/nyiyui/qrystal/util"
 )
 
 func Profile() {
 	log.Print("profiling is enabled")
-	profilePath := os.Getenv("QRYSTAL_PROFILE_PATH")
-	if profilePath != "" {
-		profile(profilePath)
+	enable := os.Getenv("QRYSTAL_PROFILE")
+	if enable == "on" {
+		profile()
 	}
 }
 
-func profile(profilePath string) {
+func profile() {
+	f, err := os.CreateTemp("", "qrystal-profile-*")
+	if err != nil {
+		util.S.Errorf("create temp: %s", err)
+		return
+	}
+	profilePath := f.Name()
+	err = f.Close()
+	if err != nil {
+		util.S.Errorf("close temp: %s", err)
+		return
+	}
 	writeProfile(profilePath)
 	ticker := time.NewTicker(1 * time.Hour)
 	go func() {
