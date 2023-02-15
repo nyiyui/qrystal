@@ -45,7 +45,7 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 		}
 		fmt.Fprintf(&desc, "\n- net %s peer %s: %#v", cnn, peer.Name, peer)
 	}
-	util.S.Infof("azusa from token %s to push\n%s", ti.Name, &desc)
+	util.S.Infof("azusa from token %s to push %d:\n%s", ti.Name, len(q.Networks), &desc)
 	ti.StartUse()
 	err = c.Tokens.UpdateToken(ti)
 	if err != nil {

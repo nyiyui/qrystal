@@ -21,6 +21,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 		cc := q.CC
 		csc := n.cs[i]
 
+		util.S.Debugf("%d CNs received", len(cc.Networks))
 		for cnn, cn := range cc.Networks {
 			util.S.Debugf("新たなCCを受信: net %s: %s", cnn, cn)
 		}
@@ -58,9 +59,9 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 				}
 				cn.MyPrivKey = &key
 				n.cc.Networks[cnn] = cn
+				util.S.Infof("net %s: my *new* PublicKey is %s", cnn, s.PubKeys[cnn])
 			}
 			s.PubKeys[cnn] = cn.MyPrivKey.PublicKey()
-			util.S.Infof("net %s: my PublicKey is %s", cnn, s.PubKeys[cnn])
 		}
 		err = n.reify()
 		if err != nil {

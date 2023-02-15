@@ -10,38 +10,39 @@ let
   rootKey = builtins.readFile ./cert/minica-key.pem;
   csCert = builtins.readFile ./cert/cs/cert.pem;
   csKey = builtins.readFile ./cert/cs/key.pem;
-in let
+
+  autologin = { ... }: { services.getty.autologinUser = "root"; };
   base = { # TODO
+    imports = [ autologin ];
     virtualisation.vlans = [ 1 ];
     environment.systemPackages = with pkgs; [ wireguard-tools ];
+    services.logrotate.enable = false; # clogs up the logs
   };
   networkBase = {
     keepalive = "10s";
     listenPort = 58120;
     ips = [ "10.123.0.1/16" ];
   };
-  nodeToken = name: hash: networkName: {
+  nodeToken = name: hash: networkNames: {
     inherit name;
     inherit hash;
     canPull = true;
-    networks.${networkName} = name;
+    networks = builtins.foldl' (a: b: a // b) {} (map (networkName: { ${networkName} = name; }) networkNames);
   };
   csTls = {
     certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
     keyPath = builtins.toFile "testing-insecure-key.pem" csKey;
   };
 in let
-  csConfig = networkName: token: {
+  csConfig = networkNames: token: {
     enable = true;
-    config.css = [
-      {
-        comment = "cs";
-        endpoint = "cs:39252";
-        tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
-        networks = [ networkName ];
-        tokenPath = builtins.toFile "token" token;
-      }
-    ];
+    config.css = [{
+      comment = "cs";
+      endpoint = "cs:39252";
+      tls.certPath = builtins.toFile "testing-insecure-node-cert.pem" (rootCert + "\n" + csCert);
+      networks = networkNames;
+      tokenPath = builtins.toFile "token" token;
+    }];
   };
 in
 {
@@ -95,8 +96,8 @@ in
             config = {
               tls = csTls;
               tokens = [
-                (nodeToken "node1" node1Hash "testnet")
-                (nodeToken "node2" node2Hash "testnet")
+                (nodeToken "node1" node1Hash [ "testnet" ])
+                (nodeToken "node2" node2Hash [ "testnet" ])
               ];
               central.networks.testnet = networkBase // {
                 peers.node1 = { allowedIPs = [ "10.123.0.1/16" ]; };
@@ -112,6 +113,7 @@ in
     };
   all = let
     networkName = "testnet";
+    networkName2 = "othernet";
     testDomain = "example.com";
     testDNS = "127.0.0.1";
     testDNSPort = "53530";
@@ -135,7 +137,7 @@ in
       ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
-      qrystal.services.node = csConfig networkName token;
+      qrystal.services.node = csConfig [ networkName networkName2 ] token;
       systemd.services.qrystal-node.wantedBy = [];
     };
   in
@@ -154,12 +156,19 @@ in
           config = {
             tls = csTls;
             tokens = [
-              (nodeToken "node1" node1Hash networkName)
-              (nodeToken "node2" node2Hash networkName)
+              (nodeToken "node1" node1Hash [ networkName networkName2 ])
+              (nodeToken "node2" node2Hash [ networkName networkName2 ])
             ];
             central.networks.${networkName} = networkBase // {
               peers.node1 = { host = "node1:58120"; allowedIPs = [ "10.123.0.1/32" ]; canSee.only = [ "node2" ]; };
               peers.node2 = { host = "node2:58120"; allowedIPs = [ "10.123.0.2/32" ]; canSee.only = [ "node1" ]; };
+            };
+            central.networks.${networkName2} = networkBase // {
+              keepalive = "10s";
+              listenPort = 58121;
+              ips = [ "10.45.0.1/16" ];
+              peers.node1 = { host = "node1:58121"; allowedIPs = [ "10.45.0.1/32" ]; canSee.only = [ "node2" ]; };
+              peers.node2 = { host = "node2:58121"; allowedIPs = [ "10.45.0.2/32" ]; canSee.only = [ "node1" ]; };
             };
           };
         };
@@ -180,7 +189,9 @@ in
       # NOTE: there is a race condition where the peers' pubkeys could not be
       # set yet when pinged (so that's why we're using wait_until_*
       for i, node in enumerate(nodes):
+        print(node.wait_until_succeeds("wg show"))
         print(node.wait_until_succeeds("wg show ${networkName}"))
+        print(node.wait_until_succeeds("wg show ${networkName2}"))
         print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
         print(node.execute("ip route show")[1])
         for addr in addrs:
@@ -255,12 +266,12 @@ in
           config = {
             tls = csTls;
             tokens = [
-              ((nodeToken "node1" node1Hash networkName) // {
+              ((nodeToken "node1" node1Hash [ networkName ]) // {
                 canPush.networks.${networkName} = { name = "node1"; canSeeElement = [ "node2" ]; };
                 canPull = true;
                 networks.${networkName} = "node1";
               })
-              ((nodeToken "node2" node2Hash networkName) // {
+              ((nodeToken "node2" node2Hash [ networkName ]) // {
                 canPush.networks.${networkName} = { name = "node2"; canSeeElement = [ "node2" ]; };
                 canPull = true;
                 networks.${networkName} = "node2";

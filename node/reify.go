@@ -65,11 +65,11 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 
 func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
-	for pn, peer := range cn.Peers {
+	for pn := range cn.Peers {
 		if pn == cn.Me {
 			continue
 		}
-		peerConfig, ignore, err := s.convPeer(cn, peer)
+		peerConfig, ignore, err := s.convPeer(cn, pn)
 		if err != nil {
 			return nil, fmt.Errorf("peer %s: %w", pn, err)
 		}
@@ -86,7 +86,8 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	return config, nil
 }
 
-func (s *Node) convPeer(cn *central.Network, peer *central.Peer) (config *wgtypes.PeerConfig, ignore bool, err error) {
+func (s *Node) convPeer(cn *central.Network, pn string) (config *wgtypes.PeerConfig, ignore bool, err error) {
+	peer := cn.Peers[pn]
 	peer.Internal.Lock.RLock()
 	defer peer.Internal.Lock.RUnlock()
 	var host *net.UDPAddr
@@ -105,7 +106,7 @@ func (s *Node) convPeer(cn *central.Network, peer *central.Peer) (config *wgtype
 		}
 	}
 
-	if peer.Internal.PubKey == nil {
+	if peer.PubKey == (wgtypes.Key{}) {
 		ignore = true
 		util.S.Warnf("ignore net %s peer %s as no pubkey", cn.Name, peer.Name)
 		return
@@ -122,7 +123,7 @@ func (s *Node) convPeer(cn *central.Network, peer *central.Peer) (config *wgtype
 	}
 
 	config = &wgtypes.PeerConfig{
-		PublicKey:                   *peer.Internal.PubKey,
+		PublicKey:                   peer.PubKey,
 		Remove:                      false,
 		UpdateOnly:                  false,
 		Endpoint:                    host,

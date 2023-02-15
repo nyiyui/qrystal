@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
 	"net"
 	"sync"
 	"time"
@@ -58,6 +59,7 @@ type Peer struct {
 	CanSee          *CanSee  `yaml:"canSee"`
 	// If CanSee is nil, this Peer can see all peers.
 
+	PubKey   wgtypes.Key
 	Internal *PeerInternal `yaml:"-"`
 }
 
@@ -67,7 +69,7 @@ func (p *Peer) String() string {
 }
 
 func (p *Peer) Same(p2 *Peer) bool {
-	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee)
+	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
 }
 
 type PeerInternal struct {
@@ -76,13 +78,8 @@ type PeerInternal struct {
 
 	Lock       sync.RWMutex
 	LatestSync time.Time
-	PubKey     *wgtypes.Key
 	Creds      credentials.TransportCredentials
 	// creds for this specific peer.
-}
-
-type peerInternalProxy struct {
-	PubKey *wgtypes.Key
 }
 
 var _ gob.GobEncoder = new(PeerInternal)
@@ -90,23 +87,18 @@ var _ gob.GobDecoder = new(PeerInternal)
 
 // GobEncode implements gob.GobEncoder.
 //
-// Only Peer.PubKey is encoded as only that should be shared over the network.
+// Nothing is encoded.
 func (pi *PeerInternal) GobEncode() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	err := gob.NewEncoder(buf).Encode(peerInternalProxy{PubKey: pi.PubKey})
-	return buf.Bytes(), err
+	return []byte("a"), nil
 }
 
 // GobDecode implements gob.GobDecoder.
 //
 // See PeerInternal.GobEncode for details about what is encoded.
 func (pi *PeerInternal) GobDecode(data []byte) error {
-	var proxy peerInternalProxy
-	err := gob.NewDecoder(bytes.NewBuffer(data)).Decode(&proxy)
-	if err != nil {
-		return err
+	if !bytes.Equal(data, []byte("a")) {
+		return errors.New("unexpected non-a (old?)")
 	}
-	pi.PubKey = proxy.PubKey
 	return nil
 }
 

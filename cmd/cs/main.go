@@ -26,6 +26,7 @@ func main() {
 	util.ShowCurrent()
 	profile.Profile()
 
+	util.S.Infof("loading config from %s", configPath)
 	config, err := cs.LoadConfig(configPath)
 	if err != nil {
 		log.Fatalf("load config: %s", err)

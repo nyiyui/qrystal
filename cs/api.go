@@ -8,6 +8,7 @@ import (
 	"github.com/cenkalti/rpc2"
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/util"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func (c *CentralSource) newHandler() {
@@ -45,7 +46,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 			util.S.Errorf("UpdateToken %s: %s", ti.key, err)
 		}
 	}()
-	util.S.Infof("%sから新たな認証済プル", ti.Name)
+	util.S.Infof("%sからプル。ネットワーク：%s", ti.Name, ti.Networks)
 
 	newCC, err := c.copyCC(ti.Networks)
 	if err != nil {
@@ -53,48 +54,66 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 		return errors.New("copyCC failed")
 	}
 
+	// NOTE: race condition around here - network can change between after push call (here) and newNotifyCh
+	// call newNotifyCh before push call so we don't have race conditon where:
+	// - node1 pulls
+	// - node1 pulls
+	// - node2 push starts and node1 push ends (new PubKeys notified)
+	// - node2 push ends
+	//   - ※ here, node2 has not called newNotifyCh yet, so doesn't reload
+	chI, ch := c.newNotifyCh()
+	defer c.removeNotifyCh(chI)
+
 	var s2 api.PushS
+	util.S.Debugf("push %s networks %s", ti.Name, ti.Networks)
 	err = cl.Call("push", &api.PushQ{CC: *newCC}, &s2)
 	if err != nil {
 		util.S.Errorf("push: %s", err)
 		return fmt.Errorf("push failed: %w", err)
 	}
-	util.S.Infof("push result %s", s2)
-	changed := map[string][]string{}
-	sendNotify := false
-	func() {
-		c.ccLock.Lock()
-		defer c.ccLock.Unlock()
-		for cnn, key := range s2.PubKeys {
-			cn := c.cc.Networks[cnn]
-			pn := ti.Networks[cnn]
-			peer := cn.Peers[pn]
-			util.S.Debug("l70", cnn, key, cn, pn, peer)
-			if peer.Internal.PubKey == nil || *peer.Internal.PubKey != key {
-				peer.Internal.PubKey = &key
-				changed[cnn] = []string{pn}
-				sendNotify = true
-				util.S.Infof("net %s peer %s: new/diff PublicKey %s", cnn, ti.Networks[cnn], key)
+	util.S.Debugf("push %s result %s", ti.Name, s2)
+	{
+		changed := map[string][]string{}
+		sendNotify := false
+		func() {
+			c.ccLock.Lock()
+			defer c.ccLock.Unlock()
+			for cnn, key := range s2.PubKeys {
+				cn := c.cc.Networks[cnn]
+				pn := ti.Networks[cnn]
+				peer := cn.Peers[pn]
+				util.S.Debugf("l70 %s %s key %s net %s peer %s", cnn, pn, key, cn, peer)
+				if peer.PubKey == (wgtypes.Key{}) || peer.PubKey != key {
+					peer.PubKey = key
+					changed[cnn] = []string{pn}
+					sendNotify = true
+					util.S.Infof("net %s peer %s: new/diff PublicKey %s", cnn, ti.Networks[cnn], key)
+				}
+				util.S.Debugf("l80 %s %s key %s net %s peer %s", cnn, pn, key, cn, peer)
 			}
+		}()
+		if sendNotify {
+			c.notify(change{Reason: fmt.Sprintf("token %s", ti.Name), Changed: changed})
 		}
-	}()
-	if sendNotify {
-		c.notify(change{Reason: fmt.Sprintf("token %s", ti.Name), Changed: changed})
 	}
 
-	chI, ch := c.newNotifyCh()
-	defer c.removeNotifyCh(chI)
 	for chg := range ch {
+		newCC2, err := c.copyCC(ti.Networks)
+		if err != nil {
+			util.S.Errorf("newCC2: %s", err)
+			return errors.New("newCC2 failed")
+		}
+		util.S.Debugf("newCC2: %s", newCC2)
 		affectsYou := func(chg change) bool {
 			c.ccLock.RLock()
 			defer c.ccLock.RUnlock()
 			for cnn := range ti.Networks {
-				peers := chg.Changed[cnn]
-				cn, ok := newCC.Networks[cnn]
+				chgPeers := chg.Changed[cnn]
+				cn, ok := newCC2.Networks[cnn]
 				if !ok {
 					continue
 				}
-				for _, pn2 := range peers {
+				for _, pn2 := range chgPeers {
 					if _, ok := cn.Peers[pn2]; ok {
 						return true
 					}
@@ -104,14 +123,12 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 		}(chg)
 		if affectsYou {
 			util.S.Infof("token %s resync due to change %s", ti.Name, chg)
-			break
+			break // see below
 		}
 	}
-	// TODO: check if changes include peers that this Node can see
 
 	// Nodes will retry pulling when sync is done (if err == nil then with a
 	// zeroed backoff), so return when we want the Nodes to resync.
-
 	return nil
 }
 
