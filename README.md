@@ -42,5 +42,6 @@ Flakes are recommended. See `flake.nix` for options.
 
 - confine qrystal-node and qrystal-cs (using systemd's options)
 - configure existing interfaces without disrupting connections (as much as possible)
-- two CNs on the same Node seem to have trouble syncing PublicKeys
-  - seems like PublicKeys are mixed up between CNs…what‽
+- support multiple hosts
+  - e.g. specify VPC network IP address first, and then public IP address
+  - heuristics for a successful wg connection?
