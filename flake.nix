@@ -146,7 +146,7 @@
                           addr = mkOption {
                             type = str;
                             default = "127.0.0.1:53";
-                            description = "All domains inside networks will be of the format <peer>.<network>.<parent>";
+                            description = "Hokuto bind address. Leave blank tod disable";
                           };
                           parent = mkOption {
                             type = str;
@@ -156,7 +156,9 @@
                           upstream = mkOption {
                             type = str;
                             default = "8.8.8.8:53";
-                            description = "Upstream DNS server to forward requests to. Recommended to set to a local resolver.";
+                            description = ''
+                              Upstream DNS server to forward requests to. Recommended to set to a local resolver such as Unbound.
+                            '';
                           };
                         };
                       };

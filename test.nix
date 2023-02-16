@@ -12,11 +12,12 @@ let
   csKey = builtins.readFile ./cert/cs/key.pem;
 
   autologin = { ... }: { services.getty.autologinUser = "root"; };
-  base = { # TODO
+  base = { ... }: {
     imports = [ autologin ];
     virtualisation.vlans = [ 1 ];
     environment.systemPackages = with pkgs; [ wireguard-tools ];
     services.logrotate.enable = false; # clogs up the logs
+    services.resolved.enable = true;
   };
   networkBase = {
     keepalive = "10s";
@@ -129,12 +130,15 @@ in
       };
     };
   in let
-    node = { token }: { pkgs, ... }: base // {
+    node = { token }: { pkgs, ... }: {
       imports = [
+        base
         self.outputs.nixosModules.${system}.node
         (_: { qrystal.services.node.config.hokuto.upstream = "${testDNS}:${testDNSPort}"; })
         dns
       ];
+
+      networking.nameservers = [ "127.0.0.1" ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
       qrystal.services.node = csConfig [ networkName networkName2 ] token;
@@ -147,8 +151,8 @@ in
     nodes = {
       node1 = node { token = node1Token; };
       node2 = node { token = node2Token; };
-      cs = { pkgs, ... }: base // {
-        imports = [ self.outputs.nixosModules.${system}.cs ];
+      cs = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.cs ];
 
         networking.firewall.allowedTCPPorts = [ 39252 ];
         qrystal.services.cs = {
@@ -200,10 +204,13 @@ in
         print(node.execute(f"ping -c 1 {addrs[i]}")[1])
         node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
       def pp(value):
-          print("pp", value)
-          return value
+        print("pp", value)
+        return value
       assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal 127.0.0.1"))
       assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal 127.0.0.1"))
+      # check DNS config is working
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
       for node in nodes:
         assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.1"))[0] == 1
         assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.1"))[0] == 1
@@ -216,8 +223,8 @@ in
   azusa = let
     networkName = "testnet";
   in let
-    node = ({ name, token, allowedIPs, canSee }: { pkgs, ... }: base // {
-      imports = [ self.outputs.nixosModules.${system}.node ];
+    node = ({ name, token, allowedIPs, canSee }: { pkgs, ... }: {
+      imports = [ base self.outputs.nixosModules.${system}.node ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
       qrystal.services.node = {
@@ -257,8 +264,8 @@ in
         allowedIPs = [ "10.123.0.2/32" ];
         canSee = [ "node2" ];
       };
-      cs = { pkgs, ... }: base // {
-        imports = [ self.outputs.nixosModules.${system}.cs ];
+      cs = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.cs ];
 
         networking.firewall.allowedTCPPorts = [ 39252 ];
         qrystal.services.cs = {

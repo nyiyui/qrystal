@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/nyiyui/qrystal/central"
@@ -43,9 +44,16 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		mio:    mh,
 		hokuto: hh,
 	}
-	err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr, cfg.HokutoDNSUpstream)
-	if err != nil {
-		return nil, fmt.Errorf("hokuto init: %w", err)
+	if cfg.HokutoDNSAddr != "" {
+		addr, err := net.ResolveUDPAddr("udp", cfg.HokutoDNSAddr)
+		if err != nil {
+			return nil, fmt.Errorf("hokuto resolve addr: %w", err)
+		}
+		node.hokutoDNSAddr = *addr
+		err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr, cfg.HokutoDNSUpstream)
+		if err != nil {
+			return nil, fmt.Errorf("hokuto init: %w", err)
+		}
 	}
 	return node, nil
 }
@@ -61,4 +69,6 @@ type Node struct {
 
 	mio    *mioHandle
 	hokuto *mioHandle
+
+	hokutoDNSAddr net.UDPAddr
 }

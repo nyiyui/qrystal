@@ -116,6 +116,7 @@ type ConfigureDeviceQ struct {
 	Token    []byte // put token here for simplicity
 	Name     string
 	Config   *wgtypes.Config
+	DNS      *net.UDPAddr
 	Address  []net.IPNet
 	PostUp   string
 	PostDown string
@@ -171,6 +172,9 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	}
 	if q.Config.ListenPort != nil {
 		dc.ListenPort = uint(*q.Config.ListenPort)
+	}
+	if q.DNS != nil {
+		dc.DNS = *q.DNS
 	}
 	err = devAdd(q.Name, dc)
 	if err != nil {
