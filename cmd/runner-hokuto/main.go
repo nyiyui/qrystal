@@ -10,6 +10,7 @@ import (
 
 func main() {
 	util.SetupLog()
+	defer util.S.Sync()
 	log.SetPrefix("hokuto:  ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	util.ShowCurrent()

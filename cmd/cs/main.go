@@ -22,6 +22,7 @@ func main() {
 	flag.Parse()
 
 	util.SetupLog()
+	defer util.S.Sync()
 
 	util.ShowCurrent()
 	profile.Profile()
