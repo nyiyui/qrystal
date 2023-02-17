@@ -72,6 +72,10 @@ func handleQuery(m *dns.Msg) (rcode int) {
 func handleInternal(m *dns.Msg, q dns.Question) (rcode int) {
 	ccLock.Lock()
 	defer ccLock.Unlock()
+	if cc == nil {
+		util.S.Errorf("cc nil (not inited?)")
+		return dns.RcodeServerFailure
+	}
 	parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
 	if len(parts) == 0 {
 		util.S.Debugf("handleQuery nx no parts")
