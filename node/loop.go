@@ -53,7 +53,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	util.S.Debug("pullCS…")
 	err = n.pullCS(i, cl)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("pullCS: %w", err)
 	}
 	return true, nil
 }

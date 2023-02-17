@@ -26,7 +26,7 @@ func (c *CentralSource) ping(cl *rpc2.Client, q *bool, s *bool) error {
 func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error {
 	ti, ok, err := c.Tokens.getToken(&q.CentralToken)
 	if err != nil {
-		return err
+		return fmt.Errorf("get token: %w", err)
 	}
 	if !ok {
 		return newTokenAuthError(q.CentralToken)
@@ -37,7 +37,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	ti.StartUse()
 	err = c.Tokens.UpdateToken(ti)
 	if err != nil {
-		return err
+		return fmt.Errorf("update token: %w", err)
 	}
 	defer func() {
 		ti.StopUse()
@@ -65,10 +65,9 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	defer c.removeNotifyCh(chI)
 
 	var s2 api.PushS
-	util.S.Debugf("push %s networks %s", ti.Name, ti.Networks)
 	err = cl.Call("push", &api.PushQ{CC: *newCC}, &s2)
 	if err != nil {
-		util.S.Errorf("push: %s", err)
+		util.S.Errorf("push %s nets %s: %s", ti.Name, ti.Networks, err)
 		return fmt.Errorf("push failed: %w", err)
 	}
 	util.S.Debugf("push %s result %s", ti.Name, s2)
