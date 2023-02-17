@@ -110,7 +110,8 @@ func devRemove(name string) error {
 
 func toAfter(cfg devConfig, peers []wgtypes.PeerConfig) string {
 	b := new(strings.Builder)
-	fmt.Fprintf(b, "DNS=%s\n", &cfg.DNS)
+	net.UDPAddr
+	fmt.Fprintf(b, "DNS=%s\n", cfg.DNS.IP)
 	for i, peer := range peers {
 		fmt.Fprintf(b, "[Peer] # peer %d (NOTE: peers only need the bare for wg-quick to route things)\n", i)
 		fmt.Fprintf(b, "PublicKey=%s\n", peer.PublicKey)
