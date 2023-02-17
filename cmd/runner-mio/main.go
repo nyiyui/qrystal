@@ -10,7 +10,6 @@ import (
 
 func main() {
 	util.SetupLog()
-	defer util.S.Sync()
 	log.SetPrefix("mio:  ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
 	util.ShowCurrent()

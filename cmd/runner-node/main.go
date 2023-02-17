@@ -87,7 +87,6 @@ func processCSConfig(cfg *csConfig) (*node.CSConfig, error) {
 
 func main() {
 	util.SetupLog()
-	defer util.S.Sync()
 
 	log.SetPrefix("node: ")
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
