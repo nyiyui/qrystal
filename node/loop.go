@@ -47,7 +47,7 @@ func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
 	util.S.Debug("newClient…")
 	cl, _, err := n.newClient(i)
 	if err != nil {
-		return
+		return false, fmt.Errorf("newClient: %w", err)
 	}
 
 	util.S.Debug("pullCS…")

@@ -85,6 +85,7 @@ func (n *Node) newClient(i int) (*rpc2.Client, *tls.Conn, error) {
 	}
 	conn, err := tls.Dial("tcp", csc.Host, tlsCfg)
 	if err != nil {
+		err = fmt.Errorf("dial: %w", err)
 		return nil, nil, err
 	}
 	cl := rpc2.NewClient(conn)
@@ -92,6 +93,7 @@ func (n *Node) newClient(i int) (*rpc2.Client, *tls.Conn, error) {
 	var b bool
 	err = cl.Call("ping", true, &b)
 	if err != nil {
+		err = fmt.Errorf("ping: %w", err)
 		return cl, conn, fmt.Errorf("ping: %s", err)
 	}
 	return cl, conn, nil
