@@ -20,7 +20,7 @@ func SetupLog() {
 	Atom = zap.NewAtomicLevel()
 	L := zap.New(zapcore.NewCore(
 		zapcore.NewConsoleEncoder(cfg.EncoderConfig),
-		zapcore.Lock(os.Stdout),
+		zapcore.Lock(os.Stderr),
 		Atom,
 	))
 	S = L.Sugar()
