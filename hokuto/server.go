@@ -54,6 +54,10 @@ func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
 	if inited {
 		return errors.New("already inited")
 	}
+	if q.Parent == "" {
+		util.S.Warnf("parent is blank so using .qrystal.internal")
+		q.Parent = ".qrystal.internal"
+	}
 	suffix = q.Parent + "."
 	dns.HandleFunc(".", handle)
 	server := &dns.Server{Addr: q.Addr, Net: "udp"}
