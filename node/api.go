@@ -59,7 +59,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 				}
 				cn.MyPrivKey = &key
 				n.cc.Networks[cnn] = cn
-				util.S.Infof("net %s: my *new* PublicKey is %s", cnn, s.PubKeys[cnn])
+				util.S.Infof("net %s: my *new* PublicKey is %s", cnn, key.PublicKey())
 			}
 			s.PubKeys[cnn] = cn.MyPrivKey.PublicKey()
 		}
