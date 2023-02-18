@@ -13,6 +13,11 @@ import (
 )
 
 func (n *Node) setupClient(cl *rpc2.Client) {
+	cl.Handle("ping", func(cl *rpc2.Client, q *bool, s *bool) error {
+		*s = true
+		panic("test")
+		return nil
+	})
 	cl.Handle("push", func(cl *rpc2.Client, q *api.PushQ, s *api.PushS) error {
 		var err error
 		n.ccLock.Lock()

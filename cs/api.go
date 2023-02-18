@@ -48,6 +48,15 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	}()
 	util.S.Infof("%sからプル。ネットワーク：%s", ti.Name, ti.Networks)
 
+	{
+		var q, s bool
+		err = cl.Call("ping", &q, &s)
+		if err != nil {
+			util.S.Errorf("ping token %s: %s", ti.Name, err)
+			return fmt.Errorf("ping failed: %w", err)
+		}
+	}
+
 	newCC, err := c.copyCC(ti.Networks)
 	if err != nil {
 		util.S.Errorf("copyCC: %s", err)
