@@ -8,7 +8,7 @@
       lastModifiedDate = self.lastModifiedDate or self.lastModified or "19700101";
 
       # Generate a user-friendly version number.
-      version = (builtins.substring 0 8 lastModifiedDate) + self.rev;
+      version = (builtins.substring 0 8 lastModifiedDate) + "-" + (if (self ? rev) then self.rev else "dirty");
 
       # System types to support.
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -238,6 +238,8 @@
                   StateDirectory = "qrystal-node";
                   StateDirectoryMode = "0700";
                   WorkingDirectory = "${pkg}/lib";
+                  PrivateTmp = "yes";
+                  ProtectHome = "yes";
                 };
               };
             };
@@ -389,6 +391,8 @@
                     StateDirectoryMode = "0700";
                     LogsDirectory = "qrystal-cs";
                     LogsDirectoryMode = "0700";
+                    PrivateTmp = "yes";
+                    ProtectHome = "yes";
                   };
                 };
               };

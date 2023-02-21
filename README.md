@@ -22,7 +22,7 @@ $ make src=.. -f ../Makefile
 # make src=.. -f ../Makefile install
 ```
 
-Then, enable/start `qrystal-runner.service` and/or `qrystal-cs.service`
+Then, enable/start `qrystal-runner.service` (Node) and/or `qrystal-cs.service` (CS)
 (depending on what you want to run).
 
 ### NixOS

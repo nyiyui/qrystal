@@ -12,6 +12,8 @@ Environment=RUNNER_NODE_CONFIG_PATH=/etc/qrystal/node-config.yml
 StateDirectory=qrystal-node
 StateDirectorymode=0700
 WorkingDirectory=/opt/qrystal
+PrivateTmp=yes
+ProectHome=yes
 
 [Install]
 WantedBy=multi-user.target
