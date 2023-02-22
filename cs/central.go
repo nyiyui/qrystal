@@ -1,9 +1,8 @@
 package cs
 
 import (
-	"fmt"
-
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/util"
 )
 
 func (s *CentralSource) copyCC(tokenNetworks map[string]string) (*central.Config, error) {
@@ -18,7 +17,9 @@ func (s *CentralSource) copyCC(tokenNetworks map[string]string) (*central.Config
 		}
 		mePeer := cn.Peers[me]
 		if mePeer == nil {
-			return nil, fmt.Errorf("net %s: token's peer %s doesn't exist", cnn, me)
+			// continue because the peer might be added later
+			util.S.Warnf("net %s: token's peer %s doesn't exist", cnn, me)
+			continue
 		}
 		peers := map[string]*central.Peer{}
 		for pn, peer := range cn.Peers {
