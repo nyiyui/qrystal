@@ -56,8 +56,8 @@ type Peer struct {
 	Host            string   `yaml:"host"`
 	AllowedIPs      []IPNet  `yaml:"allowedIPs"`
 	ForwardingPeers []string `yaml:"forwardingPeers"`
-	CanSee          *CanSee  `yaml:"canSee"`
-	// If CanSee is nil, this Peer can see all peers.
+	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
+	CanSee *CanSee `yaml:"canSee"`
 
 	PubKey   wgtypes.Key
 	Internal *PeerInternal `yaml:"-"`
