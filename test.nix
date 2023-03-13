@@ -138,7 +138,7 @@ in
         dns
       ];
 
-      networking.nameservers = [ "127.0.0.1" ];
+      networking.nameservers = [ testDNSPort ];
 
       networking.firewall.allowedTCPPorts = [ 39251 ];
       qrystal.services.node = csConfig [ networkName networkName2 ] token;
@@ -186,6 +186,7 @@ in
       for node in nodes:
         node.start()
         node.succeed("host -p ${testDNSPort} ${testDomain} ${testDNS}", timeout=5)
+        node.succeed("host -p ${testDNSPort} ${testDomain}", timeout=5) # test resolved settings work
         node.systemctl("start qrystal-dns-test.service")
         node.systemctl("start qrystal-node.service")
         node.wait_for_unit("qrystal-node.service", timeout=20)
@@ -206,16 +207,17 @@ in
       def pp(value):
         print("pp", value)
         return value
-      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal 127.0.0.1"))
-      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal 127.0.0.1"))
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal 127.0.0.39"))
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal 127.0.0.39"))
       # check DNS config is working
       assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
       assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
       for node in nodes:
-        assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.1"))[0] == 1
-        assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.1"))[0] == 1
+        assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
         a = pp(node.succeed("host -p ${testDNSPort} ${testDomain} ${testDNS} | grep 'has address'"))
-        b = pp(node.succeed("host ${testDomain} 127.0.0.1 | grep 'has address'"))
+        b = pp(node.succeed("host ${testDomain} 127.0.0.39 | grep 'has address'"))
+        b = pp(node.succeed("host ${testDomain} | grep 'has address'"))
         assert a == b
       # TODO: test network level queries
     '';

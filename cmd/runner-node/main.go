@@ -125,7 +125,7 @@ func main() {
 		MioAddr:           mioAddr,
 		MioToken:          mioToken,
 		CS:                ncscs,
-		HokutoDNSAddr:     c.Hokuto.Addr,
+		HokutoDNSAddr:     c.Hokuto.Addr + ":53",
 		HokutoDNSParent:   c.Hokuto.Parent,
 		HokutoDNSUpstream: c.Hokuto.Upstream,
 	}

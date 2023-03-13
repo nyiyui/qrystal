@@ -143,10 +143,15 @@
                     hokuto = mkOption {
                       type = submodule {
                         options = {
+                          configureResolved = mkOption {
+                            type = bool;
+                            default = true;
+                            description = "Configure resolved to use Hokuto DNS server";
+                          };
                           addr = mkOption {
                             type = str;
-                            default = "127.0.0.1:53";
-                            description = "Hokuto bind address. Leave blank tod disable";
+                            default = "127.0.0.39";
+                            description = "Hokuto bind address (no port). Leave blank to disable";
                           };
                           parent = mkOption {
                             type = str;
@@ -215,6 +220,13 @@
               };
             };
             config = mkIf cfg.enable {
+              services.resolved = mkIf (cfg.config.hokuto.configureResolved && cfg.config.hokuto.addr != "") {
+                enable = true;
+                extraConfig = ''
+                  DNS=${cfg.config.hokuto.addr}
+                  Domains=~.
+                '';
+              };
               users.groups.qrystal-node = {};
               users.users.qrystal-node = {
                 isSystemUser = true;
