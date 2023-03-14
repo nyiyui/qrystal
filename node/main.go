@@ -55,6 +55,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("hokuto init: %w", err)
 		}
+		node.hokutoUseDNS = cfg.HokutoUseDNS
 	}
 	return node, nil
 }
@@ -72,4 +73,5 @@ type Node struct {
 	hokuto *mioHandle
 
 	hokutoDNSAddr net.UDPAddr
+	hokutoUseDNS  bool
 }

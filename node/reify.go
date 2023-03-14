@@ -43,7 +43,7 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 		Config:  config,
 		Address: central.ToIPNets(me.AllowedIPs),
 	}
-	if s.HokutoUseDNS {
+	if s.hokutoUseDNS {
 		q.DNS = &s.hokutoDNSAddr
 	}
 	if s.forwardingRequired(cn.Name) {
