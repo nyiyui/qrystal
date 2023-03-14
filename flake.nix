@@ -257,6 +257,10 @@
                   WorkingDirectory = "${pkg}/lib";
                   PrivateTmp = "yes";
                   ProtectHome = "yes";
+
+                  NoNewPrivileges = "yes";
+                  PrivateDevices = "yes";
+                  ProtectClock = "yes";
                 };
               };
             };

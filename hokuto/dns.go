@@ -14,8 +14,6 @@ import (
 
 // ~~stolen~~ copied from <https://gist.github.com/walm/0d67b4fb2d5daf3edd4fad3e13b162cb>.
 
-var client = new(dns.Client)
-
 var cc *central.Config
 var ccLock sync.Mutex
 
@@ -54,17 +52,6 @@ func handleQuery(m *dns.Msg) (rcode int) {
 			util.S.Debugf("question %s", q)
 			m2.Question = append(m2.Question, q)
 		}
-	}
-	if len(m2.Question) != 0 {
-		util.S.Debugf("forward questions: %#v", m2.Question)
-		r2, _, err := client.Exchange(&m2, upstream)
-		if err != nil {
-			util.S.Errorf("forward exchange: %s", err)
-			return dns.RcodeServerFailure
-		}
-		m.Answer = append(m.Answer, r2.Answer...)
-		m.Ns = append(m.Ns, r2.Ns...)
-		m.Extra = append(m.Extra, r2.Extra...)
 	}
 	return
 }
