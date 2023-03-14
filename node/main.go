@@ -17,6 +17,7 @@ type NodeConfig struct {
 	HokutoDNSAddr     string
 	HokutoDNSParent   string
 	HokutoDNSUpstream string
+	HokutoUseDNS      bool
 	CS                []CSConfig
 }
 

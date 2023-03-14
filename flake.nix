@@ -165,6 +165,11 @@
                               Upstream DNS server to forward requests to. Recommended to set to a local resolver such as Unbound.
                             '';
                           };
+                          useInConfig = mkOption {
+                            type = bool;
+                            default = true;
+                            description = "Whether to use Hokuto for DNS= settings in WireGuard.";
+                          };
                         };
                       };
                       default = {};

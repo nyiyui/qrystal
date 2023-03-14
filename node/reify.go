@@ -41,8 +41,10 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 	q := mio.ConfigureDeviceQ{
 		Name:    cn.Name,
 		Config:  config,
-		DNS:     &s.hokutoDNSAddr,
 		Address: central.ToIPNets(me.AllowedIPs),
+	}
+	if s.HokutoUseDNS {
+		q.DNS = &s.hokutoDNSAddr
 	}
 	if s.forwardingRequired(cn.Name) {
 		// TODO: figure out how to run sysctl

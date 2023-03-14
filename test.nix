@@ -138,8 +138,6 @@ in
         dns
       ];
 
-      networking.nameservers = [ testDNSPort ];
-
       networking.firewall.allowedTCPPorts = [ 39251 ];
       qrystal.services.node = csConfig [ networkName networkName2 ] token;
       systemd.services.qrystal-node.wantedBy = [];

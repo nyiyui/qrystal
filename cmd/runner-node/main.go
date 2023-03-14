@@ -23,9 +23,10 @@ type config struct {
 }
 
 type hokutoConfig struct {
-	Parent   string `yaml:"parent"`
-	Addr     string `yaml:"addr"`
-	Upstream string `yaml:"upstream"`
+	Parent      string `yaml:"parent"`
+	Addr        string `yaml:"addr"`
+	Upstream    string `yaml:"upstream"`
+	UseInConfig bool   `yaml:"useInConfig"`
 }
 
 type csConfig struct {
@@ -128,6 +129,7 @@ func main() {
 		HokutoDNSAddr:     c.Hokuto.Addr + ":53",
 		HokutoDNSParent:   c.Hokuto.Parent,
 		HokutoDNSUpstream: c.Hokuto.Upstream,
+		HokutoUseDNS:      c.Hokuto.UseInConfig,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")
