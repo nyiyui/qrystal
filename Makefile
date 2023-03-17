@@ -10,25 +10,25 @@ ldflags-runner = -X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node
 all: runner-mio runner-hokuto runner-node runner gen-keys cs
 
 runner-mio:
-	cd ${src} && go build -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
+	cd ${src} && go build -race -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
 
 runner-hokuto:
-	cd ${src} && go build -o ${path}/runner-hokuto ${src}/cmd/runner-hokuto
+	cd ${src} && go build -race -o ${path}/runner-hokuto ${src}/cmd/runner-hokuto
 
 runner-node:
-	cd ${src} && go build -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
+	cd ${src} && go build -race -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
 
 runner:
-	cd ${src} && go build -ldflags "${ldflags-runner}" -o ${path}/runner ${src}/cmd/runner
+	cd ${src} && go build -race -ldflags "${ldflags-runner}" -o ${path}/runner ${src}/cmd/runner
 
 gen-keys:
-	cd ${src} && go build -o ${path}/gen-keys ${src}/cmd/gen-keys
+	cd ${src} && go build -race -o ${path}/gen-keys ${src}/cmd/gen-keys
 
 cs:
-	cd ${src} && go build -o ${path}/cs ${src}/cmd/cs
+	cd ${src} && go build -race -o ${path}/cs ${src}/cmd/cs
 
 cs-push:
-	cd ${src} go build -o ${path}/cs-push ${src}/cmd/cs-push
+	cd ${src} go build -race -o ${path}/cs-push ${src}/cmd/cs-push
 
 install-cs-push: cs-push
 	install -m 755 -o root -g root $@ ${pkdir}/usr/bin/qrystal-cs-push

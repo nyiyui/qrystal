@@ -56,6 +56,7 @@
           src = ./.;
 
           ldflags = ldflags pkgs;
+          buildFlags = "-race";
 
           tags = [ "nix" "sdnotify" ];
 
