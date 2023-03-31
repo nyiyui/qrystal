@@ -1,4 +1,4 @@
-{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, ... }:
+args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, ... }:
 let
   pkgs = nixpkgsFor.${system};
   lib = nixosLibFor.${system} { inherit system; };
@@ -29,6 +29,18 @@ let
     inherit hash;
     canPull = true;
     networks = builtins.foldl' (a: b: a // b) {} (map (networkName: { ${networkName} = name; }) networkNames);
+  };
+  adminTokenRaw = "qrystalct_0a3XVoDo0Q4Ni4b47tqSURZACuoqG0A79+LmfvkZQZsMco5P+OL/L6cbnPCKDe12Fj2kUkHWpHhw6eRypRgr8Q==";
+  adminToken = {
+    name = "admin";
+    hash = "qrystalcth_98e2781b6a908f179e6df385b096decf5abde8ff8655dd30b5e55c7c4d81bb90";
+    networks = null;
+    canPull = true;
+    canPush.any = true;
+    canAdminTokens = {
+      canPull = true;
+      canPush = true;
+    };
   };
   csTls = {
     certPath = builtins.toFile "testing-insecure-cert.pem" csCert;
@@ -89,7 +101,7 @@ in
           imports = [ self.outputs.nixosModules.${system}.cs ];
 
           environment.systemPackages = with pkgs; [
-            host
+            self.outputs.packages.${system}.etc
           ];
 
           qrystal.services.cs = {
@@ -99,6 +111,7 @@ in
               tokens = [
                 (nodeToken "node1" node1Hash [ "testnet" ])
                 (nodeToken "node2" node2Hash [ "testnet" ])
+                adminToken
               ];
               central.networks.testnet = networkBase // {
                 peers.node1 = { allowedIPs = [ "10.123.0.1/16" ]; };
@@ -110,20 +123,24 @@ in
       testScript = { nodes, ... }: ''
         cs.start()
         cs.wait_for_unit("qrystal-cs.service")
+        # TODO test adding tokens
+        cs.succeed("cs-admin -server 'cs:39253' -token '${adminTokenRaw}' -cert '${builtins.toFile "testing-insecure-cert.pem" csCert}' token-rm -token-hash '${node1Hash}'")
       '';
     };
   all = let
     networkName = "testnet";
     networkName2 = "othernet";
     testDomain = "example.com";
-    testDNS = "127.0.0.1";
-    testDNSPort = "53530";
+    testDNS = "127.0.0.39";
   in let
     dns = { pkgs, ... }: {
       systemd.services.qrystal-dns-test = {
         enable = true;
         description = "DNS server for testing Hokuto DNS forwarding.";
         wantedBy = [ "multi-user.target" ];
+        environment = {
+          DNS_TEST_BIND_ADDR = testDNS;
+        };
         serviceConfig = {
           ExecStart = "${self.outputs.packages.${system}.dns-test}/bin/dns-test";
         };
@@ -134,7 +151,9 @@ in
       imports = [
         base
         self.outputs.nixosModules.${system}.node
-        (_: { qrystal.services.node.config.hokuto.upstream = "${testDNS}:${testDNSPort}"; })
+        (_: {
+          services.dnsmasq.servers = [ testDNS ];
+        })
         dns
       ];
 
@@ -183,8 +202,8 @@ in
       cs.wait_for_unit("qrystal-cs.service")
       for node in nodes:
         node.start()
-        node.succeed("host -p ${testDNSPort} ${testDomain} ${testDNS}", timeout=5)
-        node.succeed("host -p ${testDNSPort} ${testDomain}", timeout=5) # test resolved settings work
+        node.succeed("host ${testDomain} ${testDNS}", timeout=5)
+        node.succeed("host ${testDomain}", timeout=5) # test resolved settings work
         node.systemctl("start qrystal-dns-test.service")
         node.systemctl("start qrystal-node.service")
         node.wait_for_unit("qrystal-node.service", timeout=20)
@@ -207,14 +226,13 @@ in
         return value
       assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal 127.0.0.39"))
       assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal 127.0.0.39"))
-      # TODO: fix DNS config from github.com/mcpt/support repo config
-      ## check DNS config is working
-      #assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
-      #assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
+      # check DNS config is working
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
       for node in nodes:
         assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
         assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
-        a = pp(node.succeed("host -p ${testDNSPort} ${testDomain} ${testDNS} | grep 'has address'"))
+        a = pp(node.succeed("host ${testDomain} ${testDNS} | grep 'has address'"))
         b = pp(node.succeed("host ${testDomain} 127.0.0.39 | grep 'has address'"))
         b = pp(node.succeed("host ${testDomain} | grep 'has address'"))
         assert a == b

@@ -34,7 +34,7 @@ tokens:
           # can push a peer with canSee element of canSeeElement
           canSeeElement: [ <peer name>… ]
     # allow token to add tokens
-    canAddTokens:
+    canAdminTokens:
       # tokens added by this token may arbitrarily pull (bool)
       canPull:
       # tokens added by this token may arbitrarily push (bool)

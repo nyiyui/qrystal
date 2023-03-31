@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/miekg/dns"
 )
@@ -41,12 +42,11 @@ func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-const port = 53530
-
 func main() {
 	dns.HandleFunc(".", handleDnsRequest)
-	server := &dns.Server{Addr: fmt.Sprintf(":%d", port), Net: "udp"}
-	log.Printf("listening on :%d", port)
+	addr := os.Getenv("DNS_TEST_BIND_ADDR")
+	server := &dns.Server{Addr: addr, Net: "udp"}
+	log.Printf("listening on %s", addr)
 	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("serve failed: %s\n ", err)

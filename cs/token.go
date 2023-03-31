@@ -68,6 +68,16 @@ func (s *TokenStore) AddToken(hash util.TokenHash, info TokenInfo, overwrite boo
 	return
 }
 
+func (s *TokenStore) RemoveToken(hash util.TokenHash) (err error) {
+	key := tokenPrefix + hash.String()
+	err = s.db.Update(func(tx *buntdb.Tx) (err error) {
+		_, err = tx.Delete(key)
+		return err
+	})
+	s.cs.backportSilent()
+	return
+}
+
 func (s *TokenStore) GetTokenByHash(hashString string) (info TokenInfo, ok bool, err error) {
 	key := tokenPrefix + hashString
 	var encoded string
@@ -115,12 +125,13 @@ func (s *TokenStore) convertToMap() (m map[string]string, err error) {
 }
 
 type TokenInfo struct {
-	key          string `json:"-"`
-	Name         string
-	Networks     map[string]string
-	CanPull      bool
-	CanPush      *CanPush
-	CanAddTokens *CanAddTokens
+	key            string `json:"-"`
+	Name           string
+	Networks       map[string]string
+	CanPull        bool
+	CanPush        *CanPush
+	CanAdminTokens *CanAdminTokens
+	// CanAdminTokens specifies whether this token can add *or remove* tokens.
 
 	Using    bool
 	LastUsed time.Time
@@ -139,10 +150,10 @@ func (ti *TokenInfo) Use() {
 	ti.LastUsed = time.Now()
 }
 
-type CanAddTokens struct {
+type CanAdminTokens struct {
 	CanPull bool `yaml:"canPull"`
 	CanPush bool `yaml:"canPush"`
-	// don't allow CanAddTokens to make logic simpler
+	// don't allow CanAdminTokens to make logic simpler
 }
 
 type CanPush struct {

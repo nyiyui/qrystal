@@ -1,4 +1,4 @@
-package main
+package csadmin
 
 import (
 	"bytes"
@@ -17,6 +17,22 @@ import (
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/util"
 )
+
+var tokenHash *string
+
+func init() {
+	addTokenCmd := flag.NewFlagSet("token-add", flag.ExitOnError)
+	commands["token-add"] = command{
+		FS:      addTokenCmd,
+		Handler: tokenAddMain,
+	}
+	rmTokenCmd := flag.NewFlagSet("token-rm", flag.ExitOnError)
+	commands["token-rm"] = command{
+		FS:      rmTokenCmd,
+		Handler: tokenRemoveMain,
+	}
+	tokenHash = rmTokenCmd.String("token-hash", "", "hash of token to remove (starts with qrystalcth_)")
+}
 
 type AddTokenQ struct {
 	Overwrite bool           `json:"overwrite"`
@@ -73,19 +89,9 @@ func convQ(q AddTokenQ) api.HAddTokenQ {
 	return q2
 }
 
-func main() {
-	serverAddr := flag.String("server", "", "server address")
-	ctRaw := flag.String("token", "", "central token")
-	certPath := flag.String("cert", "", "path to server cert")
-	flag.Parse()
-
-	ct, err := util.ParseToken(*ctRaw)
-	if err != nil {
-		log.Fatalf("parse token: %s", err)
-	}
-
+func tokenAddMain() {
 	var q AddTokenQ
-	err = json.NewDecoder(os.Stdin).Decode(&q)
+	err := json.NewDecoder(os.Stdin).Decode(&q)
 	if err != nil {
 		log.Fatalf("unmarshal config: %s", err)
 	}
@@ -107,8 +113,53 @@ func main() {
 	}
 	hq.Header.Set("X-Qrystal-CentralToken", ct.String())
 	cl := &http.Client{
-		Transport: newTLSTransport(*certPath),
-		Timeout:   5 * time.Second,
+		Timeout: 5 * time.Second,
+	}
+	if certPath != nil && *certPath != "" {
+		cl.Transport = newTLSTransport(*certPath)
+	}
+	hs, err := cl.Do(hq)
+	if err != nil {
+		log.Fatalf("request: %s", err)
+	}
+	body, err := io.ReadAll(hs.Body)
+	if err != nil {
+		log.Fatalf("response body read: %s", err)
+	}
+	if hs.StatusCode != 200 {
+		log.Fatalf("response status: %s %s", hs.Status, body)
+	}
+	log.Printf("response: %s", body)
+}
+
+func tokenRemoveMain() {
+	log.Printf("%s", *tokenHash)
+	tokenHash, err := util.ParseTokenHash(*tokenHash)
+	if err != nil {
+		log.Fatalf("parse token hash: %s", err)
+	}
+	buf, err := json.Marshal(api.HRemoveTokenQ{
+		Hash: tokenHash,
+	})
+	if err != nil {
+		panic(fmt.Sprintf("json marshal failed: %s", err))
+	}
+	log.Printf("payload: %s", buf)
+	u := url.URL{
+		Scheme: "https",
+		Host:   *serverAddr,
+		Path:   "/remove-token",
+	}
+	hq, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(buf))
+	if err != nil {
+		panic(fmt.Sprintf("NewRequest: %s", err))
+	}
+	hq.Header.Set("X-Qrystal-CentralToken", ct.String())
+	cl := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	if *certPath != "" {
+		cl.Transport = newTLSTransport(*certPath)
 	}
 	hs, err := cl.Do(hq)
 	if err != nil {

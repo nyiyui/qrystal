@@ -23,3 +23,7 @@ type CanNetwork struct {
 	PeerName        string
 	CanSeeElementOf []string
 }
+
+type HRemoveTokenQ struct {
+	Hash *util.TokenHash
+}

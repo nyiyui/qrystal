@@ -144,10 +144,10 @@
                     hokuto = mkOption {
                       type = submodule {
                         options = {
-                          configureResolved = mkOption {
+                          configureDnsmasq = mkOption {
                             type = bool;
                             default = true;
-                            description = "Configure resolved to use Hokuto DNS server";
+                            description = "Enable and configure dnsmasq to use Hokuto DNS server";
                           };
                           addr = mkOption {
                             type = str;
@@ -158,13 +158,6 @@
                             type = str;
                             default = ".qrystal.internal";
                             description = "All domains inside networks will be of the format <peer>.<network>.<parent>";
-                          };
-                          upstream = mkOption {
-                            type = str;
-                            default = "8.8.8.8:53";
-                            description = ''
-                              Upstream DNS server to forward requests to. Recommended to set to a local resolver such as Unbound.
-                            '';
                           };
                           useInConfig = mkOption {
                             type = bool;
@@ -226,11 +219,17 @@
               };
             };
             config = mkIf cfg.enable {
-              services.resolved = mkIf (cfg.config.hokuto.configureResolved && cfg.config.hokuto.addr != "") {
+              services.dnsmasq = mkIf (cfg.config.hokuto.configureDnsmasq && cfg.config.hokuto.addr != "") {
                 enable = true;
+                resolveLocalQueries = true;
+                servers = [ "8.8.8.8" "8.8.4.4" "/${cfg.config.hokuto.parent}/127.0.0.39" ];
                 extraConfig = ''
-                  DNS=${cfg.config.hokuto.addr}
-                  Domains=~.
+                  conf-file=${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf
+                  dnssec
+                  listen-address=::1,127.0.0.53
+                  local=/${cfg.config.hokuto.parent}/
+                  interface=lo
+                  bind-interfaces # hokuto binds to 127.0.0.39
                 '';
               };
               users.groups.qrystal-node = {};
@@ -329,7 +328,7 @@
                                   default = false;
                                   description = "Can push to any peer in any net.";
                                 };
-                                networks = mkOption { type = attrsOf (submodule { options = {
+                                networks = mkOption { default=null;type = nullOr (attrsOf (submodule { options = {
                                   name = mkOption {
                                     type = str;
                                     description = "Peer name.";
@@ -338,21 +337,21 @@
                                     type = listOf str;
                                     description = "Pushed peers' canSee must be an element of canSeeElement.";
                                   };
-                                }; }); };
+                                }; })); };
                               };
                             });
                             default = null;
                             description = "Allow token to push peers.";
                           };
-                          canAddTokens = mkOption {
+                          canAdminTokens = mkOption {
                             type = nullOr (submodule {
                               options = {
                                 canPull = mkOption { type = bool; default = false; description = "Tokens added by this token can arbitrarily pull."; };
-                                canPush = mkOption { type = bool; default = false; description = "Tokens added by this token can arbitrarily pull."; };
+                                canPush = mkOption { type = bool; default = false; description = "Tokens added by this token can arbitrarily push."; };
                               };
                             });
                             default = null;
-                            description = "Allow token to add more tokens.";
+                            description = "Allow token to add more tokens, or remove any tokens.";
                           };
                         };
                       }); };

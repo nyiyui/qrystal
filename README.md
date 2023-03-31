@@ -5,6 +5,8 @@
 
 Qrystal /kristl/ sets up several WireGuard tunnels between servers.
 In addition, it provides centralised configuration management.
+Nodes and tokens can be dynamically added (and removed, in a future
+version).
 
 ## Installation
 

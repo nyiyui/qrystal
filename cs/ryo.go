@@ -26,6 +26,7 @@ func (c *CentralSource) HandleRyo(addr string, tlsCfg TLS) error {
 	// TODO: only POST
 	mux.Handle("/push", c.ryoToken(http.HandlerFunc(c.ryoPush)))
 	mux.Handle("/add-token", c.ryoToken(http.HandlerFunc(c.ryoAddToken)))
+	mux.Handle("/remove-token", c.ryoToken(http.HandlerFunc(c.ryoRemoveToken)))
 	s := &http.Server{
 		Addr:        addr,
 		Handler:     mux,
@@ -146,7 +147,7 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ti := r.Context().Value(tokenInfoKey).(TokenInfo)
-	if ti.CanAddTokens == nil {
+	if ti.CanAdminTokens == nil {
 		http.Error(w, "token: cannot push", 403)
 		return
 	}
@@ -177,6 +178,41 @@ func (c *CentralSource) ryoAddToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "add token failed", 500)
 		util.S.Errorf("AddToken: %s", err)
+		return
+	}
+	w.Write([]byte("ok"))
+}
+
+func (c *CentralSource) ryoRemoveToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "only POST", 405)
+		return
+	}
+	var q api.HRemoveTokenQ
+	err := json.NewDecoder(r.Body).Decode(&q)
+	if err != nil {
+		util.S.Errorf("json decode failed: %s", err)
+		http.Error(w, "json decode failed", 422)
+		return
+	}
+
+	ti := r.Context().Value(tokenInfoKey).(TokenInfo)
+	if ti.CanAdminTokens == nil {
+		http.Error(w, "token: cannot push", 403)
+		return
+	}
+	ti.Use()
+	err = c.Tokens.UpdateToken(ti)
+	if err != nil {
+		util.S.Errorf("UpdateToken: %s", err)
+		http.Error(w, "update token failed", 500)
+		return
+	}
+	util.S.Infof("remove token %s: %s", q.Hash, q)
+	err = c.Tokens.RemoveToken(*q.Hash)
+	if err != nil {
+		http.Error(w, "add token failed", 500)
+		util.S.Errorf("RemoveToken: %s", err)
 		return
 	}
 	w.Write([]byte("ok"))
