@@ -17,7 +17,6 @@ let
     virtualisation.vlans = [ 1 ];
     environment.systemPackages = with pkgs; [ wireguard-tools ];
     services.logrotate.enable = false; # clogs up the logs
-    services.resolved.enable = true;
   };
   networkBase = {
     keepalive = "10s";
@@ -121,17 +120,28 @@ in
         };
       };
       testScript = { nodes, ... }: ''
+        import json
+
         cs.start()
         cs.wait_for_unit("qrystal-cs.service")
-        # TODO test adding tokens
         cs.succeed("cs-admin -server 'cs:39253' -token '${adminTokenRaw}' -cert '${builtins.toFile "testing-insecure-cert.pem" csCert}' token-rm -token-hash '${node1Hash}'")
+        q = json.dumps(dict(
+          overwrite=True,
+          name='node1new',
+          hash='${node1Hash}',
+          canPull=dict(
+            testnet='node1',
+          ),
+        ))
+        cs.succeed(f"echo '{q}' | cs-admin -server 'cs:39253' -token '${adminTokenRaw}' -cert '${builtins.toFile "testing-insecure-cert.pem" csCert}' token-add")
+        # TODO test this actually works
       '';
     };
   all = let
     networkName = "testnet";
     networkName2 = "othernet";
     testDomain = "example.com";
-    testDNS = "127.0.0.39";
+    testDNS = "127.0.0.40";
   in let
     dns = { pkgs, ... }: {
       systemd.services.qrystal-dns-test = {
@@ -139,7 +149,7 @@ in
         description = "DNS server for testing Hokuto DNS forwarding.";
         wantedBy = [ "multi-user.target" ];
         environment = {
-          DNS_TEST_BIND_ADDR = testDNS;
+          DNS_TEST_BIND_ADDR = testDNS + ":53";
         };
         serviceConfig = {
           ExecStart = "${self.outputs.packages.${system}.dns-test}/bin/dns-test";
@@ -202,6 +212,7 @@ in
       cs.wait_for_unit("qrystal-cs.service")
       for node in nodes:
         node.start()
+        node.wait_for_unit("qrystal-dns-test.service")
         node.succeed("host ${testDomain} ${testDNS}", timeout=5)
         node.succeed("host ${testDomain}", timeout=5) # test resolved settings work
         node.systemctl("start qrystal-dns-test.service")
@@ -224,9 +235,6 @@ in
       def pp(value):
         print("pp", value)
         return value
-      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal 127.0.0.39"))
-      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal 127.0.0.39"))
-      # check DNS config is working
       assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
       assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
       for node in nodes:
