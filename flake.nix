@@ -36,6 +36,7 @@
         "-X github.com/nyiyui/qrystal/mio.CommandWgQuick=${pkgs.wireguard-tools}/bin/wg-quick"
         "-X github.com/nyiyui/qrystal/node.CommandIp=${pkgs.iproute2}/bin/ip"
         "-X github.com/nyiyui/qrystal/node.CommandIptables=${pkgs.iptables}/bin/iptables"
+        "-race"
       ];
     in rec {
       devShells = let pkgs = nixpkgsFor.${system}; in { default = pkgs.mkShell {
@@ -56,7 +57,6 @@
           src = ./.;
 
           ldflags = ldflags pkgs;
-          buildFlags = "-race";
 
           tags = [ "nix" "sdnotify" ];
 
