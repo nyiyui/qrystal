@@ -65,9 +65,6 @@ func (n *Node) applyCC(cc2 *central.Config) {
 				}
 			}
 			peer.CanSee = peer2.CanSee
-			if peer.Internal == nil {
-				peer.Internal = new(central.PeerInternal)
-			}
 			if peer.PubKey != peer2.PubKey {
 				peer.Desynced |= central.DKeys
 			}

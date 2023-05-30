@@ -30,13 +30,6 @@ func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource,
 		return nil, err
 	}
 	cs.Tokens = ts
-
-	for _, cn := range cc.Networks {
-		for _, peer := range cn.Peers {
-			peer.Internal = new(central.PeerInternal)
-		}
-	}
-
 	cs.cc = cc
 	cs.backportPath = backportPath
 	cs.newHandler()

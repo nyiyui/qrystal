@@ -2,17 +2,12 @@
 package central
 
 import (
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
-	"errors"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"google.golang.org/grpc/credentials"
 	"gopkg.in/yaml.v3"
 )
 
@@ -27,21 +22,21 @@ const (
 // Config is the root.
 type Config struct {
 	Desynced int
-	Networks map[string]*Network `yaml:"networks"`
+	Networks map[string]*Network `yaml:"networks" json:"networks"`
 }
 
 // Network configures a CN.
 type Network struct {
 	Desynced   int
 	Name       string
-	IPs        []IPNet          `yaml:"ips"`
-	Peers      map[string]*Peer `yaml:"peers"`
-	Me         string           `yaml:"me"`
-	Keepalive  Duration         `yaml:"keepalive"`
-	ListenPort int              `yaml:"listenPort"`
+	IPs        []IPNet          `yaml:"ips" json:"ips"`
+	Peers      map[string]*Peer `yaml:"peers" json:"peers"`
+	Me         string           `yaml:"me" json:"me"`
+	Keepalive  Duration         `yaml:"keepalive" json:"keepalive"`
+	ListenPort int              `yaml:"listenPort" json:"listenPort"`
 
 	// lock is only for myPrivKey.
-	MyPrivKey *wgtypes.Key
+	MyPrivKey *wgtypes.Key `json:"myPrivKey"`
 }
 
 func (cn *Network) String() string {
@@ -52,15 +47,14 @@ func (cn *Network) String() string {
 // Peer configures a peer.
 type Peer struct {
 	Desynced        int
-	Name            string   `yaml:"name"`
-	Host            string   `yaml:"host"`
-	AllowedIPs      []IPNet  `yaml:"allowedIPs"`
-	ForwardingPeers []string `yaml:"forwardingPeers"`
+	Name            string   `yaml:"name" json:"name"`
+	Host            string   `yaml:"host" json:"host"`
+	AllowedIPs      []IPNet  `yaml:"allowedIPs" json:"allowedIPs"`
+	ForwardingPeers []string `yaml:"forwardingPeers" json:"forwardingPeers"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
-	CanSee *CanSee `yaml:"canSee"`
+	CanSee *CanSee `yaml:"canSee" json:"canSee"`
 
-	PubKey   wgtypes.Key
-	Internal *PeerInternal `yaml:"-"`
+	PubKey wgtypes.Key
 }
 
 func (p *Peer) String() string {
@@ -70,36 +64,6 @@ func (p *Peer) String() string {
 
 func (p *Peer) Same(p2 *Peer) bool {
 	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
-}
-
-type PeerInternal struct {
-	LSA     time.Time
-	LSALock sync.RWMutex
-
-	Lock       sync.RWMutex
-	LatestSync time.Time
-	Creds      credentials.TransportCredentials
-	// creds for this specific peer.
-}
-
-var _ gob.GobEncoder = new(PeerInternal)
-var _ gob.GobDecoder = new(PeerInternal)
-
-// GobEncode implements gob.GobEncoder.
-//
-// Nothing is encoded.
-func (pi *PeerInternal) GobEncode() ([]byte, error) {
-	return []byte("a"), nil
-}
-
-// GobDecode implements gob.GobDecoder.
-//
-// See PeerInternal.GobEncode for details about what is encoded.
-func (pi *PeerInternal) GobDecode(data []byte) error {
-	if !bytes.Equal(data, []byte("a")) {
-		return errors.New("unexpected non-a (old?)")
-	}
-	return nil
 }
 
 type CanSee struct {
@@ -152,7 +116,7 @@ func (d *Duration) MarshalYAML() (interface{}, error) {
 	return time.Duration(*d).String(), nil
 }
 
-// IPNet is a YAML-friendly net.IPNet.
+// IPNet is a YAML- and JSON- friendly net.IPNet.
 // TODO: move to package util
 type IPNet net.IPNet
 

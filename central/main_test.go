@@ -9,7 +9,6 @@ import (
 )
 
 func TestGobEncoding(t *testing.T) {
-	// NOTE: testing things that should not be encoded like Desynced and PeerInternal later
 	cc := Config{
 		Networks: map[string]*Network{
 			"testnet": &Network{

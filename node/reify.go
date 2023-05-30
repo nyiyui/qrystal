@@ -11,6 +11,8 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
+// reify applies current CC to system.
+// NOTE: ccLock must be held
 func (s *Node) reify() (err error) {
 	for cnn, cn := range s.cc.Networks {
 		err = s.reifyCN(cn)
@@ -22,6 +24,7 @@ func (s *Node) reify() (err error) {
 	return
 }
 
+// NOTE: ccLock must be held
 func (s *Node) reifyCN(cn *central.Network) (err error) {
 	config, err := s.convCN(cn)
 	if err != nil {
@@ -66,6 +69,7 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 	return nil
 }
 
+// NOTE: ccLock must be held
 func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn := range cn.Peers {
@@ -89,10 +93,9 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	return config, nil
 }
 
+// NOTE: ccLock must be held
 func (s *Node) convPeer(cn *central.Network, pn string) (config *wgtypes.PeerConfig, ignore bool, err error) {
 	peer := cn.Peers[pn]
-	peer.Internal.Lock.RLock()
-	defer peer.Internal.Lock.RUnlock()
 	var host *net.UDPAddr
 	if peer.Host != "" {
 		var hostOnly string
