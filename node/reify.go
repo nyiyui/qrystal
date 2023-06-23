@@ -46,9 +46,6 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 		Config:  config,
 		Address: central.ToIPNets(me.AllowedIPs),
 	}
-	if s.hokutoUseDNS {
-		q.DNS = &s.hokutoDNSAddr
-	}
 	if s.forwardingRequired(cn.Name) {
 		// TODO: figure out how to run sysctl
 		// TODO: how to agree between all peers to select one forwarder? or one forwarder for a specific peer, another forwarder for another peer, and so on?

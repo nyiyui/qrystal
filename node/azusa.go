@@ -8,10 +8,9 @@ import (
 	"github.com/nyiyui/qrystal/central"
 )
 
-func (n *Node) azusa(i int, networks map[string]central.Peer, cl *rpc2.Client) (err error) {
-	csc := n.cs[i]
+func (n *Node) azusa(networks map[string]central.Peer, cl *rpc2.Client) (err error) {
 	var s api.AzusaS
-	err = cl.Call("azusa", &api.AzusaQ{Networks: networks, CentralToken: csc.Token}, &s)
+	err = cl.Call("azusa", &api.AzusaQ{Networks: networks, CentralToken: n.cs.Token}, &s)
 	if err != nil {
 		err = fmt.Errorf("call: %w", err)
 		return

@@ -18,15 +18,13 @@ import (
 )
 
 type config struct {
-	CSs    []csConfig   `yaml:"css"`
+	CS     csConfig     `yaml:"cs"`
 	Hokuto hokutoConfig `yaml:"hokuto"`
 }
 
 type hokutoConfig struct {
-	Parent      string `yaml:"parent"`
-	Addr        string `yaml:"addr"`
-	Upstream    string `yaml:"upstream"`
-	UseInConfig bool   `yaml:"useInConfig"`
+	Parent string `yaml:"parent"`
+	Addr   string `yaml:"addr"`
 }
 
 type csConfig struct {
@@ -108,13 +106,9 @@ func main() {
 	log.Printf("config loaded from %s: %#v", configPath, c)
 
 	// CS
-	ncscs := make([]node.CSConfig, 0, len(c.CSs))
-	for i, csc := range c.CSs {
-		ncsc, err := processCSConfig(&csc)
-		if err != nil {
-			log.Fatalf("config cs2 %d: %s", i, err)
-		}
-		ncscs = append(ncscs, *ncsc)
+	ncsc, err := processCSConfig(&c.CS)
+	if err != nil {
+		log.Fatalf("config cs2: %s", err)
 	}
 
 	mioAddr := os.Getenv("MIO_ADDR")
@@ -123,13 +117,11 @@ func main() {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
 	nc := node.NodeConfig{
-		MioAddr:           mioAddr,
-		MioToken:          mioToken,
-		CS:                ncscs,
-		HokutoDNSAddr:     c.Hokuto.Addr + ":53",
-		HokutoDNSParent:   c.Hokuto.Parent,
-		HokutoDNSUpstream: c.Hokuto.Upstream,
-		HokutoUseDNS:      c.Hokuto.UseInConfig,
+		MioAddr:         mioAddr,
+		MioToken:        mioToken,
+		CS:              *ncsc,
+		HokutoDNSAddr:   c.Hokuto.Addr + ":53",
+		HokutoDNSParent: c.Hokuto.Parent,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")
@@ -143,8 +135,5 @@ func main() {
 		panic(err)
 	}
 
-	if c.CSs != nil {
-		go n.ListenCS()
-	}
-	select {}
+	n.ListenCS()
 }

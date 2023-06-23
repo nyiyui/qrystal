@@ -34,7 +34,6 @@ type devConfig struct {
 	Address    []net.IPNet
 	PrivateKey *wgtypes.Key
 	ListenPort uint
-	DNS        net.UDPAddr
 	PostUp     string
 	PostDown   string
 	Peers      []wgtypes.PeerConfig
@@ -77,6 +76,7 @@ func devAdd(name string, cfg devConfig) error {
 		strconv.FormatUint(uint64(cfg.ListenPort), 10),
 		CommandWg,
 		CommandWgQuick,
+		"systemd", // persist
 	)
 	cmd.Stdout = outBuf
 	cmd.Stderr = errBuf
@@ -96,7 +96,7 @@ func devAdd(name string, cfg devConfig) error {
 func devRemove(name string) error {
 	util.S.Infof("devRemove %s", name)
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command(CommandBash, "./dev-remove.sh", name, CommandWgQuick)
+	cmd := exec.Command(CommandBash, "./dev-remove.sh", name, CommandWgQuick, "systemd")
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
@@ -110,7 +110,6 @@ func devRemove(name string) error {
 
 func toAfter(cfg devConfig, peers []wgtypes.PeerConfig) string {
 	b := new(strings.Builder)
-	fmt.Fprintf(b, "DNS=%s\n", cfg.DNS.IP)
 	for i, peer := range peers {
 		fmt.Fprintf(b, "[Peer] # peer %d (NOTE: peers only need the bare for wg-quick to route things)\n", i)
 		fmt.Fprintf(b, "PublicKey=%s\n", peer.PublicKey)

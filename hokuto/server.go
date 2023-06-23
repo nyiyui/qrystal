@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"net/rpc"
 	"os"
@@ -43,9 +42,8 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 }
 
 type InitQ struct {
-	Addr     string
-	Parent   string
-	Upstream string
+	Addr   string
+	Parent string
 }
 
 func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
@@ -61,11 +59,6 @@ func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
 	suffix = q.Parent + "."
 	dns.HandleFunc(".", handle)
 	server := &dns.Server{Addr: q.Addr, Net: "udp"}
-	_, _, err = net.SplitHostPort(q.Upstream)
-	if err != nil {
-		return
-	}
-	upstream = q.Upstream
 	util.S.Infof("listening on %s", server.Addr)
 	inited = true
 	go func() {

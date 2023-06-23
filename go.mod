@@ -9,14 +9,12 @@ require (
 	github.com/tidwall/buntdb v1.2.10
 	go.uber.org/zap v1.23.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220916014741-473347a5e6e3
-	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/cenk/hub v1.0.1 // indirect
 	github.com/cenkalti/hub v1.0.1 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/mdlayher/genetlink v1.2.0 // indirect
 	github.com/mdlayher/netlink v1.6.0 // indirect
@@ -38,5 +36,4 @@ require (
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 )

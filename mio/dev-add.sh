@@ -11,6 +11,7 @@ after="$6"
 listen_port="$7"
 wg="$8"
 wg_quick="$9"
+persist="${10}"
 
 umask 077
 mkdir -p /etc/wireguard
@@ -33,6 +34,11 @@ EOF
 ifaces=($($wg show interfaces))
 
 log=$(mktemp)
+
+if [[ "$persist" == "systemd" ]]; then
+  unit_name="wg-quick@$name.service"
+  systemctl enablw "$unit_name" 2> $log || (1>&2 cat $log; 1>&2 cat "$config_path")
+fi
 
 if [[ " ${ifaces[*]} " =~ " $name " ]]; then
 	# TODO: syncconf if ips don't change

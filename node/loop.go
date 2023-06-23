@@ -13,25 +13,17 @@ import (
 )
 
 type listenError struct {
-	i   int
 	err error
 }
 
 func (n *Node) ListenCS() {
-	errCh := make(chan listenError, len(n.cs))
-	for i := range n.cs {
-		go func(i int) {
-			errCh <- listenError{i: i, err: n.listenCS(i)}
-		}(i)
-	}
-	err := <-errCh
-	csc := n.cs[err.i]
-	util.S.Errorf("cs %d (%s at %s) error: %s", err.i, csc.Comment, csc.Host, err.err)
+	err := n.listenCS()
+	util.S.Errorf("cs listen error: %s", err)
 }
 
-func (n *Node) listenCS(i int) error {
+func (n *Node) listenCS() error {
 	return util.Backoff(func() (resetBackoff bool, err error) {
-		return n.listenCSOnce(i)
+		return n.listenCSOnce()
 	}, func(backoff time.Duration, err error) error {
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
@@ -42,26 +34,25 @@ func (n *Node) listenCS(i int) error {
 	})
 }
 
-func (n *Node) listenCSOnce(i int) (resetBackoff bool, err error) {
+func (n *Node) listenCSOnce() (resetBackoff bool, err error) {
 	// Setup
 	util.S.Debug("newClient…")
-	cl, _, err := n.newClient(i)
+	cl, _, err := n.newClient()
 	if err != nil {
 		return false, fmt.Errorf("newClient: %w", err)
 	}
 
 	util.S.Debug("pullCS…")
-	err = n.pullCS(i, cl)
+	err = n.pullCS(cl)
 	if err != nil {
 		return false, fmt.Errorf("pullCS: %w", err)
 	}
 	return true, nil
 }
 
-func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
-	csc := n.cs[i]
-	if len(csc.Azusa) != 0 {
-		err = n.azusa(i, csc.Azusa, cl)
+func (n *Node) pullCS(cl *rpc2.Client) (err error) {
+	if len(n.cs.Azusa) != 0 {
+		err = n.azusa(n.cs.Azusa, cl)
 		if err != nil {
 			err = fmt.Errorf("azusa: %w", err)
 			return
@@ -69,7 +60,7 @@ func (n *Node) pullCS(i int, cl *rpc2.Client) (err error) {
 	}
 	for {
 		var s api.SyncS
-		err = cl.Call("sync", &api.SyncQ{I: i, CentralToken: csc.Token}, &s)
+		err = cl.Call("sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
 		if err != nil {
 			err = fmt.Errorf("sync: %w", err)
 			return

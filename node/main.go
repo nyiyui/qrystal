@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/nyiyui/qrystal/central"
 )
 
 type NodeConfig struct {
-	CC                central.Config
-	MioAddr           string
-	MioToken          []byte
-	HokutoAddr        string
-	HokutoToken       []byte
-	HokutoDNSAddr     string
-	HokutoDNSParent   string
-	HokutoDNSUpstream string
-	HokutoUseDNS      bool
-	CS                []CSConfig
+	CC              central.Config
+	MioAddr         string
+	MioToken        []byte
+	HokutoAddr      string
+	HokutoToken     []byte
+	HokutoDNSAddr   string
+	HokutoDNSParent string
+	HokutoUseDNS    bool
+	CS              CSConfig
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -37,10 +37,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 	node := &Node{
 		cc: cfg.CC,
 
-		ready: make([]bool, len(cfg.CS)),
-
-		cs:     cfg.CS,
-		csNets: map[string]int{},
+		cs: cfg.CS,
 
 		mio:    mh,
 		hokuto: hh,
@@ -51,11 +48,10 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 			return nil, fmt.Errorf("hokuto resolve addr: %w", err)
 		}
 		node.hokutoDNSAddr = *addr
-		err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr, cfg.HokutoDNSUpstream)
+		err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr)
 		if err != nil {
 			return nil, fmt.Errorf("hokuto init: %w", err)
 		}
-		node.hokutoUseDNS = cfg.HokutoUseDNS
 	}
 	return node, nil
 }
@@ -63,15 +59,16 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 type Node struct {
 	ccLock sync.RWMutex
 	cc     central.Config
+	// ccApplyTime is the latest time a backport is updated.
+	// This is not meant to
+	ccApplyTime time.Time
 
-	ready []bool
+	ready bool
 
-	cs     []CSConfig
-	csNets map[string]int
+	cs CSConfig
 
 	mio    *mioHandle
 	hokuto *mioHandle
 
 	hokutoDNSAddr net.UDPAddr
-	hokutoUseDNS  bool
 }

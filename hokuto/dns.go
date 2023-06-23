@@ -20,7 +20,6 @@ var ccLock sync.Mutex
 var mask32 = net.CIDRMask(32, 32)
 
 var suffix string
-var upstream string
 
 func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
 	for _, in := range peer.AllowedIPs {
