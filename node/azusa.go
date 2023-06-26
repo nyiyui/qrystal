@@ -10,7 +10,7 @@ import (
 )
 
 func (n *Node) azusa(networks map[string]central.Peer, cl *rpc2.Client) (err error) {
-	util.S.Info("azusa: call: %s", networks)
+	util.S.Infof("azusa: call: %s", networks)
 	var s api.AzusaS
 	err = cl.Call("azusa", &api.AzusaQ{Networks: networks, CentralToken: n.cs.Token}, &s)
 	if err != nil {
