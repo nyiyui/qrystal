@@ -38,7 +38,7 @@ func checkPeer(ti TokenInfo, cnn string, peer central.Peer) error {
 		if peer.Name != cpn.Name {
 			return newHttpErrorf(403, "%s as only peer %s is allowed", prelude, cpn.Name)
 		}
-		if cpn.CanSeeElement != nil {
+		if cpn.CanSeeElementAny == false {
 			if peer.CanSee == nil {
 				return newHttpErrorf(403, "%s as peer specifies CanSee any but CanSeeElement does not allow any", prelude)
 			} else if len(MissingFromFirst(SliceToMap(cpn.CanSeeElement), SliceToMap(peer.CanSee.Only))) != 0 {

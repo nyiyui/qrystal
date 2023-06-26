@@ -8,6 +8,7 @@ import (
 
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
+	"gopkg.in/yaml.v3"
 )
 
 const tokenPrefix = "token:"
@@ -162,9 +163,48 @@ type CanPush struct {
 }
 
 type CanPushNetwork struct {
-	Name             string   `yaml:"name"`
-	CanSeeElement    []string `yaml:"canSeeElement"`
-	CanSeeElementAny bool     `yaml:"canSeeElementAny"`
+	Name             string
+	CanSeeElement    []string
+	CanSeeElementAny bool
+}
+
+type canPushNetwork struct {
+	Name          string      `yaml:"name"`
+	CanSeeElement interface{} `yaml:"canSeeElement"`
+}
+
+func (c *CanPushNetwork) UnmarshalYAML(value *yaml.Node) error {
+	var cpn canPushNetwork
+	err := value.Decode(&cpn)
+	if err != nil {
+		return err
+	}
+	c.Name = cpn.Name
+	switch cse := cpn.CanSeeElement.(type) {
+	case string:
+		c.CanSeeElementAny = cse == "any"
+	case []string:
+		c.CanSeeElement = cse
+	default:
+		return errors.New("canSeeElement must be \"any\" or []string")
+	}
+	return nil
+}
+
+func (c *CanPushNetwork) MarshalYaml() (interface{}, error) {
+	var cse interface{}
+	if c.CanSeeElementAny {
+		cse = "any"
+	} else {
+		cse = c.CanSeeElement
+	}
+	if c.CanSeeElementAny && len(c.CanSeeElement) != 0 {
+		return nil, errors.New("CanSeeElementAny == true but CanSeeElement is not zero-length")
+	}
+	return canPushNetwork{
+		Name:          c.Name,
+		CanSeeElement: cse,
+	}, nil
 }
 
 type Token struct {
