@@ -145,7 +145,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               enable = true;
               resolveLocalQueries = true;
               settings = {
-                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ] ++ if cfg.config.hokuto.dnsmasqGoogleDNS then [ "8.8.8.8" "8.8.4.4" ] else [];
+                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ] ++ (if cfg.config.hokuto.dnsmasqGoogleDNS then [ "8.8.8.8" "8.8.4.4" ] else []);
                 conf-file = "${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf";
                 dnssec = true;
                 listen-address = "::1,127.0.0.53";
