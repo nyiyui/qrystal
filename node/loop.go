@@ -17,7 +17,7 @@ type listenError struct {
 }
 
 func (n *Node) ListenCS() {
-	util.S.Info("listening…")
+	util.S.Debug("listening…")
 	err := n.listenCS()
 	util.S.Errorf("cs listen error: %s", err)
 }
