@@ -66,6 +66,12 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                         description =
                           "Enable and configure dnsmasq to use Hokuto DNS server";
                       };
+                      dnsmasqGoogleDNS = mkOption {
+                        type = bool;
+                        default = true;
+                        description =
+                          "Set 8.8.8.8 and 8.8.4.4 as DNS servers for dnsmasq. This is defaulted to true so if you forget to specify servers, your dnsmasq config isn't destroyed."
+                      };
                       addr = mkOption {
                         type = str;
                         default = "127.0.0.39";
@@ -139,7 +145,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               enable = true;
               resolveLocalQueries = true;
               settings = {
-                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ];
+                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ] ++ if cfg.config.hokuto.dnsmasqGoogleDNS then [ "8.8.8.8" "8.8.4.4" ] else [];
                 conf-file = "${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf";
                 dnssec = true;
                 listen-address = "::1,127.0.0.53";
