@@ -70,7 +70,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                         type = bool;
                         default = true;
                         description =
-                          "Set 8.8.8.8 and 8.8.4.4 as DNS servers for dnsmasq. This is defaulted to true so if you forget to specify servers, your dnsmasq config isn't destroyed."
+                          "Set 8.8.8.8 and 8.8.4.4 as DNS servers for dnsmasq. This is defaulted to true so if you forget to specify servers, your dnsmasq config isn't destroyed.";
                       };
                       addr = mkOption {
                         type = str;
