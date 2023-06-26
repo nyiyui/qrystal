@@ -265,10 +265,10 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                                     description = "Peer name.";
                                   };
                                   canSeeElement = mkOption {
-                                    type = (oneOf
+                                    type = (oneOf [
                                       (listOf str)
                                       (enum [ "any" ])
-                                    );
+                                    ]);
                                     description =
                                       "Pushed peers' canSee must be an element of canSeeElement.";
                                   };
