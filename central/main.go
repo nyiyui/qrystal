@@ -52,6 +52,7 @@ type Peer struct {
 	AllowedIPs      []IPNet  `yaml:"allowedIPs" json:"allowedIPs"`
 	ForwardingPeers []string `yaml:"forwardingPeers" json:"forwardingPeers"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
+	// TODO: when CanSee.Only is blank, this is interpreted as nil → no way to distinguish between seeing nothing and everything
 	CanSee *CanSee `yaml:"canSee" json:"canSee"`
 
 	PubKey wgtypes.Key
