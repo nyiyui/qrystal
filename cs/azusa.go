@@ -20,24 +20,9 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	}
 	var desc strings.Builder
 	for cnn, peer := range q.Networks {
-		if ti.CanPush == nil {
-			return fmt.Errorf("token %s cannot push at all", ti.Name)
-		}
-		if !ti.CanPush.Any {
-			cpn, ok := ti.CanPush.Networks[cnn]
-			if !ok {
-				return fmt.Errorf("token %s cannot push to net %s", ti.Name, cnn)
-			}
-			if peer.Name != cpn.Name {
-				return fmt.Errorf("token %s cannot push to net %s with name not %s", ti.Name, cnn, cpn.Name)
-			}
-			if cpn.CanSeeElement != nil {
-				if peer.CanSee == nil || peer.CanSee.Only == nil {
-					return fmt.Errorf("token %s cannot push to net %s as peer violates CanSeeElement any", ti.Name, cnn)
-				} else if len(MissingFromFirst(SliceToMap(cpn.CanSeeElement), SliceToMap(peer.CanSee.Only))) != 0 {
-					return fmt.Errorf("token %s cannot push to net %s as peer violates CanSeeElement %s", ti.Name, cnn, cpn.CanSeeElement)
-				}
-			}
+		err = checkPeer(ti, cnn, peer)
+		if err != nil {
+			return err
 		}
 		_, ok := c.cc.Networks[cnn]
 		if !ok {

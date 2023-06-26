@@ -162,8 +162,9 @@ type CanPush struct {
 }
 
 type CanPushNetwork struct {
-	Name          string   `yaml:"name"`
-	CanSeeElement []string `yaml:"canSeeElement"`
+	Name             string   `yaml:"name"`
+	CanSeeElement    []string `yaml:"canSeeElement"`
+	CanSeeElementAny bool     `yaml:"canSeeElementAny"`
 }
 
 type Token struct {

@@ -82,25 +82,16 @@ func (c *CentralSource) ryoPush(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "token: cannot push", 403)
 		return
 	}
-	if !ti.CanPush.Any {
-		cpn, ok := ti.CanPush.Networks[q.CNN]
-		if !ok {
-			http.Error(w, fmt.Sprintf("cannot push to net %s", q.CNN), 403)
-			return
+	q.Peer.Name = q.PeerName
+	err = checkPeer(ti, q.CNN, q.Peer)
+	if err != nil {
+		switch err := err.(type) {
+		case httpError:
+			http.Error(w, fmt.Sprint(err.err), err.code)
+		default:
+			http.Error(w, fmt.Sprint(err), 500)
 		}
-		if q.PeerName != cpn.Name {
-			http.Error(w, fmt.Sprintf("cannot push to net %s peer %s", q.CNN, q.PeerName), 403)
-			return
-		}
-		if cpn.CanSeeElement != nil {
-			if q.Peer.CanSee == nil {
-				http.Error(w, fmt.Sprintf("cannot push to net %s as peer violates CanSeeElement any", q.CNN), 403)
-				return
-			} else if len(MissingFromFirst(SliceToMap(cpn.CanSeeElement), SliceToMap(q.Peer.CanSee.Only))) != 0 {
-				http.Error(w, fmt.Sprintf("cannot push to net %s as peer violates CanSeeElement %s", q.CNN, cpn.CanSeeElement), 403)
-				return
-			}
-		}
+		return
 	}
 
 	if ti.Networks == nil {
