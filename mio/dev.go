@@ -76,7 +76,7 @@ func devAdd(name string, cfg devConfig) error {
 		strconv.FormatUint(uint64(cfg.ListenPort), 10),
 		CommandWg,
 		CommandWgQuick,
-		"systemd", // persist
+		"", // persist
 	)
 	cmd.Stdout = outBuf
 	cmd.Stderr = errBuf
@@ -96,7 +96,7 @@ func devAdd(name string, cfg devConfig) error {
 func devRemove(name string) error {
 	util.S.Infof("devRemove %s", name)
 	errBuf := new(bytes.Buffer)
-	cmd := exec.Command(CommandBash, "./dev-remove.sh", name, CommandWgQuick, "systemd")
+	cmd := exec.Command(CommandBash, "./dev-remove.sh", name, CommandWgQuick, "")
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
