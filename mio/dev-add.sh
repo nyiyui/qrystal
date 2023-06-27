@@ -37,7 +37,7 @@ log=$(mktemp)
 
 if [[ "$persist" == "systemd" ]]; then
   unit_name="wg-quick@$name.service"
-  systemctl enablw "$unit_name" 2> $log || (1>&2 cat $log; 1>&2 cat "$config_path")
+  systemctl enable "$unit_name" 2> $log || (1>&2 cat $log; 1>&2 cat "$config_path")
 fi
 
 if [[ " ${ifaces[*]} " =~ " $name " ]]; then
