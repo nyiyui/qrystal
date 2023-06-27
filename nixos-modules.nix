@@ -50,13 +50,18 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
       in let
         cfg = config.qrystal.services.node;
         mkConfigFile = cfg:
-          builtins.toFile "node-config.json" (builtins.toJSON cfg.config);
+          pkgs.writeText "node-config.json" (builtins.toJSON cfg.config);
       in {
         options.qrystal.services.node = {
           enable = mkEnableOption "Enables the Qrystal Node service";
           config = mkOption {
             type = submodule {
               options = {
+                endpointOverride = mkOption {
+                  type = nullOr path;
+                  description = "Path to executable for endpoint override.";
+                  default = null;
+                };
                 hokuto = mkOption {
                   type = submodule {
                     options = {

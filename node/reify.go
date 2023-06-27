@@ -93,15 +93,24 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 // NOTE: ccLock must be held
 func (s *Node) convPeer(cn *central.Network, pn string) (config *wgtypes.PeerConfig, ignore bool, err error) {
 	peer := cn.Peers[pn]
+	endpoint := s.getEOLog(eoQ{
+		CNN:      cn.Name,
+		PN:       pn,
+		Endpoint: peer.Host,
+	})
 	var host *net.UDPAddr
-	if peer.Host != "" {
+	if endpoint != "" {
 		var hostOnly string
-		hostOnly, _, err = net.SplitHostPort(peer.Host)
+		hostOnly, _, err = net.SplitHostPort(endpoint)
 		if err != nil {
 			err = fmt.Errorf("peer %s: splitting failed", peer.Name)
 			return
 		}
 		toResolve := fmt.Sprintf("%s:%d", hostOnly, cn.ListenPort)
+		if endpoint != peer.Host {
+			// if a custom endpoint is given, respect port choices for that
+			toResolve = endpoint
+		}
 		host, err = net.ResolveUDPAddr("udp", toResolve)
 		if err != nil {
 			err = fmt.Errorf("peer %s: resolving failed", toResolve)

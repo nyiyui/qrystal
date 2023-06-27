@@ -347,4 +347,85 @@ in {
         node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
     '';
   });
+  eo = let
+    networkName = "testnet";
+    eoPath = pkgs.writeShellScript "eo.sh" ''
+      while IFS= read -r line
+      do
+        echo '{"endpoint":"1.2.3.4:5678"}'
+      done
+    '';
+    node = { token }:
+      { pkgs, ... }: {
+        imports = [
+          base
+          self.outputs.nixosModules.${system}.node
+          ({ ... }: { qrystal.services.node.config.endpointOverride = eoPath; })
+        ];
+
+        networking.firewall.allowedTCPPorts = [ 39251 ];
+        qrystal.services.node = csConfig [ networkName ] token;
+      };
+  in lib.runTest ({
+    name = "eo";
+    hostPkgs = pkgs;
+    nodes = {
+      node1 = node { token = node1Token; };
+      node2 = node { token = node2Token; };
+      cs = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.cs ];
+
+        networking.firewall.allowedTCPPorts = [ 39252 ];
+        qrystal.services.cs = {
+          enable = true;
+          config = {
+            tls = csTls;
+            tokens = [
+              (nodeToken "node1" node1Hash [ networkName ])
+              (nodeToken "node2" node2Hash [ networkName ])
+            ];
+            central.networks.${networkName} = networkBase // {
+              peers.node1 = {
+                host = "node1:58120";
+                allowedIPs = [ "10.123.0.1/32" ];
+                canSee.only = [ "node2" ];
+              };
+              peers.node2 = {
+                host = "node2:58120";
+                allowedIPs = [ "10.123.0.2/32" ];
+                canSee.only = [ "node1" ];
+              };
+            };
+          };
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      import time
+
+      nodes = [node1, node2]
+      addrs = ["10.123.0.2", "10.123.0.1"]
+      cs.start()
+      cs.wait_for_unit("qrystal-cs.service")
+      for node in nodes:
+        node.start()
+      for node in nodes:
+        node.wait_for_unit("qrystal-node.service", timeout=20)
+      for node in nodes:
+        start = time.time()
+        while True:
+          now = time.time()
+          if now-start > 60:
+            raise RuntimeError("timeout")
+          print(node.succeed("wg show ${networkName}"))
+          endpoints = node.succeed("wg show ${networkName} endpoints")
+          print('endpoints', endpoints)
+          if ':' not in endpoints:
+            # wait until sync is done
+            time.sleep(1)
+            continue
+          assert "1.2.3.4:5678" in endpoints, "endpoint check"
+          break
+    '';
+  });
 }

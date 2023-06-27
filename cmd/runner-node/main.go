@@ -18,8 +18,9 @@ import (
 )
 
 type config struct {
-	CS     csConfig     `yaml:"cs"`
-	Hokuto hokutoConfig `yaml:"hokuto"`
+	CS               csConfig     `yaml:"cs"`
+	Hokuto           hokutoConfig `yaml:"hokuto"`
+	EndpointOverride string       `yaml:"endpointOverride"`
 }
 
 type hokutoConfig struct {
@@ -117,11 +118,12 @@ func main() {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
 	nc := node.NodeConfig{
-		MioAddr:         mioAddr,
-		MioToken:        mioToken,
-		CS:              *ncsc,
-		HokutoDNSAddr:   c.Hokuto.Addr + ":53",
-		HokutoDNSParent: c.Hokuto.Parent,
+		MioAddr:          mioAddr,
+		MioToken:         mioToken,
+		CS:               *ncsc,
+		HokutoDNSAddr:    c.Hokuto.Addr + ":53",
+		HokutoDNSParent:  c.Hokuto.Parent,
+		EndpointOverride: c.EndpointOverride,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")

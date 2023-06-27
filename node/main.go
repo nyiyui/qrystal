@@ -10,15 +10,16 @@ import (
 )
 
 type NodeConfig struct {
-	CC              central.Config
-	MioAddr         string
-	MioToken        []byte
-	HokutoAddr      string
-	HokutoToken     []byte
-	HokutoDNSAddr   string
-	HokutoDNSParent string
-	HokutoUseDNS    bool
-	CS              CSConfig
+	CC               central.Config
+	MioAddr          string
+	MioToken         []byte
+	HokutoAddr       string
+	HokutoToken      []byte
+	HokutoDNSAddr    string
+	HokutoDNSParent  string
+	HokutoUseDNS     bool
+	CS               CSConfig
+	EndpointOverride string
 }
 
 func NewNode(cfg NodeConfig) (*Node, error) {
@@ -39,8 +40,9 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 
 		cs: cfg.CS,
 
-		mio:    mh,
-		hokuto: hh,
+		mio:                  mh,
+		hokuto:               hh,
+		endpointOverridePath: cfg.EndpointOverride,
 	}
 	if cfg.HokutoDNSAddr != "" {
 		addr, err := net.ResolveUDPAddr("udp", cfg.HokutoDNSAddr)
@@ -71,4 +73,8 @@ type Node struct {
 	hokuto *mioHandle
 
 	hokutoDNSAddr net.UDPAddr
+
+	endpointOverridePath string
+	eoState              *eoState
+	eoStateLock          sync.Mutex
 }
