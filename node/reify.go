@@ -1,14 +1,11 @@
 package node
 
 import (
-	"crypto/rand"
-	"encoding/base32"
 	"fmt"
 	"net"
 	"time"
 
 	"github.com/nyiyui/qrystal/central"
-	"github.com/nyiyui/qrystal/hokuto"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/util"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -17,11 +14,6 @@ import (
 // reify applies current CC to system.
 // NOTE: ccLock must be held
 func (s *Node) reify() (err error) {
-	err = s.reifyHosts()
-	if err != nil {
-		err = fmt.Errorf("reify hosts: %w", err)
-		return
-	}
 	for cnn, cn := range s.cc.Networks {
 		err = s.reifyCN(cn)
 		if err != nil {
@@ -30,35 +22,6 @@ func (s *Node) reify() (err error) {
 		}
 	}
 	return
-}
-
-// NOTE: ccLock must be held
-func (n *Node) reifyHosts() (err error) {
-	hosts := map[string][]string{}
-	for _, cn := range n.cc.Networks {
-		for _, peer := range cn.Peers {
-			if len(peer.Hosts) > 1 {
-				raw := make([]byte, 64)
-				_, err := rand.Read(raw)
-				if err != nil {
-					return err
-				}
-				key := base32.StdEncoding.EncodeToString(raw)
-				hosts[key] = peer.Hosts
-				peer.HostsKey = key
-			}
-		}
-	}
-	var dummy bool
-	q := hokuto.UpdateHostsQ{
-		Token: n.hokuto.token,
-		Hosts: hosts,
-	}
-	err = n.hokuto.client.Call("Hokuto.UpdateHosts", q, &dummy)
-	if err != nil {
-		return fmt.Errorf("hokuto: %w", err)
-	}
-	return nil
 }
 
 // NOTE: ccLock must be held
@@ -74,7 +37,7 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 	if !ok {
 		return fmt.Errorf("peer %s not found", cn.Me)
 	}
-	if len(me.Hosts) != 0 {
+	if me.Host != "" {
 		listenPort := cn.ListenPort
 		config.ListenPort = &listenPort
 	}
@@ -130,31 +93,28 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 // NOTE: ccLock must be held
 func (s *Node) convPeer(cn *central.Network, pn string) (config *wgtypes.PeerConfig, ignore bool, err error) {
 	peer := cn.Peers[pn]
-	endpoint, overridden := s.getEOLog(eoQ{
+	endpoint := s.getEOLog(eoQ{
 		CNN:      cn.Name,
 		PN:       pn,
 		Endpoint: peer.Host,
 	})
-	if overridden {
-		host, err = net.ResolveUDPAddr("udp", endpoint)
+	var host *net.UDPAddr
+	if endpoint != "" {
+		var hostOnly string
+		hostOnly, _, err = net.SplitHostPort(endpoint)
+		if err != nil {
+			err = fmt.Errorf("peer %s: splitting failed", peer.Name)
+			return
+		}
+		toResolve := fmt.Sprintf("%s:%d", hostOnly, cn.ListenPort)
+		if endpoint != peer.Host {
+			// if a custom endpoint is given, respect port choices for that
+			toResolve = endpoint
+		}
+		host, err = net.ResolveUDPAddr("udp", toResolve)
 		if err != nil {
 			err = fmt.Errorf("peer %s: resolving failed", toResolve)
 			return
-		}
-	} else {
-		var host *net.UDPAddr
-		for _, host := range peer.Hosts {
-			var hostOnly string
-			hostOnly, _, err = net.SplitHostPort(host)
-			if err != nil {
-				err = fmt.Errorf("peer %s: splitting failed", peer.Name)
-				return
-			}
-			toResolve := fmt.Sprintf("%s:%d", hostOnly, cn.ListenPort)
-			if overridden {
-				// if a custom endpoint is given, respect port choices for that
-				toResolve = host
-			}
 		}
 	}
 

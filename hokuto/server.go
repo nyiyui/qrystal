@@ -41,25 +41,6 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 	return nil
 }
 
-type UpdateHostsQ struct {
-	Token []byte
-	Hosts map[string][]string
-}
-
-func (_ Hokuto) UpdateHosts(q *UpdateHostsQ, _ *bool) error {
-	if !bytes.Equal(token, q.Token) {
-		return errors.New("token mismatch")
-	}
-	if q.Hosts == nil {
-		return errors.New("Hosts is nil")
-	}
-	hostsLock.Lock()
-	defer hostsLock.Unlock()
-	hosts = q.Hosts
-	util.S.Debugf("UpdateHosts: %s", hosts)
-	return nil
-}
-
 type InitQ struct {
 	Addr   string
 	Parent string

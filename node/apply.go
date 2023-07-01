@@ -48,10 +48,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 				peer.Desynced = central.DPeer
 			}
 			peer.Name = pn2
-			peer.Hosts = peer2.Hosts
-			if !central.Same3(peer.Hosts, peer2.Hosts) {
-				peer.Desynced |= central.DHosts
-			}
+			peer.Host = peer2.Host
 			peer.AllowedIPs = peer2.AllowedIPs
 			if !central.Same(peer.AllowedIPs, peer2.AllowedIPs) {
 				peer.Desynced |= central.DIPs

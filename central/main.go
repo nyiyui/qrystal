@@ -17,7 +17,6 @@ const (
 	DIPs     = 0x2
 	DKeys    = 0x8
 	DPeer    = 0x4
-	DHosts   = 0x16
 )
 
 // Config is the root.
@@ -49,15 +48,14 @@ func (cn *Network) String() string {
 type Peer struct {
 	Desynced        int
 	Name            string   `yaml:"name" json:"name"`
-	Hosts           []string `yaml:"hosts" json:"hosts"`
+	Host            string   `yaml:"host" json:"host"`
 	AllowedIPs      []IPNet  `yaml:"allowedIPs" json:"allowedIPs"`
 	ForwardingPeers []string `yaml:"forwardingPeers" json:"forwardingPeers"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
 	// TODO: when CanSee.Only is blank, this is interpreted as nil → no way to distinguish between seeing nothing and everything
 	CanSee *CanSee `yaml:"canSee" json:"canSee"`
 
-	PubKey   wgtypes.Key
-	HostsKey string
+	PubKey wgtypes.Key
 }
 
 func (p *Peer) String() string {
@@ -66,7 +64,7 @@ func (p *Peer) String() string {
 }
 
 func (p *Peer) Same(p2 *Peer) bool {
-	return p.Name == p2.Name && Same3(p.Hosts, p2.Hosts) && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
+	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
 }
 
 type CanSee struct {
