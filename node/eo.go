@@ -102,14 +102,14 @@ func (n *Node) getEO(q eoQ) (overriddenEndpoint string, err error) {
 }
 
 // getEOLog returns the overriden endpoint for a peer.
-func (n *Node) getEOLog(q eoQ) (overriddenEndpoint string) {
+func (n *Node) getEOLog(q eoQ) (overriddenEndpoint string, overridden bool) {
 	n.eoStateLock.Lock()
 	defer n.eoStateLock.Unlock()
 	if n.eoState == nil {
 		err := n.initEORaw()
 		if err != nil {
 			util.S.Errorf("endpoint override: init: %s", err)
-			return q.Endpoint
+			return "", false
 		}
 	}
 	oe, err := n.getEO(q)
@@ -118,7 +118,7 @@ func (n *Node) getEOLog(q eoQ) (overriddenEndpoint string) {
 		util.S.Info("endpoint override: destroying…")
 		err = n.deinitEORaw()
 		util.S.Errorf("endpoint override: deinit: %s", err)
-		return q.Endpoint
+		return "", false
 	}
-	return oe
+	return oe, true
 }

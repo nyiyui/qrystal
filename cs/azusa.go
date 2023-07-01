@@ -58,7 +58,7 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			}
 		}
 		cn.Peers[peer.Name] = &central.Peer{
-			Host:       peer.Host,
+			Hosts:      peer.Hosts,
 			AllowedIPs: peer.AllowedIPs,
 			CanSee:     peer.CanSee,
 		}

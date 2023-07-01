@@ -16,6 +16,8 @@ import (
 
 var cc *central.Config
 var ccLock sync.Mutex
+var hosts map[string][]string
+var hostsLock sync.Mutex
 
 var mask32 = net.CIDRMask(32, 32)
 
@@ -69,6 +71,9 @@ func handleInternal(m *dns.Msg, q dns.Question) (rcode int) {
 	}
 	reverse(parts)
 	cnn := parts[0]
+	if cnn == "multiple-hosts-internal" {
+		return handleHosts(m, q, parts[1])
+	}
 	cn := cc.Networks[cnn]
 	if cn == nil {
 		util.S.Debugf("handleQuery nx net %s", cnn)
@@ -88,6 +93,23 @@ func handleInternal(m *dns.Msg, q dns.Question) (rcode int) {
 			return dns.RcodeNameError
 		}
 		returnPeer(m, q, peer)
+	}
+	return dns.RcodeSuccess
+}
+
+func handleHosts(m *dns.Msg, q dns.Question, key string) int {
+	hostsLock.Lock()
+	defer hostsLock.Unlock()
+	for _, val := range hosts[key] {
+		// TODO: if val looks like an IP, use A
+		typ := "CNAME"
+		if net.ParseIP(val) != nil {
+			typ = "A"
+		}
+		rr, err := dns.NewRR(fmt.Sprintf("%s %s %s", q.Name, typ, val))
+		if err == nil {
+			m.Answer = append(m.Answer, rr)
+		}
 	}
 	return dns.RcodeSuccess
 }

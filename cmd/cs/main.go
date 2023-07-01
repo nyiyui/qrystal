@@ -106,10 +106,10 @@ func warnNoPorts(config *cs.Config) error {
 	bad := false
 	for cnn, cn := range config.CC.Networks {
 		for pn, peer := range cn.Peers {
-			if peer.Host != "" {
-				_, _, err := net.SplitHostPort(peer.Host)
+			for i, host := range peer.Hosts {
+				_, _, err := net.SplitHostPort(host)
 				if err != nil {
-					util.S.Warnf("net %s peer %s has bad host: %s", cnn, pn, err)
+					util.S.Warnf("net %s peer %s has bad host (index %d): %s", cnn, pn, i, err)
 					bad = true
 				}
 			}
