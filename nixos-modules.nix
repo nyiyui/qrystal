@@ -57,6 +57,23 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
           config = mkOption {
             type = submodule {
               options = {
+                trace = mkOption {
+                  type = nullOr (submodule {
+                    options = {
+                      outputPath = mkOption {
+                        type = path;
+                        description = ''
+                          Output path of the trace. Note that PrivateTmp=yes is set on the systemd unit, so "/tmp/trace" will actually be "/tmp/systemd-private.../tmp/trace".'';
+                      };
+                      waitUntilCNs = mkOption {
+                        type = listOf str;
+                        description =
+                          "Wait for these CNs to reify before stopping the trace.";
+                      };
+                    };
+                  });
+                  default = null;
+                };
                 endpointOverride = mkOption {
                   type = nullOr path;
                   description = "Path to executable for endpoint override.";
@@ -150,7 +167,12 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               enable = true;
               resolveLocalQueries = true;
               settings = {
-                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ] ++ (if cfg.config.hokuto.dnsmasqGoogleDNS then [ "8.8.8.8" "8.8.4.4" ] else []);
+                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ]
+                  ++ (if cfg.config.hokuto.dnsmasqGoogleDNS then [
+                    "8.8.8.8"
+                    "8.8.4.4"
+                  ] else
+                    [ ]);
                 conf-file = "${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf";
                 dnssec = true;
                 listen-address = "::1,127.0.0.53";
@@ -173,7 +195,12 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               "RUNNER_HOKUTO_PATH" = "${pkg}/bin/runner-hokuto";
               "RUNNER_NODE_PATH" = "${pkg}/bin/runner-node";
               "RUNNER_NODE_CONFIG_PATH" = mkConfigFile cfg;
-            };
+            } // (if (cfg.config.trace != null) then {
+              "QRYSTAL_TRACE_OUTPUT_PATH" = cfg.config.trace.outputPath;
+              "QRYSTAL_TRACE_UNTIL_CNS" =
+                builtins.toJSON cfg.config.trace.waitUntilCNs;
+            } else
+              { });
 
             serviceConfig = {
               Restart = "on-failure";
@@ -270,10 +297,8 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                                     description = "Peer name.";
                                   };
                                   canSeeElement = mkOption {
-                                    type = (oneOf [
-                                      (listOf str)
-                                      (enum [ "any" ])
-                                    ]);
+                                    type =
+                                      (oneOf [ (listOf str) (enum [ "any" ]) ]);
                                     description =
                                       "Pushed peers' canSee must be an element of canSeeElement.";
                                   };

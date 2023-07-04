@@ -447,9 +447,9 @@ in {
               text = "not yet";
               mode = "0666";
             };
-            systemd.services.qrystal-node.environment = {
-              "QRYSTAL_TRACE_OUTPUT_PATH" = tracePath;
-              "QRYSTAL_TRACE_UNTIL_CNS" = builtins.toJSON [networkName];
+            qrystal.services.node.config.trace = {
+              outputPath = tracePath;
+              waitUntilCNs = [ networkName ];
             };
             environment.systemPackages = with pkgs; [ go ];
           })
