@@ -112,6 +112,9 @@ func (n *Node) getEOLog(q eoQ) (overriddenEndpoint string) {
 			return q.Endpoint
 		}
 	}
+	if n.eoState == nil {
+		return q.Endpoint
+	}
 	oe, err := n.getEO(q)
 	if err != nil {
 		util.S.Errorf("endpoint override: get: %s", err)
