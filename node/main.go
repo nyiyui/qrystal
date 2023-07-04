@@ -22,6 +22,7 @@ type NodeConfig struct {
 	EndpointOverride string
 }
 
+// There must be only one Node instance as a Node can trigger a trace to stop.
 func NewNode(cfg NodeConfig) (*Node, error) {
 	mh, err := newMio(cfg.MioAddr, cfg.MioToken)
 	if err != nil {

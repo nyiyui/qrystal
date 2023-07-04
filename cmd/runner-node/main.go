@@ -94,6 +94,7 @@ func main() {
 	util.ShowCurrent()
 	profile.Profile()
 
+	node.TraceInit()
 	var c config
 	configPath := os.Getenv("CONFIG_PATH")
 	data, err := os.ReadFile(configPath)

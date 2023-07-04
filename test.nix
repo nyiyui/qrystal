@@ -428,4 +428,75 @@ in {
           break
     '';
   });
+  trace = let
+    networkName = "testnet";
+    eoPath = pkgs.writeShellScript "eo.sh" ''
+      while IFS= read -r line
+      do
+        echo '{"endpoint":"1.2.3.4:5678"}'
+      done
+    '';
+    tracePath = "/etc/qrystal-trace";
+    node = { token }:
+      { pkgs, ... }: {
+        imports = [
+          base
+          self.outputs.nixosModules.${system}.node
+          ({ ... }: { 
+            environment.etc."qrystal-trace" = {
+              text = "not yet";
+              mode = "0666";
+            };
+            systemd.services.qrystal-node.environment = {
+              "QRYSTAL_TRACE_OUTPUT_PATH" = tracePath;
+              "QRYSTAL_TRACE_UNTIL_CNS" = builtins.toJSON [networkName];
+            };
+            environment.systemPackages = with pkgs; [ go ];
+          })
+        ];
+
+        networking.firewall.allowedTCPPorts = [ 39251 ];
+        qrystal.services.node = csConfig [ networkName ] token;
+      };
+  in lib.runTest ({
+    name = "trace";
+    hostPkgs = pkgs;
+    nodes = {
+      node1 = node { token = node1Token; };
+      cs = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.cs ];
+
+        networking.firewall.allowedTCPPorts = [ 39252 ];
+        qrystal.services.cs = {
+          enable = true;
+          config = {
+            tls = csTls;
+            tokens = [
+              (nodeToken "node1" node1Hash [ networkName ])
+            ];
+            central.networks.${networkName} = networkBase // {
+              peers.node1 = {
+                host = "node1:58120";
+                allowedIPs = [ "10.123.0.1/32" ];
+                canSee.only = [ "node1" ];
+              };
+            };
+          };
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      import time
+
+      cs.start()
+      cs.wait_for_unit("qrystal-cs.service")
+      node1.start()
+      node1.wait_for_unit("qrystal-node.service", timeout=20)
+      start = time.time()
+      node1.wait_until_succeeds("cat ${tracePath}", timeout=20)
+      # verify trace is valid (e.g. if it finished writing correctly)
+      node1.succeed("go tool trace -pprof=net ${tracePath}")
+      # pprof type doesn't matter
+    '';
+  });
 }

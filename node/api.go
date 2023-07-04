@@ -74,6 +74,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 		}
 		util.Notify(fmt.Sprintf("STATUS=Synced to new CC (%d CNs)...", len(cc.Networks)))
 		util.Notify("READY=1")
+		n.traceCheck()
 		return nil
 	})
 	go cl.Run()
