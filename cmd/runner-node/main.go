@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/hokuto"
 	"github.com/nyiyui/qrystal/node"
 	"github.com/nyiyui/qrystal/profile"
 	"github.com/nyiyui/qrystal/util"
@@ -24,8 +25,9 @@ type config struct {
 }
 
 type hokutoConfig struct {
-	Parent string `yaml:"parent"`
-	Addr   string `yaml:"addr"`
+	Parent       string               `yaml:"parent"`
+	ExtraParents []hokuto.ExtraParent `yaml:"extraParents"`
+	Addr         string               `yaml:"addr"`
 }
 
 type csConfig struct {
@@ -119,12 +121,13 @@ func main() {
 		log.Fatalf("parse MIO_TOKEN: %s", err)
 	}
 	nc := node.NodeConfig{
-		MioAddr:          mioAddr,
-		MioToken:         mioToken,
-		CS:               *ncsc,
-		HokutoDNSAddr:    c.Hokuto.Addr + ":53",
-		HokutoDNSParent:  c.Hokuto.Parent,
-		EndpointOverride: c.EndpointOverride,
+		MioAddr:            mioAddr,
+		MioToken:           mioToken,
+		CS:                 *ncsc,
+		HokutoDNSAddr:      c.Hokuto.Addr + ":53",
+		HokutoDNSParent:    c.Hokuto.Parent,
+		HokutoExtraParents: c.Hokuto.ExtraParents,
+		EndpointOverride:   c.EndpointOverride,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")

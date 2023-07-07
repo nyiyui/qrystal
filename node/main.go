@@ -7,19 +7,21 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/hokuto"
 )
 
 type NodeConfig struct {
-	CC               central.Config
-	MioAddr          string
-	MioToken         []byte
-	HokutoAddr       string
-	HokutoToken      []byte
-	HokutoDNSAddr    string
-	HokutoDNSParent  string
-	HokutoUseDNS     bool
-	CS               CSConfig
-	EndpointOverride string
+	CC                 central.Config
+	MioAddr            string
+	MioToken           []byte
+	HokutoAddr         string
+	HokutoToken        []byte
+	HokutoDNSAddr      string
+	HokutoDNSParent    string
+	HokutoUseDNS       bool
+	HokutoExtraParents []hokuto.ExtraParent
+	CS                 CSConfig
+	EndpointOverride   string
 }
 
 // There must be only one Node instance as a Node can trigger a trace to stop.
@@ -51,7 +53,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 			return nil, fmt.Errorf("hokuto resolve addr: %w", err)
 		}
 		node.hokutoDNSAddr = *addr
-		err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr)
+		err = node.hokutoInit(cfg.HokutoDNSParent, cfg.HokutoDNSAddr, cfg.HokutoExtraParents)
 		if err != nil {
 			return nil, fmt.Errorf("hokuto init: %w", err)
 		}

@@ -106,6 +106,26 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                         description =
                           "All domains inside networks will be of the format <peer>.<network>.<parent>";
                       };
+                      extraParents = mkOption {
+                        type = listOf (submodule {
+                          options = {
+                            network = mkOption {
+                              type = nullOr str;
+                              description =
+                                "If not null, this parent domain will be for just this network.";
+                              default = null;
+                            };
+                            domain = mkOption {
+                              type = str;
+                              description = "Parent domain.";
+                              example = ".internal.example.org";
+                              default = null;
+                            };
+                          };
+                        });
+                        default = [];
+                        description = "Extra parent domains.";
+                      };
                     };
                   };
                   default = { };

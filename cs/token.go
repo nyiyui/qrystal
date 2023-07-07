@@ -185,8 +185,18 @@ func (c *CanPushNetwork) UnmarshalYAML(value *yaml.Node) error {
 		c.CanSeeElementAny = cse == "any"
 	case []string:
 		c.CanSeeElement = cse
+	case []interface{}:
+		cse2 := make([]string, 0, len(cse))
+		for i, val := range cse {
+			s, ok := val.(string)
+			if !ok {
+				return fmt.Errorf("must be []string (index %d is %T)", i, val)
+			}
+			cse2 = append(cse2, s)
+		}
+		c.CanSeeElement = cse2
 	default:
-		return errors.New("canSeeElement must be \"any\" or []string")
+		return fmt.Errorf("canSeeElement must be \"any\" or []string, not %#v", cse)
 	}
 	return nil
 }

@@ -42,8 +42,15 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 }
 
 type InitQ struct {
-	Addr   string
-	Parent string
+	Addr         string
+	Parent       string
+	ExtraParents []ExtraParent
+}
+
+// ExtraParent configuration.
+type ExtraParent struct {
+	Network string `yaml:"network"`
+	Domain  string `yaml:"domain"`
 }
 
 func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {

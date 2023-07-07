@@ -14,6 +14,8 @@ import (
 
 // ~~stolen~~ copied from <https://gist.github.com/walm/0d67b4fb2d5daf3edd4fad3e13b162cb>.
 
+var extraParents []ExtraParent
+
 var cc *central.Config
 var ccLock sync.Mutex
 
@@ -35,27 +37,33 @@ func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
 }
 
 func handleQuery(m *dns.Msg) (rcode int) {
-	var m2 dns.Msg
 	for _, q := range m.Question {
 		util.S.Debugf("handleQuery: %s", q.Name)
 
 		if strings.HasSuffix(q.Name, suffix) {
 			if q.Qtype == dns.TypeA {
-				rcode2 := handleInternal(m, q)
+				rcode2 := handleInternal(m, q, suffix, "")
 				if rcode2 != dns.RcodeSuccess {
 					rcode = rcode2
 					return
 				}
 			}
 		} else {
-			util.S.Debugf("question %s", q)
-			m2.Question = append(m2.Question, q)
+			for _, extra := range extraParents {
+				if strings.HasSuffix(q.Name, extra.Domain) {
+					rcode2 := handleInternal(m, q, extra.Domain, extra.Network)
+					if rcode2 != dns.RcodeSuccess {
+						rcode = rcode2
+						return
+					}
+				}
+			}
 		}
 	}
 	return
 }
 
-func handleInternal(m *dns.Msg, q dns.Question) (rcode int) {
+func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) {
 	ccLock.Lock()
 	defer ccLock.Unlock()
 	if cc == nil {
@@ -68,7 +76,10 @@ func handleInternal(m *dns.Msg, q dns.Question) (rcode int) {
 		return dns.RcodeNameError
 	}
 	reverse(parts)
-	cnn := parts[0]
+	if cnn == "" {
+		cnn = parts[0]
+		parts = parts[1:]
+	}
 	cn := cc.Networks[cnn]
 	if cn == nil {
 		util.S.Debugf("handleQuery nx net %s", cnn)
@@ -81,7 +92,7 @@ func handleInternal(m *dns.Msg, q dns.Question) (rcode int) {
 			returnPeer(m, q, peer)
 		}
 	case 2:
-		pn := parts[1]
+		pn := parts[0]
 		peer := cn.Peers[pn]
 		if peer == nil {
 			util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
