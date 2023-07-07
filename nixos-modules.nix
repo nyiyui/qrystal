@@ -187,7 +187,8 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               enable = true;
               resolveLocalQueries = true;
               settings = {
-                server = [ "/${cfg.config.hokuto.parent}/127.0.0.39" ]
+                server = [ "/${cfg.config.hokuto.parent}/${cfg.config.hokuto.addr}" ]
+                  ++ (map (ep: "/${ep.domain}/${cfg.config.hokuto.addr}") cfg.config.hokuto.extraParents)
                   ++ (if cfg.config.hokuto.dnsmasqGoogleDNS then [
                     "8.8.8.8"
                     "8.8.4.4"
@@ -198,7 +199,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 listen-address = "::1,127.0.0.53";
                 local = "/${cfg.config.hokuto.parent}/";
                 interface = "lo";
-                bind-interfaces = true; # hokuto binds to 127.0.0.39
+                bind-interfaces = true; # hokuto binds to cfg.config.hokuto.addr
               };
             };
           users.groups.qrystal-node = { };
