@@ -86,12 +86,12 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 		return dns.RcodeNameError
 	}
 	switch len(parts) {
-	case 1:
+	case 0:
 		util.S.Debugf("handleQuery net %s", cnn)
 		for _, peer := range cn.Peers {
 			returnPeer(m, q, peer)
 		}
-	case 2:
+	case 1:
 		pn := parts[0]
 		peer := cn.Peers[pn]
 		if peer == nil {
