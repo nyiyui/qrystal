@@ -197,7 +197,6 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 conf-file = "${pkgs.dnsmasq}/share/dnsmasq/trust-anchors.conf";
                 dnssec = true;
                 listen-address = "::1,127.0.0.53";
-                local = "/${cfg.config.hokuto.parent}/";
                 interface = "lo";
                 bind-interfaces = true; # hokuto binds to cfg.config.hokuto.addr
               };
