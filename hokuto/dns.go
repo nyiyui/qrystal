@@ -80,8 +80,8 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 		cnn = parts[0]
 		parts = parts[1:]
 	}
-	cn := cc.Networks[cnn]
-	if cn == nil {
+	cn, ok := cc.Networks[cnn]
+	if !ok {
 		util.S.Debugf("handleQuery nx net %s", cnn)
 		return dns.RcodeNameError
 	}

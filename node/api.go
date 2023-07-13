@@ -3,6 +3,7 @@ package node
 import (
 	"crypto/tls"
 	"fmt"
+	"strings"
 
 	"github.com/cenkalti/rpc2"
 	"github.com/nyiyui/qrystal/api"
@@ -72,7 +73,11 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 		if err != nil {
 			return fmt.Errorf("updateHokutoCC: %w", err)
 		}
-		util.Notify(fmt.Sprintf("STATUS=Synced to new CC (%d CNs)...", len(cc.Networks)))
+		cns := new(strings.Builder)
+		for cnn, cn := range n.cc.Networks {
+			fmt.Fprintf(cns, " %s", cnn)
+		}
+		util.Notify(fmt.Sprintf("STATUS=Synced. CNs:%s", cns))
 		util.Notify("READY=1")
 		n.traceCheck()
 		return nil
