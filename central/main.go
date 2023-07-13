@@ -112,6 +112,11 @@ func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
 	return err
 }
 
+// MarshalJSON implements yaml.Marshaler.
+func (d *Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(*d).String())
+}
+
 // MarshalYAML implements yaml.Marshaler.
 func (d *Duration) MarshalYAML() (interface{}, error) {
 	return time.Duration(*d).String(), nil
@@ -143,6 +148,12 @@ func (i *IPNet) UnmarshalYAML(value *yaml.Node) error {
 	net, err := util.ParseCIDR(raw)
 	*i = IPNet(net)
 	return err
+}
+
+// MarshalJSON implements yaml.Marshaler.
+func (i IPNet) MarshalJSON() ([]byte, error) {
+	i2 := net.IPNet(i)
+	return json.Marshal(i2.String())
 }
 
 // MarshalYAML implements yaml.Marshaler.
