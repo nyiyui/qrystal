@@ -22,6 +22,7 @@ type NodeConfig struct {
 	HokutoExtraParents []hokuto.ExtraParent
 	CS                 CSConfig
 	EndpointOverride   string
+	BackportPath       string
 }
 
 // There must be only one Node instance as a Node can trigger a trace to stop.
@@ -46,6 +47,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		mio:                  mh,
 		hokuto:               hh,
 		endpointOverridePath: cfg.EndpointOverride,
+		backportPath:         cfg.BackportPath,
 	}
 	if cfg.HokutoDNSAddr != "" {
 		addr, err := net.ResolveUDPAddr("udp", cfg.HokutoDNSAddr)
@@ -80,4 +82,6 @@ type Node struct {
 	endpointOverridePath string
 	eoState              *eoState
 	eoStateLock          sync.Mutex
+
+	backportPath string
 }

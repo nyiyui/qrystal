@@ -42,7 +42,7 @@ Flakes are recommended. See `flake.nix` for options.
 
 ## TODO
 
-- node: wg config persistent over reboot, etc (change only when cs requests so, or when wg conn fails?)
+- node: test node backport (in test.nix)
 - confine qrystal-node and qrystal-cs (using systemd's options)
 - configure existing interfaces without disrupting connections (as much as possible)
 - support multiple hosts

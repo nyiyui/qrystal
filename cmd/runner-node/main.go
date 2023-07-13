@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"crypto/tls"
@@ -128,6 +129,7 @@ func main() {
 		HokutoDNSParent:    c.Hokuto.Parent,
 		HokutoExtraParents: c.Hokuto.ExtraParents,
 		EndpointOverride:   c.EndpointOverride,
+		BackportPath:       filepath.Join(os.Getenv("STATE_DIRECTORY"), "node-backport.json"),
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")
@@ -141,5 +143,9 @@ func main() {
 		panic(err)
 	}
 
+	err = n.LoadBackport()
+	if err != nil {
+		util.S.Errorf("load backport: %s", err)
+	}
 	n.ListenCS()
 }

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/nyiyui/qrystal/runner/config"
 )
@@ -17,6 +18,38 @@ type nodeHandle struct {
 }
 
 func newNode(cfg *config.Node, mh, hh *mioHandle) (*nodeHandle, error) {
+	backportPath := filepath.Join(os.Getenv("STATE_DIRECTORY"), "node-backport.json")
+	_, err := os.Stat(backportPath)
+	if os.IsNotExist(err) {
+		f, err := os.Create(backportPath)
+		if err != nil {
+			return nil, fmt.Errorf("create backport file: %w", err)
+		}
+		err = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("close created backport file: %w", err)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("stat backport file: %w", err)
+	}
+	err = os.Chmod(backportPath, 0o0600)
+	if err != nil {
+		return nil, fmt.Errorf("chmod created backport file: %w", err)
+	}
+	cred, err := cfg.Subprocess.Credential.ToCredential()
+	if err != nil {
+		return nil, fmt.Errorf("backport file: load credential: %w", err)
+	}
+	err = os.Chown(backportPath, int(cred.Uid), int(cred.Gid))
+	if err != nil {
+		return nil, fmt.Errorf("chown created backport file: %w", err)
+	}
+
+	err = os.Chown(os.Getenv("STATE_DIRECTORY"), int(cred.Uid), int(cred.Gid))
+	if err != nil {
+		return nil, fmt.Errorf("chown STATE_DIRECTORY: %w", err)
+	}
+
 	cmd, err := newSubprocess(cfg.Subprocess)
 	if err != nil {
 		return nil, fmt.Errorf("subprocess: %w", err)

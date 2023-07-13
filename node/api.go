@@ -74,11 +74,15 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 			return fmt.Errorf("updateHokutoCC: %w", err)
 		}
 		cns := new(strings.Builder)
-		for cnn, cn := range n.cc.Networks {
+		for cnn := range n.cc.Networks {
 			fmt.Fprintf(cns, " %s", cnn)
 		}
 		util.Notify(fmt.Sprintf("STATUS=Synced. CNs:%s", cns))
 		util.Notify("READY=1")
+		err = n.saveBackport()
+		if err != nil {
+			util.S.Errorf("save backport: %s", err)
+		}
 		n.traceCheck()
 		return nil
 	})
