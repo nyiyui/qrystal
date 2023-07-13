@@ -146,6 +146,8 @@ func main() {
 	err = n.LoadBackport()
 	if err != nil {
 		util.S.Errorf("load backport: %s", err)
+	} else {
+		util.S.Info("loaded from backport.")
 	}
 	n.ListenCS()
 }

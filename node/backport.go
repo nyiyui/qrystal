@@ -29,6 +29,10 @@ func (n *Node) LoadBackport() error {
 			defer n.ccLock.Unlock()
 			n.cc = *b.CC
 		}()
+		err = n.update()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
