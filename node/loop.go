@@ -26,6 +26,7 @@ func (n *Node) listenCS() error {
 	return util.Backoff(func() (resetBackoff bool, err error) {
 		return n.listenCSOnce()
 	}, func(backoff time.Duration, err error) error {
+		util.Notify(fmt.Sprintf("STATUS=connecting to CS: %s (retrying in %s)", err, backoff))
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
 			"err", err,
