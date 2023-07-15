@@ -499,4 +499,105 @@ in {
       # pprof type doesn't matter
     '';
   });
+  node-backport = let
+    networkName = "testnet";
+    networkName2 = "othernet";
+    testDomain = "cs";
+  in let
+    node = { token }:
+      { pkgs, ... }: {
+        imports = [
+          base
+          self.outputs.nixosModules.${system}.node
+        ];
+
+        networking.firewall.allowedTCPPorts = [ 39251 ];
+        qrystal.services.node = csConfig [ networkName networkName2 ] token;
+        systemd.services.qrystal-node.wantedBy = [ ];
+      };
+  in lib.runTest ({
+    name = "node-backport";
+    hostPkgs = pkgs;
+    nodes = {
+      node1 = node { token = node1Token; };
+      node2 = node { token = node2Token; };
+      cs = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.cs ];
+
+        networking.firewall.allowedTCPPorts = [ 39252 ];
+        qrystal.services.cs = {
+          enable = true;
+          config = {
+            tls = csTls;
+            tokens = [
+              (nodeToken "node1" node1Hash [ networkName networkName2 ])
+              (nodeToken "node2" node2Hash [ networkName networkName2 ])
+            ];
+            central.networks.${networkName} = networkBase // {
+              peers.node1 = {
+                host = "node1:58120";
+                allowedIPs = [ "10.123.0.1/32" ];
+                canSee.only = [ "node2" ];
+              };
+              peers.node2 = {
+                host = "node2:58120";
+                allowedIPs = [ "10.123.0.2/32" ];
+                canSee.only = [ "node1" ];
+              };
+            };
+            central.networks.${networkName2} = networkBase // {
+              keepalive = "10s";
+              listenPort = 58121;
+              ips = [ "10.45.0.1/16" ];
+              peers.node1 = {
+                host = "node1:58121";
+                allowedIPs = [ "10.45.0.1/32" ];
+                canSee.only = [ "node2" ];
+              };
+              peers.node2 = {
+                host = "node2:58121";
+                allowedIPs = [ "10.45.0.2/32" ];
+                canSee.only = [ "node1" ];
+              };
+            };
+          };
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      nodes = [node1, node2]
+      addrs = ["10.123.0.2", "10.123.0.1"]
+      cs.start()
+      cs.wait_for_unit("qrystal-cs.service")
+      for node in nodes:
+        node.start()
+        node.systemctl("start qrystal-node.service")
+        node.wait_for_unit("qrystal-node.service", timeout=20)
+      print("all nodes started")
+      # NOTE: there is a race condition where the peers' pubkeys could not be
+      # set yet when pinged (so that's why we're using wait_until_*
+      for i, node in enumerate(nodes):
+        print(node.wait_until_succeeds("wg show"))
+        print(node.wait_until_succeeds("wg show ${networkName}"))
+        print(node.wait_until_succeeds("wg show ${networkName2}"))
+        print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
+        print(node.execute("ip route show")[1])
+        for addr in addrs:
+          print(node.execute(f"ip route get {addr}")[1])
+      for i, node in enumerate(nodes):
+        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
+        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+      cs.crash() # bye bye
+      # 1st, nodes must survive CS crashing
+      for i, node in enumerate(nodes):
+        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
+        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+      # 2nd, nodes must survive CS crashing + restart
+      for i, node in enumerate(nodes):
+        node.systemctl("restart qrystal-node.service")
+      for i, node in enumerate(nodes):
+        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
+        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+    '';
+  });
 }
