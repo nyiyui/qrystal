@@ -50,7 +50,7 @@ install-cs: cs
 	systemctl restart systemd-sysusers
 	#
 	mkdir -p "${pkgdir}/etc/qrystal"
-	chown root:qrystal-node "${pkgdir}/etc/qrystal"
+	chown root:qrystal-cs "${pkgdir}/etc/qrystal"
 	chmod 755 "${pkgdir}/etc/qrystal"
 	install '${src}/config/cs-config.yml' "${pkgdir}/etc/qrystal/"
 	chown root:qrystal-cs "${pkgdir}/etc/qrystal/cs-config.yml"
