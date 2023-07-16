@@ -35,7 +35,7 @@ sd-notify-test:
 	go build -race -tags "${tags}" -o ${path}/sd-notify-test ${src}/cmd/sd-notify-test
 
 install-cs-push: cs-push
-	install -m 755 -o root -g root $@ ${pkdir}/usr/bin/qrystal-cs-push
+	install -m 755 -o root -g root $< ${pkdir}/usr/bin/qrystal-cs-push
 
 uninstall-cs-push:
 	rm -f ${pkgdir}/usr/bin/qrystal-cs-push
@@ -44,7 +44,7 @@ install-cs: cs
 	systemctl stop qrystal-cs
 	#
 	mkdir -p "${pkgdir}/opt/qrystal"
-	install -m 755 -o root -g root $@ ${pkdir}/opt/qrystal/qrystal-cs
+	install -m 755 -o root -g root $< ${pkdir}/opt/qrystal/qrystal-cs
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	install -m 644 '${src}/config/sysusers-cs.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal-cs.conf"
 	systemctl restart systemd-sysusers
