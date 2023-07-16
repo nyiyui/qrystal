@@ -1,5 +1,4 @@
 src=.
-path=${shell pwd}
 tags = sdnotiy
 ldflags-mio = -X github.com/nyiyui/qrystal/mio.CommandBash=${shell which bash}
 ldflags-mio += -X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
@@ -11,28 +10,28 @@ ldflags-runner = -X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node
 all: cs-admin cs gen-keys runner-hokuto runner-mio runner-node runner sd-notify-test
 
 cs-admin:
-	go build -race -tags "${tags}" -o ${path}/cs-push ${src}/cmd/cs-admin
+	go build -race -tags "${tags}" -o cs-push ${src}/cmd/cs-admin
 
 cs:
-	go build -race -tags "${tags}" -o ${path}/cs ${src}/cmd/cs
+	go build -race -tags "${tags}" -o cs ${src}/cmd/cs
 
 gen-keys:
-	go build -race -tags "${tags}" -o ${path}/gen-keys ${src}/cmd/gen-keys
+	go build -race -tags "${tags}" -o gen-keys ${src}/cmd/gen-keys
 
 runner-hokuto:
-	go build -race -tags "${tags}" -o ${path}/runner-hokuto ${src}/cmd/runner-hokuto
+	go build -race -tags "${tags}" -o runner-hokuto ${src}/cmd/runner-hokuto
 
 runner-mio:
-	go build -race -tags "${tags}" -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
+	go build -race -tags "${tags}" -ldflags "${ldflags-mio}" -o runner-mio ${src}/cmd/runner-mio
 
 runner-node:
-	go build -race -tags "${tags}" -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
+	go build -race -tags "${tags}" -ldflags "${ldflags-node}" -o runner-node ${src}/cmd/runner-node
 
 runner:
-	go build -race -tags "${tags}" -ldflags "${ldflags-runner}" -o ${path}/runner ${src}/cmd/runner
+	go build -race -tags "${tags}" -ldflags "${ldflags-runner}" -o runner ${src}/cmd/runner
 
 sd-notify-test:
-	go build -race -tags "${tags}" -o ${path}/sd-notify-test ${src}/cmd/sd-notify-test
+	go build -race -tags "${tags}" -o sd-notify-test ${src}/cmd/sd-notify-test
 
 install-cs-push: cs-push
 	install -m 755 -o root -g root $< ${pkdir}/usr/bin/qrystal-cs-push
