@@ -8,28 +8,31 @@ ldflags-node = -X github.com/nyiyui/qrystal/node.CommandIp=${shell which ip}
 ldflags-node += -X github.com/nyiyui/qrystal/node.CommandIptables=${shell which iptables}
 ldflags-runner = -X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node
 
-all: runner-mio runner-hokuto runner-node runner gen-keys cs
+all: cs-admin cs gen-keys runner-hokuto runner-mio runner-node runner sd-notify-test
 
-runner-mio:
-	cd ${src} && go build -race -tags "${tags}" -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
-
-runner-hokuto:
-	cd ${src} && go build -race -tags "${tags}" -o ${path}/runner-hokuto ${src}/cmd/runner-hokuto
-
-runner-node:
-	cd ${src} && go build -race -tags "${tags}" -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
-
-runner:
-	cd ${src} && go build -race -tags "${tags}" -ldflags "${ldflags-runner}" -o ${path}/runner ${src}/cmd/runner
-
-gen-keys:
-	cd ${src} && go build -race -tags "${tags}" -o ${path}/gen-keys ${src}/cmd/gen-keys
+cs-admin:
+	go build -race -tags "${tags}" -o ${path}/cs-push ${src}/cmd/cs-admin
 
 cs:
-	cd ${src} && go build -race -tags "${tags}" -o ${path}/cs ${src}/cmd/cs
+	go build -race -tags "${tags}" -o ${path}/cs ${src}/cmd/cs
 
-cs-push:
-	cd ${src} go build -race -tags "${tags}" -o ${path}/cs-push ${src}/cmd/cs-push
+gen-keys:
+	go build -race -tags "${tags}" -o ${path}/gen-keys ${src}/cmd/gen-keys
+
+runner-hokuto:
+	go build -race -tags "${tags}" -o ${path}/runner-hokuto ${src}/cmd/runner-hokuto
+
+runner-mio:
+	go build -race -tags "${tags}" -ldflags "${ldflags-mio}" -o ${path}/runner-mio ${src}/cmd/runner-mio
+
+runner-node:
+	go build -race -tags "${tags}" -ldflags "${ldflags-node}" -o ${path}/runner-node ${src}/cmd/runner-node
+
+runner:
+	go build -race -tags "${tags}" -ldflags "${ldflags-runner}" -o ${path}/runner ${src}/cmd/runner
+
+sd-notify-test:
+	go build -race -tags "${tags}" -o ${path}/sd-notify-test ${src}/cmd/sd-notify-test
 
 install-cs-push: cs-push
 	install -m 755 -o root -g root $@ ${pkdir}/usr/bin/qrystal-cs-push
