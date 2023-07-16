@@ -275,7 +275,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 ryoAddr = mkOption {
                   type = str;
                   default = ":39253";
-                  description = "Bind address of Ryo (HTTP) API";
+                  description = "Bind address of Ryo (HTTP; for cs-push) API";
                 };
                 tokens = mkOption {
                   type = listOf (submodule {
@@ -401,7 +401,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
             group = "qrystal-cs";
           };
           systemd.services.qrystal-cs = {
-            wantedBy = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
             serviceConfig = let pkg = packages.cs;
             in {
               User = "qrystal-cs";

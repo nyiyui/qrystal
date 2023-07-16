@@ -1,11 +1,12 @@
 [Unit]
 Wants=network-online.target
-After=network.target network-online.target
+After=network-online.target nss-lookup.target
 
 [Service]
 User=qrystal-cs
-ExecStart=qrystal-cs -config /etc/qrystal/cs-config.yml
-Environment=QRYSTAL_PROFILE=on
+Restart=on-failure
+Type=notify
+ExecStart=/opt/qrystal/qrystal-cs -config /etc/qrystal/cs-config.yml
 RuntimeDirectory=qrystal-cs
 RuntimeDirectoryMode=0700
 StateDirectory=qrystal-cs

@@ -1,32 +1,33 @@
-# NOTE: options not commented out are required.
+# NOTE: options not commented out are required. Options commented out have the default value filled in.
 tls:
   # path to pem-encoded tls certificate and key
   certPath:
   keyPath:
 # bind address for node API (node)
 addr: :39252
-# bind address for haruka API (cs-push etc)
-harukaAddr: :39253
+# bind address for ryo API (HTTP; for cs-push)
+ryoAddr: :39253
 # path to backport file
-backportPath: $STATE_DIRECTORY/cs-backport.yml
+#backportPath: $STATE_DIRECTORY/cs-backport.yml
 # path to db
-dbPath: $STATE_DIRECTORY/db
+#dbPath: $STATE_DIRECTORY/db
+
 # tokens for node and haruka APIs
 tokens:
   - # friendly name (used in e.g. errors)
     name: 
     # hash of the token (use qrystal-gen-keys)
     hash:
-    # allow token to pull (bool)
+    # Allow token to pull peers (see networks)
     canPull:
-    # networks the token can pull from
+    # Nets this token can pull from and the corresponding peer names.
     networks:
       <net name>: <peer name>
     # allow token to push new peer configs
     canPush:
       # can push to any peer in any net (bool)
       any:
-      # can pish to the following nets (overridden by any: true)
+      # can push to the following nets (overridden by any: true)
       networks:
         <net name>: 
           # can push a peer with this name
@@ -44,7 +45,7 @@ central:
     <net name>:
       # PersistentKeepalive= in wg-quick config
       keepalive: 10s
-      # ListenPort = in wg-quick config
+      # ListenPort= in wg-quick config
       listenPort: 58120
       # all IP addresses (IPv4 only) in the net
       ips:
@@ -58,5 +59,7 @@ central:
           allowed-ips:
             - 10.123.0.1/32
           # peer can only see the following peers
+          # NOTE: has to be either { only: ... } or "any"
           canSee:
             only: [ <peer name>… ]
+          canSee: "any"
