@@ -2,6 +2,7 @@ package node
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 )
@@ -39,7 +40,10 @@ func (n *Node) nominateForwarder(cnn string) (peerName string, err error) {
 			available = append(available, pn)
 		}
 	}
-	i, err := rand.Int(rand.Reader, big.NewInt(int64(len(cn.Peers)-1)))
+	if len(available) == 0 {
+		return "", errors.New("no available forwarders")
+	}
+	i, err := rand.Int(rand.Reader, big.NewInt(int64(len(available)-1)))
 	if err != nil {
 		return "", fmt.Errorf("choosing random peer: %w", err)
 	}
