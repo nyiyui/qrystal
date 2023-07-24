@@ -24,6 +24,11 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 "AllowedIPs= in wg-quick(8) config. If null, an available one is automagically allocated.";
               default = null;
             };
+            canForward = mkOption {
+              type = bool;
+              description = "Peer can forward for other peers.";
+              default = false;
+            };
             canSee = mkOption {
               type = nullOr (oneOf [
                 (submodule {
