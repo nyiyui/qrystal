@@ -46,16 +46,17 @@ func (cn *Network) String() string {
 
 // Peer configures a peer.
 type Peer struct {
-	Desynced        int
-	Name            string   `yaml:"name" json:"name"`
-	Host            string   `yaml:"host" json:"host"`
-	AllowedIPs      []IPNet  `yaml:"allowedIPs" json:"allowedIPs"`
-	ForwardingPeers []string `yaml:"forwardingPeers" json:"forwardingPeers"`
+	Desynced   int
+	Name       string  `yaml:"name" json:"name"`
+	Host       string  `yaml:"host" json:"host"`
+	AllowedIPs []IPNet `yaml:"allowedIPs" json:"allowedIPs"`
+	CanForward bool    `yaml:"canForward" json:"canForward"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
 	// TODO: when CanSee.Only is blank, this is interpreted as nil → no way to distinguish between seeing nothing and everything
 	CanSee *CanSee `yaml:"canSee" json:"canSee"`
 
-	PubKey wgtypes.Key
+	PubKey          wgtypes.Key
+	ForwardingPeers []string
 }
 
 func (p *Peer) String() string {
