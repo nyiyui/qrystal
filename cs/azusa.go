@@ -61,6 +61,7 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			Host:       peer.Host,
 			AllowedIPs: peer.AllowedIPs,
 			CanSee:     peer.CanSee,
+			CanForward: peer.CanForward,
 		}
 	}
 	return nil
