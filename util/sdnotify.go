@@ -29,6 +29,7 @@ package util
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"os"
 )
@@ -53,6 +54,10 @@ func Notify(state string) (err error) {
 	if err != nil {
 		return fmt.Errorf("sdnotify: Write: %w", err)
 	}
-	S.Infof("notify: %s", state)
+	if S == nil {
+		log.Printf("notify: %s", state)
+	} else {
+		S.Infof("notify: %s", state)
+	}
 	return nil
 }
