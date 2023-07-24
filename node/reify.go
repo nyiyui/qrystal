@@ -74,14 +74,16 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("nominate forwarder: %w", err)
 		}
-		forwarding := make([]string, 0, len(cn.Peers)-2)
-		for pn := range cn.Peers {
-			if cn.Me == pn || forwarder == pn {
-				continue
+		if forwarder != "" {
+			forwarding := make([]string, 0, len(cn.Peers)-2)
+			for pn := range cn.Peers {
+				if cn.Me == pn || forwarder == pn {
+					continue
+				}
+				forwarding = append(forwarding, pn)
 			}
-			forwarding = append(forwarding, pn)
+			cn.Peers[forwarder].ForwardingPeers = forwarding
 		}
-		cn.Peers[forwarder].ForwardingPeers = forwarding
 	}
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn := range cn.Peers {
