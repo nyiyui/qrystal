@@ -68,7 +68,6 @@ func (s *Node) reifyCN(cn *central.Network) (err error) {
 
 // NOTE: ccLock must be held.
 func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
-	var err error
 	var forwarder string
 	if cn.Peers[cn.Me].Host == "" {
 		forwarder, err = s.nominateForwarder(cn.Name)
