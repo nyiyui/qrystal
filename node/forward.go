@@ -43,7 +43,7 @@ func (n *Node) nominateForwarder(cnn string) (peerName string, err error) {
 	if len(available) == 0 {
 		return "", errors.New("no available forwarders")
 	}
-	i, err := rand.Int(rand.Reader, big.NewInt(int64(len(available)-1)))
+	i, err := rand.Int(rand.Reader, big.NewInt(int64(len(available))))
 	if err != nil {
 		return "", fmt.Errorf("choosing random peer: %w", err)
 	}
