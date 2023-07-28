@@ -49,6 +49,7 @@ func (n *Node) applyCC(cc2 *central.Config) {
 			}
 			peer.Name = pn2
 			peer.Host = peer2.Host
+			peer.CanForward = peer2.CanForward
 			peer.AllowedIPs = peer2.AllowedIPs
 			if !central.Same(peer.AllowedIPs, peer2.AllowedIPs) {
 				peer.Desynced |= central.DIPs
