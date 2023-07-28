@@ -1,6 +1,7 @@
 package node
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"time"
@@ -72,7 +73,8 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 	if cn.Peers[cn.Me].Host == "" {
 		forwarder, err = s.nominateForwarder(cn.Name)
 		if err != nil {
-			util.S.Infof("nomination from cn %#v failed", cn)
+			data, _ := json.MarshalIndent(cn, "", "  ")
+			util.S.Infof("nomination from cn %s failed", data)
 			return nil, fmt.Errorf("nominate forwarder: %w", err)
 		}
 		forwarding := make([]string, 0, len(cn.Peers)-2)
