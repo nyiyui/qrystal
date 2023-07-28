@@ -91,6 +91,10 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 		if pn == cn.Me {
 			continue
 		}
+		if forwarder != "" && pn != forwarder {
+			// only the forwarder is necessary for WireGuard
+			continue
+		}
 		peerConfig, ignore, err := s.convPeer(cn, pn)
 		if err != nil {
 			return nil, fmt.Errorf("peer %s: %w", pn, err)
