@@ -47,6 +47,7 @@
               protoc-gen-go
               protoc-gen-go-grpc
               nixfmt
+              govulncheck
             ];
           };
         };
