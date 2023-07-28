@@ -9,6 +9,7 @@ import (
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/util"
+	"golang.org/x/exp/slices"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -86,12 +87,16 @@ func (s *Node) convCN(cn *central.Network) (config *wgtypes.Config, err error) {
 		}
 		cn.Peers[forwarder].ForwardingPeers = forwarding
 	}
+	forwardedPeers := make([]string, 0)
+	for _, peer := range cn.Peers {
+		forwardedPeers = append(forwardedPeers, peer.ForwardingPeers...)
+	}
 	configs := make([]wgtypes.PeerConfig, 0, len(cn.Peers))
 	for pn := range cn.Peers {
 		if pn == cn.Me {
 			continue
 		}
-		if forwarder != "" && pn != forwarder {
+		if slices.Index(forwardedPeers, pn) != -1 {
 			// only the forwarder is necessary for WireGuard
 			continue
 		}
