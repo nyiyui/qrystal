@@ -65,7 +65,7 @@ func (p *Peer) String() string {
 }
 
 func (p *Peer) Same(p2 *Peer) bool {
-	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
+	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanForward == p2.CanForward && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
 }
 
 type CanSee struct {
