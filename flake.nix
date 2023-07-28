@@ -64,7 +64,7 @@
 
             #vendorSha256 = pkgs.lib.fakeSha256;
             vendorSha256 =
-              "b0ff1bcd48d430744eb68e636bdeae52bba88e45e49e43c6dd22b69438f6903d";
+              "2f8ac98cfcc7d7a6388b8bb286c63b6e627f6d4619d87e6821b59d46b8a58bb7";
           };
         in {
           runner = pkgs.buildGoModule (common // {
