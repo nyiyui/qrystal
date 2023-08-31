@@ -46,7 +46,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               default = null;
             };
             allowedSRVs = mkOption {
-              type = listOf (submodule {
+              type = nullOr (listOf (submodule {
                 options = {
                   service = mkOption { type = str; };
                   serviceAny = mkOption { type = bool; default = false; };
@@ -57,7 +57,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                   weightMin = mkOption { type = port; default = 0; };
                   weightMax = mkOption { type = port; default = 65535; };
                 };
-              });
+              }));
               default = null;
             };
           };
