@@ -20,6 +20,20 @@ type PushS struct {
 	PubKeys map[string]wgtypes.Key
 }
 
+type SRVUpdateQ struct {
+	CentralToken util.Token
+	SRVs         []SRV
+}
+
+type SRVUpdateS struct{}
+
+type SRV struct {
+	NetworkName string
+	PeerName    string
+
+	central.SRV
+}
+
 type GenerateQ struct {
 	CNNs []string
 }

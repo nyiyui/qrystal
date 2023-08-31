@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/util"
 	"github.com/tidwall/buntdb"
 	"gopkg.in/yaml.v3"
@@ -126,13 +127,19 @@ func (s *TokenStore) convertToMap() (m map[string]string, err error) {
 }
 
 type TokenInfo struct {
-	key            string `json:"-"`
-	Name           string
-	Networks       map[string]string
-	CanPull        bool
-	CanPush        *CanPush
-	CanAdminTokens *CanAdminTokens
+	key      string `json:"-"`
+	Name     string
+	Networks map[string]string
+	CanPull  bool
+	CanPush  *CanPush
 	// CanAdminTokens specifies whether this token can add *or remove* tokens.
+	CanAdminTokens *CanAdminTokens
+	// CanSRVUpdate allows updating SRV allowances for peers it can push to.
+	CanSRVUpdate bool
+	// SRVAllowance is a ORed list of SRV alloances for peers it can push to.
+	SRVAllowances []central.SRVAllowance
+	// SRVAllowancesAny allows updating SRV allowances without restrictions by SRVAllowances.
+	SRVAllowancesAny bool
 
 	Using    bool
 	LastUsed time.Time

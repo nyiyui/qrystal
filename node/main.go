@@ -23,6 +23,7 @@ type NodeConfig struct {
 	CS                 CSConfig
 	EndpointOverride   string
 	BackportPath       string
+	SRVList            string
 }
 
 // There must be only one Node instance as a Node can trigger a trace to stop.
@@ -48,6 +49,7 @@ func NewNode(cfg NodeConfig) (*Node, error) {
 		hokuto:               hh,
 		endpointOverridePath: cfg.EndpointOverride,
 		backportPath:         cfg.BackportPath,
+		srvListPath:          cfg.SRVList,
 	}
 	if cfg.HokutoDNSAddr != "" {
 		addr, err := net.ResolveUDPAddr("udp", cfg.HokutoDNSAddr)
@@ -84,4 +86,5 @@ type Node struct {
 	eoStateLock          sync.Mutex
 
 	backportPath string
+	srvListPath  string
 }

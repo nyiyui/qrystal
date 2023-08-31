@@ -16,6 +16,7 @@ func (c *CentralSource) newHandler() {
 	h.Handle("ping", c.ping)
 	h.Handle("sync", c.sync)
 	h.Handle("azusa", c.azusa)
+	h.Handle("srvUpdate", c.srvUpdate)
 	c.handler = h
 }
 

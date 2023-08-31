@@ -3,6 +3,7 @@ package central
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 	"time"
 
@@ -53,10 +54,12 @@ type Peer struct {
 	CanForward bool    `yaml:"canForward" json:"canForward"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
 	// TODO: when CanSee.Only is blank, this is interpreted as nil → no way to distinguish between seeing nothing and everything
-	CanSee *CanSee `yaml:"canSee" json:"canSee"`
+	CanSee      *CanSee `yaml:"canSee" json:"canSee"`
+	AllowedSRVs []SRVAllowance
 
 	PubKey          wgtypes.Key
 	ForwardingPeers []string
+	SRVs            []SRV
 }
 
 func (p *Peer) String() string {
@@ -84,6 +87,73 @@ func (c *CanSee) Same(c2 *CanSee) bool {
 		return false
 	}
 	return Same3(c.Only, c2.Only)
+}
+
+type SRVAllowable interface {
+	// AllowedBy returns nil this is allowed by the SRVAllowance, and a non-nil error otherwise.
+	AllowedBy(SRVAllowance) error
+}
+
+func AllowedByAny(sa SRVAllowable, a2s []SRVAllowance) bool {
+	for _, a2 := range a2s {
+		err := sa.AllowedBy(a2)
+		if err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+type SRVAllowance struct {
+	Service     string
+	ServiceAny  bool
+	Name        string
+	NameAny     bool
+	PriorityMin uint16
+	PriorityMax uint16
+	WeightMin   uint16
+	WeightMax   uint16
+}
+
+func (a SRVAllowance) AllowedBy(a2 SRVAllowance) error {
+	if !a2.ServiceAny && a.Service != a2.Service {
+		return errors.New("Service mismatch")
+	}
+	if !a2.NameAny && a.Name != a2.Name {
+		return errors.New("Name mismatch")
+	}
+	if !(a.PriorityMin >= a2.PriorityMin && a.PriorityMax <= a2.PriorityMax) {
+		return errors.New("Priority not in range")
+	}
+	if !(a.WeightMin >= a2.WeightMin && a.WeightMax <= a2.WeightMax) {
+		return errors.New("Weight not in range")
+	}
+	return nil
+}
+
+type SRV struct {
+	Service  string
+	Protocol string
+	Name     string
+	Priority uint16
+	Weight   uint16
+	Port     uint16
+}
+
+func (s SRV) AllowedBy(a2 SRVAllowance) error {
+	if !a2.ServiceAny && s.Service != a2.Service {
+		return errors.New("Service mismatch")
+	}
+	if !a2.NameAny && s.Name != a2.Name {
+		return errors.New("Name mismatch")
+	}
+	if !(a2.PriorityMin <= s.Priority && s.Priority <= a2.PriorityMax) {
+		return errors.New("Priority not in range")
+	}
+	if !(a2.WeightMin <= s.Weight && s.Weight <= a2.WeightMax) {
+		return errors.New("Weight not in range")
+	}
+	return nil
 }
 
 // Duration is a encoding-friendly time.Duration.

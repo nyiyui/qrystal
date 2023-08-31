@@ -23,6 +23,7 @@ type config struct {
 	CS               csConfig     `yaml:"cs"`
 	Hokuto           hokutoConfig `yaml:"hokuto"`
 	EndpointOverride string       `yaml:"endpointOverride"`
+	SRVList          string       `yaml:"srvList"`
 }
 
 type hokutoConfig struct {
@@ -130,6 +131,7 @@ func main() {
 		HokutoExtraParents: c.Hokuto.ExtraParents,
 		EndpointOverride:   c.EndpointOverride,
 		BackportPath:       filepath.Join(os.Getenv("STATE_DIRECTORY"), "node-backport.json"),
+		SRVList:            c.SRVList,
 	}
 	if os.Getenv("HOKUTO_ADDR") != "" {
 		nc.HokutoAddr = os.Getenv("HOKUTO_ADDR")

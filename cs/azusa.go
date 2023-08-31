@@ -26,17 +26,25 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 		}
 		peer, ok := cn.Peers[q.Networks[cnn].Name]
 		if !ok {
-			return fmt.Errorf("net %s no exist :(", cnn)
+			return fmt.Errorf("net %s peer %s no exist :(", cnn, q.Networks[cnn].Name)
 		}
 		peer.Name = q.Networks[cnn].Name
-		err = checkPeer(ti, cnn, peer)
+		err = checkPeer(ti, cnn, *peer)
 		if err != nil {
 			return err
 		}
-		_, ok := c.cc.Networks[cnn]
+		_, ok = c.cc.Networks[cnn]
 		if !ok {
 			return fmt.Errorf("net %s no exist :(", cnn)
 		}
+		if !ti.SRVAllowancesAny {
+			for saI, sa := range q.Networks[cnn].AllowedSRVs {
+				if !central.AllowedByAny(sa, ti.SRVAllowances) {
+					return fmt.Errorf("peer allowance %d: not allowed by any token-level allowances", saI)
+				}
+			}
+		}
+		// TODO: token-level restrictions on SRVAllowance and SRVs
 		fmt.Fprintf(&desc, "\n- net %s peer %s: %#v", cnn, peer.Name, peer)
 	}
 	util.S.Infof("azusa from token %s to push %d:\n%s", ti.Name, len(q.Networks), &desc)

@@ -4,6 +4,9 @@ package node
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/cenkalti/rpc2"
@@ -17,15 +20,48 @@ type listenError struct {
 }
 
 func (n *Node) ListenCS() {
+	go func() {
+		err := n.handleSRV()
+		util.S.Errorf("srv error: %s", err)
+		panic(fmt.Sprintf("srv error: %s", err))
+	}()
 	util.S.Debug("listening…")
 	err := n.listenCS()
 	util.S.Errorf("cs listen error: %s", err)
 }
 
+func (n *Node) handleSRV() error {
+	reloadCh := make(chan os.Signal)
+	signal.Notify(reloadCh, syscall.SIGUSR1)
+	return util.Backoff(func() (resetBackoff bool, err error) { return n.handleSRVOnce(reloadCh) }, func(backoff time.Duration, err error) error {
+		util.S.Errorf("srv: %s; retry in %s", err, backoff)
+		util.S.Errorw("srv: error",
+			"err", err,
+			"backoff", backoff,
+		)
+		return nil
+	})
+}
+
+func (n *Node) handleSRVOnce(reloadCh <-chan os.Signal) (resetBackoff bool, err error) {
+	util.S.Debug("newClient…")
+	cl, _, err := n.newClient()
+	if err != nil {
+		return false, fmt.Errorf("newClient: %w", err)
+	}
+
+	for range reloadCh {
+		err = n.loadSRVList(cl)
+		if err != nil {
+			err = fmt.Errorf("srv: %w", err)
+			return
+		}
+	}
+	return true, nil
+}
+
 func (n *Node) listenCS() error {
-	return util.Backoff(func() (resetBackoff bool, err error) {
-		return n.listenCSOnce()
-	}, func(backoff time.Duration, err error) error {
+	return util.Backoff(n.listenCSOnce, func(backoff time.Duration, err error) error {
 		util.Notify(fmt.Sprintf("STATUS=connecting to CS: %s (retrying in %s)", err, backoff))
 		util.S.Errorf("listen: %s; retry in %s", err, backoff)
 		util.S.Errorw("listen: error",
@@ -37,7 +73,6 @@ func (n *Node) listenCS() error {
 }
 
 func (n *Node) listenCSOnce() (resetBackoff bool, err error) {
-	// Setup
 	util.S.Debug("newClient…")
 	cl, _, err := n.newClient()
 	if err != nil {
