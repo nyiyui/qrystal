@@ -45,6 +45,21 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               ]);
               default = null;
             };
+            allowedSRVs = mkOption {
+              type = listOf (submodule {
+                options = {
+                  service = mkOption { type = str; };
+                  serviceAny = mkOption { type = bool; default = false; };
+                  name = mkOption { type = str; };
+                  nameAny = mkOption { type = bool; default = false; };
+                  priorityMin = mkOption { type = port; default = 0; };
+                  priorityMax = mkOption { type = port; default = 65535; };
+                  weightMin = mkOption { type = port; default = 0; };
+                  weightMax = mkOption { type = port; default = 65535; };
+                };
+              });
+              default = null;
+            };
           };
       });
   in {
@@ -82,6 +97,11 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 endpointOverride = mkOption {
                   type = nullOr path;
                   description = "Path to executable for endpoint override.";
+                  default = null;
+                };
+                srvList = mkOption {
+                  type = nullOr path;
+                  description = "Path to list of SRV records.";
                   default = null;
                 };
                 hokuto = mkOption {

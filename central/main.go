@@ -54,8 +54,8 @@ type Peer struct {
 	CanForward bool    `yaml:"canForward" json:"canForward"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
 	// TODO: when CanSee.Only is blank, this is interpreted as nil → no way to distinguish between seeing nothing and everything
-	CanSee      *CanSee `yaml:"canSee" json:"canSee"`
-	AllowedSRVs []SRVAllowance
+	CanSee      *CanSee        `yaml:"canSee" json:"canSee"`
+	AllowedSRVs []SRVAllowance `yaml:"allowedSRVs" json:"allowedSRVs"`
 
 	PubKey          wgtypes.Key
 	ForwardingPeers []string
@@ -105,14 +105,14 @@ func AllowedByAny(sa SRVAllowable, a2s []SRVAllowance) bool {
 }
 
 type SRVAllowance struct {
-	Service     string
-	ServiceAny  bool
-	Name        string
-	NameAny     bool
-	PriorityMin uint16
-	PriorityMax uint16
-	WeightMin   uint16
-	WeightMax   uint16
+	Service     string `yaml:"service"`
+	ServiceAny  bool   `yaml:"serviceAny"`
+	Name        string `yaml:"name"`
+	NameAny     bool   `yaml:"nameAny"`
+	PriorityMin uint16 `yaml:"priorityMin"`
+	PriorityMax uint16 `yaml:"priorityMax"`
+	WeightMin   uint16 `yaml:"weightMin"`
+	WeightMax   uint16 `yaml:"weightMax"`
 }
 
 func (a SRVAllowance) AllowedBy(a2 SRVAllowance) error {
