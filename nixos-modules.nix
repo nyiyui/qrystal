@@ -50,8 +50,6 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 options = {
                   service = mkOption { type = str; };
                   serviceAny = mkOption { type = bool; default = false; };
-                  name = mkOption { type = str; };
-                  nameAny = mkOption { type = bool; default = false; };
                   priorityMin = mkOption { type = port; default = 0; };
                   priorityMax = mkOption { type = port; default = 65535; };
                   weightMin = mkOption { type = port; default = 0; };

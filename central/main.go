@@ -107,8 +107,6 @@ func AllowedByAny(sa SRVAllowable, a2s []SRVAllowance) bool {
 type SRVAllowance struct {
 	Service     string `yaml:"service"`
 	ServiceAny  bool   `yaml:"serviceAny"`
-	Name        string `yaml:"name"`
-	NameAny     bool   `yaml:"nameAny"`
 	PriorityMin uint16 `yaml:"priorityMin"`
 	PriorityMax uint16 `yaml:"priorityMax"`
 	WeightMin   uint16 `yaml:"weightMin"`
@@ -118,9 +116,6 @@ type SRVAllowance struct {
 func (a SRVAllowance) AllowedBy(a2 SRVAllowance) error {
 	if !a2.ServiceAny && a.Service != a2.Service {
 		return errors.New("Service mismatch")
-	}
-	if !a2.NameAny && a.Name != a2.Name {
-		return errors.New("Name mismatch")
 	}
 	if !(a.PriorityMin >= a2.PriorityMin && a.PriorityMax <= a2.PriorityMax) {
 		return errors.New("Priority not in range")
@@ -143,9 +138,6 @@ type SRV struct {
 func (s SRV) AllowedBy(a2 SRVAllowance) error {
 	if !a2.ServiceAny && s.Service != a2.Service {
 		return errors.New("Service mismatch")
-	}
-	if !a2.NameAny && s.Name != a2.Name {
-		return errors.New("Name mismatch")
 	}
 	if !(a2.PriorityMin <= s.Priority && s.Priority <= a2.PriorityMax) {
 		return errors.New("Priority not in range")
