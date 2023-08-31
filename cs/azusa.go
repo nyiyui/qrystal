@@ -19,7 +19,16 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 		return newTokenAuthError(q.CentralToken)
 	}
 	var desc strings.Builder
-	for cnn, peer := range q.Networks {
+	for cnn := range q.Networks {
+		cn, ok := c.cc.Networks[cnn]
+		if !ok {
+			return fmt.Errorf("net %s no exist :(", cnn)
+		}
+		peer, ok := cn.Peers[q.Networks[cnn].Name]
+		if !ok {
+			return fmt.Errorf("net %s no exist :(", cnn)
+		}
+		peer.Name = q.Networks[cnn].Name
 		err = checkPeer(ti, cnn, peer)
 		if err != nil {
 			return err
