@@ -49,3 +49,5 @@ Flakes are recommended. See `flake.nix` for options.
   - e.g. specify VPC network IP address first, and then public IP address
   - heuristics for a successful wg connection?
 - test all fails on `host cs` but after waiting a few hours, `host cs` works so I'll have to figure that out...
+- if azusa contains configuration for a network that isn't in config.cs.networks, warn about this (possible misconfiguration)
+- SRV records
