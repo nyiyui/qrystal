@@ -48,3 +48,17 @@ func checkPeer(ti TokenInfo, cnn string, peer central.Peer) error {
 	}
 	return nil
 }
+
+func checkSrv(ti TokenInfo, cnn string) error {
+	if ti.CanPush == nil {
+		return newHttpError(403, errors.New("token: cannot push"))
+	}
+	if !ti.CanPush.Any {
+		prelude := fmt.Sprintf("cannot push to net %s peer %s", cnn, peer.Name)
+		cpn, ok := ti.CanPush.Networks[cnn]
+		if !ok {
+			return newHttpErrorf(403, "%s as token cannot push to this net", prelude)
+		}
+	}
+	return nil
+}
