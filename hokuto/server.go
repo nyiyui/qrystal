@@ -37,7 +37,7 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 	ccLock.Lock()
 	defer ccLock.Unlock()
 	cc = q.CC
-	util.S.Debugf("UpdateCC: %s", cc)
+	util.S.Infof("UpdateCC: %s", cc)
 	return nil
 }
 

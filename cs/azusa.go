@@ -53,6 +53,7 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	}()
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
+	changed := map[string][]string{}
 	for cnn, peer := range q.Networks {
 		cn := c.cc.Networks[cnn]
 		if peer.AllowedIPs == nil || len(peer.AllowedIPs) == 0 {
@@ -71,6 +72,8 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			CanSee:     peer.CanSee,
 			CanForward: peer.CanForward,
 		}
+		changed[cnn] = []string{peer.Name}
 	}
+	c.notify(change{Reason: fmt.Sprintf("azusa %s", ti.Name), Changed: changed})
 	return nil
 }

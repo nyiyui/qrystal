@@ -47,6 +47,7 @@ func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRV
 	}()
 	c.ccLock.Lock()
 	defer c.ccLock.Unlock()
+	changed := map[string][]string{}
 	for srvI, srv := range q.SRVs {
 		cn, ok := c.cc.Networks[srv.NetworkName]
 		if !ok {
@@ -68,6 +69,11 @@ func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRV
 		} else {
 			peer.SRVs[i] = srv.SRV
 		}
+		if changed[srv.NetworkName] == nil {
+			changed[srv.NetworkName] = make([]string, 0, 1)
+		}
+		changed[srv.NetworkName] = append(changed[srv.NetworkName], srv.PeerName)
 	}
+	c.notify(change{Reason: fmt.Sprintf("srvUpdate %s", ti.Name), Changed: changed})
 	return nil
 }
