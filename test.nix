@@ -160,6 +160,17 @@ in {
         imports = [
           base
           self.outputs.nixosModules.${system}.node
+          {
+            qrystal.services.node.config.srvList = pkgs.writeText "srvlist.json" (builtins.toJSON {
+              ${networkName} = [{
+                Service = "_testservice";
+                Protocol = "_tcp";
+                Priority = "10";
+                Weight = "10";
+                Port = "123";
+              }];
+            });
+          }
         ];
 
         networking.firewall.allowedTCPPorts = [ 39251 ];
@@ -247,6 +258,7 @@ in {
       for node in nodes:
         assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
         assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert pp(node.execute("host _testservice._tcp.idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
       # TODO: test network level queries
     '';
   });

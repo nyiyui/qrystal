@@ -425,6 +425,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
           };
           systemd.services.qrystal-cs = {
             wants = [ "network-online.target" ];
+            wantedBy = [ "multi-user.target" ];
             serviceConfig = let pkg = packages.cs;
             in {
               User = "qrystal-cs";
