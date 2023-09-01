@@ -54,10 +54,9 @@ func checkSrv(ti TokenInfo, cnn string) error {
 		return newHttpError(403, errors.New("token: cannot push"))
 	}
 	if !ti.CanPush.Any {
-		prelude := fmt.Sprintf("cannot push to net %s peer %s", cnn, peer.Name)
-		cpn, ok := ti.CanPush.Networks[cnn]
+		_, ok := ti.CanPush.Networks[cnn]
 		if !ok {
-			return newHttpErrorf(403, "%s as token cannot push to this net", prelude)
+			return newHttpErrorf(403, "token cannot push to this net")
 		}
 	}
 	return nil

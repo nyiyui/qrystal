@@ -23,7 +23,7 @@ func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRV
 		if !ok {
 			return fmt.Errorf("net %s no exist :(", srv.NetworkName)
 		}
-		_, ok := cn.Peers[srv.PeerName]
+		_, ok = cn.Peers[srv.PeerName]
 		if !ok {
 			return fmt.Errorf("net %s peer %s no exist :(", srv.NetworkName, srv.PeerName)
 		}
