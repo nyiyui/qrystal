@@ -42,14 +42,21 @@ func handleQuery(m *dns.Msg) (rcode int) {
 
 		if strings.HasSuffix(q.Name, suffix) {
 			switch q.Qtype {
-			case dns.TypeA, dns.TypeSRV:
+			case dns.TypeA:
 				rcode2 := handleInternal(m, q, suffix, "")
+				if rcode2 != dns.RcodeSuccess {
+					rcode = rcode2
+					return
+				}
+			case dns.TypeSRV:
+				rcode2 := handleInternalSRV(m, q, suffix, "")
 				if rcode2 != dns.RcodeSuccess {
 					rcode = rcode2
 					return
 				}
 			}
 		} else {
+			// TODO: SRV support for extraParents
 			for _, extra := range extraParents {
 				if strings.HasSuffix(q.Name, extra.Domain) {
 					rcode2 := handleInternal(m, q, extra.Domain, extra.Network)
