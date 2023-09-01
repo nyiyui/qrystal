@@ -50,10 +50,16 @@ func (n *Node) handleSRVOnce(reloadCh <-chan os.Signal) (resetBackoff bool, err 
 		return false, fmt.Errorf("newClient: %w", err)
 	}
 
+	err = n.loadSRVList(cl)
+	if err != nil {
+		err = fmt.Errorf("srv (initial): %w", err)
+		return
+	}
+
 	for range reloadCh {
 		err = n.loadSRVList(cl)
 		if err != nil {
-			err = fmt.Errorf("srv: %w", err)
+			err = fmt.Errorf("srv (signal): %w", err)
 			return
 		}
 	}

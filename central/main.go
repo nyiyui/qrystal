@@ -129,7 +129,6 @@ func (a SRVAllowance) AllowedBy(a2 SRVAllowance) error {
 type SRV struct {
 	Service  string
 	Protocol string
-	Name     string
 	Priority uint16
 	Weight   uint16
 	Port     uint16

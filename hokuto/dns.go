@@ -41,7 +41,8 @@ func handleQuery(m *dns.Msg) (rcode int) {
 		util.S.Debugf("handleQuery: %s", q.Name)
 
 		if strings.HasSuffix(q.Name, suffix) {
-			if q.Qtype == dns.TypeA {
+			switch q.Qtype {
+			case dns.TypeA, dns.TypeSRV:
 				rcode2 := handleInternal(m, q, suffix, "")
 				if rcode2 != dns.RcodeSuccess {
 					rcode = rcode2
@@ -99,6 +100,54 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 			return dns.RcodeNameError
 		}
 		returnPeer(m, q, peer)
+	}
+	return dns.RcodeSuccess
+}
+
+func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) {
+	ccLock.Lock()
+	defer ccLock.Unlock()
+	if cc == nil {
+		util.S.Errorf("cc nil (not updated?)")
+		return dns.RcodeServerFailure
+	}
+	parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
+	if len(parts) != 4 {
+		util.S.Debugf("handleQuery nx no parts")
+		return dns.RcodeNameError
+	}
+	reverse(parts)
+	cnn = parts[0]
+	pn := parts[1]
+	protocol := parts[2]
+	service := parts[3]
+	cn, ok := cc.Networks[cnn]
+	if !ok {
+		util.S.Debugf("handleQuery nx net %s", cnn)
+		return dns.RcodeNameError
+	}
+	peer := cn.Peers[pn]
+	if peer == nil {
+		util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
+		return dns.RcodeNameError
+	}
+	for _, srv := range peer.SRVs {
+		if srv.Service != service || srv.Protocol != protocol {
+			continue
+		}
+		rr, err := dns.NewRR(fmt.Sprintf(
+			"%s SRV %d %d %d %s.%s.%s",
+			q.Name,
+			srv.Priority,
+			srv.Weight,
+			srv.Port,
+			pn,
+			cnn,
+			suffix,
+		))
+		if err == nil {
+			m.Answer = append(m.Answer, rr)
+		}
 	}
 	return dns.RcodeSuccess
 }

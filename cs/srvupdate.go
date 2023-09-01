@@ -60,7 +60,7 @@ func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRV
 			return fmt.Errorf("srv %d: not allowed", srvI)
 		}
 		i := slices.IndexFunc(peer.SRVs, func(s central.SRV) bool { return s.Service == srv.Service })
-		if srv.Name == "" && i != -1 {
+		if srv.Service == "" && i != -1 {
 			peer.SRVs = append(peer.SRVs[:i], peer.SRVs[i+1:]...)
 		} else if i == -1 {
 			i = len(peer.SRVs)
