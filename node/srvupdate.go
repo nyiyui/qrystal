@@ -30,7 +30,7 @@ type SRVList struct {
 }
 
 func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
-	util.S.Infof("srv: loading srv list...")
+	util.S.Infof("srv: loading srv list from %s...", n.srvListPath)
 	b, err := os.ReadFile(n.srvListPath)
 	if err != nil {
 		return fmt.Errorf("load list: %w", err)
