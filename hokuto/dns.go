@@ -144,7 +144,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode in
 			continue
 		}
 		rr, err := dns.NewRR(fmt.Sprintf(
-			"%s SRV %d %d %d %s.%s.%s",
+			"%s SRV %d %d %d %s.%s%s",
 			q.Name,
 			srv.Priority,
 			srv.Weight,
@@ -156,7 +156,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode in
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		} else {
-			panic(err)
+			util.S.Errorf("handleQuery debug: parts: %#v peer: %#v error: %s", parts, peer.SRVs, err)
 		}
 	}
 	return dns.RcodeSuccess
