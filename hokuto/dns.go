@@ -138,7 +138,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode in
 		util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
 		return dns.RcodeNameError
 	}
-	util.S.Debugf("handleQuery debug: parts: %#v peer: %#v", parts, peer.SRVs)
+	util.S.Infof("handleQuery debug: parts: %#v peer: %#v", parts, peer.SRVs)
 	for _, srv := range peer.SRVs {
 		if srv.Service != service || srv.Protocol != protocol {
 			continue
