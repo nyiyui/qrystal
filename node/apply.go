@@ -3,6 +3,7 @@ package node
 import (
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/util"
+	"golang.org/x/exp/slices"
 )
 
 // applyCC applies cc2 to n.
@@ -70,6 +71,13 @@ func (n *Node) applyCC(cc2 *central.Config) {
 				peer.Desynced |= central.DKeys
 			}
 			peer.PubKey = peer2.PubKey
+			if peer.PubKey != peer2.PubKey {
+				peer.Desynced |= central.DKeys
+			}
+			peer.SRVs = peer2.SRVs
+			if !slices.Equal(peer.SRVs, peer2.SRVs) {
+				peer.Desynced |= central.DSRVs
+			}
 			cn.Peers[pn2] = peer
 		}
 		for pn := range cn.Peers {

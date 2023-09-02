@@ -18,6 +18,7 @@ const (
 	DIPs     = 0x2
 	DKeys    = 0x8
 	DPeer    = 0x4
+	DSRVs    = 0x10
 )
 
 // Config is the root.
