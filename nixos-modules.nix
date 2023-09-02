@@ -374,7 +374,12 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                         description =
                           "Allow token to add more tokens, or remove any tokens.";
                       };
-                      allowedSRVs = mkOption {
+                      canSRVUpdate = mkOption {
+                        type = bool;
+                        description = "Allow updating SRV allowanes for peers it can push to.";
+                        default = false;
+                      };
+                      srvAllowances = mkOption {
                         type = nullOr (listOf (submodule {
                           options = {
                             service = mkOption { type = str; };
@@ -386,6 +391,11 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                           };
                         }));
                         default = null;
+                      };
+                      srvAllowancesAny = mkOption {
+                        type = bool;
+                        description = "Allow updating SRV allowances without restrictions by srvAllowances.";
+                        default = false;
                       };
                     };
                   });
