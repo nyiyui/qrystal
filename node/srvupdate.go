@@ -21,7 +21,7 @@ func (n *Node) srvUpdate(cl *rpc2.Client, srvs []api.SRV) (err error) {
 		err = fmt.Errorf("call: %w", err)
 		return
 	}
-	util.s.Infof("srv: called srvUpdate successfully")
+	util.S.Infof("srv: called srvUpdate successfully")
 	return
 }
 
