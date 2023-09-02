@@ -69,12 +69,15 @@ func (t *TokensConfig) UnmarshalYAML(value *yaml.Node) error {
 }
 
 type TokenConfig struct {
-	Name           string            `yaml:"name" json:"name"`
-	Hash           *util.TokenHash   `yaml:"hash" json:"hash"`
-	Networks       map[string]string `yaml:"networks" json:"networks"`
-	CanPull        bool              `yaml:"canPull"`
-	CanPush        *CanPush          `yaml:"canPush"`
-	CanAdminTokens *CanAdminTokens   `yaml:"canAdminTokens"`
+	Name             string                 `yaml:"name" json:"name"`
+	Hash             *util.TokenHash        `yaml:"hash" json:"hash"`
+	Networks         map[string]string      `yaml:"networks" json:"networks"`
+	CanPull          bool                   `yaml:"canPull"`
+	CanPush          *CanPush               `yaml:"canPush"`
+	CanAdminTokens   *CanAdminTokens        `yaml:"canAdminTokens"`
+	CanSRVUpdate     bool                   `yaml:"canSRVUpdate"`
+	SRVAllowances    []central.SRVAllowance `yaml:"srvAllowances"`
+	SRVAllowancesAny bool                   `yaml:"srvAllowancesAny"`
 }
 
 func convertTokens2(tokens []TokenConfig) ([]Token, error) {
@@ -83,11 +86,14 @@ func convertTokens2(tokens []TokenConfig) ([]Token, error) {
 		res[i] = Token{
 			Hash: *token.Hash,
 			Info: TokenInfo{
-				Name:           token.Name,
-				Networks:       token.Networks,
-				CanPull:        token.CanPull,
-				CanPush:        token.CanPush,
-				CanAdminTokens: token.CanAdminTokens,
+				Name:             token.Name,
+				Networks:         token.Networks,
+				CanPull:          token.CanPull,
+				CanPush:          token.CanPush,
+				CanAdminTokens:   token.CanAdminTokens,
+				CanSRVUpdate:     token.CanSRVUpdate,
+				SRVAllowances:    token.SRVAllowances,
+				SRVAllowancesAny: token.SRVAllowancesAny,
 			},
 		}
 	}

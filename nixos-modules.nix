@@ -374,6 +374,19 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                         description =
                           "Allow token to add more tokens, or remove any tokens.";
                       };
+                      allowedSRVs = mkOption {
+                        type = nullOr (listOf (submodule {
+                          options = {
+                            service = mkOption { type = str; };
+                            serviceAny = mkOption { type = bool; default = false; };
+                            priorityMin = mkOption { type = port; default = 0; };
+                            priorityMax = mkOption { type = port; default = 65535; };
+                            weightMin = mkOption { type = port; default = 0; };
+                            weightMax = mkOption { type = port; default = 65535; };
+                          };
+                        }));
+                        default = null;
+                      };
                     };
                   });
                 };

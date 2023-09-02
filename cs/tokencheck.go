@@ -53,6 +53,9 @@ func checkSrv(ti TokenInfo, cnn string) error {
 	if ti.CanPush == nil {
 		return newHttpError(403, errors.New("token: cannot push"))
 	}
+	if !ti.CanSRVUpdate {
+		return newHttpError(403, errors.New("token: cannot srvUpdate"))
+	}
 	if !ti.CanPush.Any {
 		_, ok := ti.CanPush.Networks[cnn]
 		if !ok {
