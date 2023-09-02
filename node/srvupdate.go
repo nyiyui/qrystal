@@ -8,6 +8,7 @@ import (
 	"github.com/cenkalti/rpc2"
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/util"
 )
 
 func (n *Node) srvUpdate(cl *rpc2.Client, srvs []api.SRV) (err error) {
@@ -20,6 +21,7 @@ func (n *Node) srvUpdate(cl *rpc2.Client, srvs []api.SRV) (err error) {
 		err = fmt.Errorf("call: %w", err)
 		return
 	}
+	util.s.Infof("srv: called srvUpdate successfully")
 	return
 }
 
@@ -28,6 +30,7 @@ type SRVList struct {
 }
 
 func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
+	util.S.Infof("srv: loading srv list...")
 	b, err := os.ReadFile(n.srvListPath)
 	if err != nil {
 		return fmt.Errorf("load list: %w", err)
@@ -37,6 +40,7 @@ func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
 	if err != nil {
 		return fmt.Errorf("load list: %w", err)
 	}
+	util.S.Infof("srv: loaded srv list: %#v", sl)
 	srvs := make([]api.SRV, 0)
 	for cnn, srvs2 := range sl.Networks {
 		for _, srv2 := range srvs2 {
