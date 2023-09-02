@@ -155,6 +155,8 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode in
 		))
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
+		} else {
+			panic(err)
 		}
 	}
 	return dns.RcodeSuccess
