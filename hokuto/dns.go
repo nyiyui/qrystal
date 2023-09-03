@@ -49,7 +49,7 @@ func handleQuery(m *dns.Msg) (rcode int) {
 					return
 				}
 			case dns.TypeSRV:
-				rcode2 := handleInternalSRV(m, q, suffix, "")
+				rcode2 := handleInternalSRV(m, q, suffix)
 				if rcode2 != dns.RcodeSuccess {
 					rcode = rcode2
 					return
@@ -111,7 +111,7 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 	return dns.RcodeSuccess
 }
 
-func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) {
+func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 	ccLock.Lock()
 	defer ccLock.Unlock()
 	if cc == nil {
@@ -119,27 +119,43 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode in
 		return dns.RcodeServerFailure
 	}
 	parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
-	if len(parts) != 4 {
+	reverse(parts)
+	var cnn, pn, protocol, service string
+	switch len(parts) {
+	case 3:
+		cnn = parts[0]
+		protocol = parts[1]
+		service = parts[2]
+	case 4:
+		cnn = parts[0]
+		pn = parts[1]
+		protocol = parts[2]
+		service = parts[3]
+	default:
 		util.S.Debugf("handleQuery nx no parts")
 		return dns.RcodeNameError
 	}
-	reverse(parts)
-	cnn = parts[0]
-	pn := parts[1]
-	protocol := parts[2]
-	service := parts[3]
 	cn, ok := cc.Networks[cnn]
 	if !ok {
 		util.S.Debugf("handleQuery nx net %s", cnn)
 		return dns.RcodeNameError
 	}
-	peer := cn.Peers[pn]
-	if peer == nil {
-		util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
-		return dns.RcodeNameError
+	var srvs []central.SRV
+	if pn == "" {
+		srvs = make([]central.SRV, 0)
+		for _, peer := range cn.Peers {
+			srvs = append(srvs, peer.SRVs...)
+		}
+	} else {
+		peer := cn.Peers[pn]
+		if peer == nil {
+			util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
+			return dns.RcodeNameError
+		}
+		srvs = peer.SRVs
 	}
-	util.S.Infof("handleQuery debug: parts: %#v peer: %#v", parts, peer.SRVs)
-	for _, srv := range peer.SRVs {
+	util.S.Infof("handleQuery debug: parts: %#v srvs: %#v", parts, srvs)
+	for _, srv := range srvs {
 		if srv.Service != service || srv.Protocol != protocol {
 			continue
 		}
@@ -156,7 +172,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode in
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		} else {
-			util.S.Errorf("handleQuery debug: parts: %#v peer: %#v error: %s", parts, peer.SRVs, err)
+			util.S.Errorf("handleQuery debug: parts: %#v srvs: %#v error: %s", parts, srvs, err)
 		}
 	}
 	return dns.RcodeSuccess
