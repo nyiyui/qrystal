@@ -159,13 +159,19 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 		if srv.Service != service || srv.Protocol != protocol {
 			continue
 		}
+		var pnPart string
+		if pn == "" {
+			pnPart = ""
+		} else {
+			pnPart = pn + "."
+		}
 		rr, err := dns.NewRR(fmt.Sprintf(
-			"%s SRV %d %d %d %s.%s%s",
+			"%s SRV %d %d %d %s%s%s",
 			q.Name,
 			srv.Priority,
 			srv.Weight,
 			srv.Port,
-			pn,
+			pnPart,
 			cnn,
 			suffix,
 		))
