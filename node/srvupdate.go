@@ -21,6 +21,8 @@ func (n *Node) srvUpdate(cl *rpc2.Client, srvs []api.SRV) (err error) {
 		err = fmt.Errorf("call: %w", err)
 		return
 	}
+	// Since srvUpdate only propagates to peers that depend on this Node, and not this Node itself, we must propagate the change here ourselves.
+
 	util.S.Infof("srv: called srvUpdate successfully")
 	return
 }
@@ -30,6 +32,8 @@ type SRVList struct {
 }
 
 func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
+	n.ccLock.Lock()
+	defer n.ccLock.Unlock()
 	util.S.Infof("srv: loading srv list from %s...", n.srvListPath)
 	b, err := os.ReadFile(n.srvListPath)
 	if err != nil {
@@ -43,6 +47,9 @@ func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
 	util.S.Infof("srv: loaded srv list: %#v", sl)
 	srvs := make([]api.SRV, 0)
 	for cnn, srvs2 := range sl.Networks {
+		cn := n.cc.Networks[cnn]
+		me := cn.Peers[cn.Me]
+		me.SRVs = central.UpdateSRVs(me.SRVs, srvs2)
 		for _, srv2 := range srvs2 {
 			srvs = append(srvs, api.SRV{
 				NetworkName: cnn,

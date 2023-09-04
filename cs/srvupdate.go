@@ -7,7 +7,6 @@ import (
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/util"
-	"golang.org/x/exp/slices"
 )
 
 func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRVUpdateS) error {
@@ -60,19 +59,16 @@ func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRV
 		if !central.AllowedByAny(srv, peer.AllowedSRVs) {
 			return fmt.Errorf("srv %d: not allowed", srvI)
 		}
-		i := slices.IndexFunc(peer.SRVs, func(s central.SRV) bool { return s.Service == srv.Service })
-		if srv.Service == "" && i != -1 {
-			peer.SRVs = append(peer.SRVs[:i], peer.SRVs[i+1:]...)
-		} else if i == -1 {
-			i = len(peer.SRVs)
-			peer.SRVs = append(peer.SRVs, srv.SRV)
-		} else {
-			peer.SRVs[i] = srv.SRV
+		srvs := make([]central.SRV, len(q.SRVs))
+		for srvI, srv := range q.SRVs {
+			srvs[srvI] = srv.SRV
 		}
+		peer.SRVs = central.UpdateSRVs(peer.SRVs, srvs)
 		if changed[srv.NetworkName] == nil {
 			changed[srv.NetworkName] = make([]string, 0, 1)
 		}
 		changed[srv.NetworkName] = append(changed[srv.NetworkName], srv.PeerName)
+		// TODO: append to changed[] only when the SRV is different from before (not just in the update request)
 	}
 	c.notify(change{Reason: fmt.Sprintf("srvUpdate %s", ti.Name), Changed: changed})
 	return nil

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nyiyui/qrystal/util"
+	"golang.org/x/exp/slices"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/yaml.v3"
 )
@@ -146,6 +147,21 @@ func (s SRV) AllowedBy(a2 SRVAllowance) error {
 		return errors.New("Weight not in range")
 	}
 	return nil
+}
+
+func UpdateSRVs(target, updater []SRV) (target_ []SRV) {
+	for _, srv := range updater {
+		i := slices.IndexFunc(target, func(s SRV) bool { return s.Service == srv.Service })
+		if srv.Service == "" && i != -1 {
+			target = append(target[:i], target[i+1:]...)
+		} else if i == -1 {
+			i = len(target)
+			target = append(target, srv)
+		} else {
+			target[i] = srv
+		}
+	}
+	return target
 }
 
 // Duration is a encoding-friendly time.Duration.
