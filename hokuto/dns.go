@@ -181,7 +181,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 			srv.Priority,
 			srv.Weight,
 			srv.Port,
-			pn,
+			spp.PeerName,
 			cnn,
 			suffix,
 		))
