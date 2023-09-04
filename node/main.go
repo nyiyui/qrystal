@@ -87,4 +87,6 @@ type Node struct {
 
 	backportPath string
 	srvListPath  string
+
+	reupdateSRV chan string
 }

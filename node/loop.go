@@ -20,6 +20,14 @@ type listenError struct {
 }
 
 func (n *Node) ListenCS() {
+	n.reupdateSRV = make(chan string)
+	go func() {
+		sig := make(chan os.Signal)
+		signal.Notify(sig, syscall.SIGUSR1)
+		for range sig {
+			n.reupdateSRV <- "received signal"
+		}
+	}()
 	go func() {
 		err := n.handleSRV()
 		util.S.Errorf("srv error: %s", err)
@@ -31,9 +39,7 @@ func (n *Node) ListenCS() {
 }
 
 func (n *Node) handleSRV() error {
-	reloadCh := make(chan os.Signal)
-	signal.Notify(reloadCh, syscall.SIGUSR1)
-	return util.Backoff(func() (resetBackoff bool, err error) { return n.handleSRVOnce(reloadCh) }, func(backoff time.Duration, err error) error {
+	return util.Backoff(n.handleSRVOnce, func(backoff time.Duration, err error) error {
 		util.S.Errorf("srv: %s; retry in %s", err, backoff)
 		util.S.Errorw("srv: error",
 			"err", err,
@@ -43,7 +49,7 @@ func (n *Node) handleSRV() error {
 	})
 }
 
-func (n *Node) handleSRVOnce(reloadCh <-chan os.Signal) (resetBackoff bool, err error) {
+func (n *Node) handleSRVOnce() (resetBackoff bool, err error) {
 	util.S.Debug("newClient…")
 	cl, _, err := n.newClient()
 	if err != nil {
@@ -56,7 +62,7 @@ func (n *Node) handleSRVOnce(reloadCh <-chan os.Signal) (resetBackoff bool, err 
 		return
 	}
 
-	for range reloadCh {
+	for range n.reupdateSRV {
 		err = n.loadSRVList(cl)
 		if err != nil {
 			err = fmt.Errorf("srv (signal): %w", err)
@@ -100,6 +106,7 @@ func (n *Node) pullCS(cl *rpc2.Client) (err error) {
 			err = fmt.Errorf("azusa: %w", err)
 			return
 		}
+		n.reupdateSRV <- "azusa"
 	}
 	for {
 		var s api.SyncS
