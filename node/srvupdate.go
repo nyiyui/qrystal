@@ -32,6 +32,10 @@ type SRVList struct {
 }
 
 func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
+	if n.srvListPath == "" {
+		util.S.Infof("srv: blank srv list path, so not loading.")
+		return nil
+	}
 	n.ccLock.Lock()
 	defer n.ccLock.Unlock()
 	util.S.Infof("srv: loading srv list from %s...", n.srvListPath)
