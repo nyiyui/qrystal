@@ -140,11 +140,20 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 		util.S.Debugf("handleQuery nx net %s", cnn)
 		return dns.RcodeNameError
 	}
-	var srvs []central.SRV
+	type srvPeerPair struct {
+		PeerName string
+		SRV      central.SRV
+	}
+	var spps []srvPeerPair
 	if pn == "" {
-		srvs = make([]central.SRV, 0)
-		for _, peer := range cn.Peers {
-			srvs = append(srvs, peer.SRVs...)
+		spps = make([]srvPeerPair, 0)
+		for pn, peer := range cn.Peers {
+			for _, srv := range peer.SRVs {
+				spps = append(spps, srvPeerPair{
+					PeerName: pn,
+					SRV:      srv,
+				})
+			}
 		}
 	} else {
 		peer := cn.Peers[pn]
@@ -152,33 +161,34 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 			util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
 			return dns.RcodeNameError
 		}
-		srvs = peer.SRVs
+		spps = make([]srvPeerPair, 0)
+		for _, srv := range peer.SRVs {
+			spps = append(spps, srvPeerPair{
+				PeerName: pn,
+				SRV:      srv,
+			})
+		}
 	}
-	util.S.Infof("handleQuery debug: parts: %#v srvs: %#v", parts, srvs)
-	for _, srv := range srvs {
+	util.S.Infof("handleQuery debug: parts: %#v srvs: %#v", parts, spps)
+	for _, spp := range spps {
+		srv := spp.SRV
 		if srv.Service != service || srv.Protocol != protocol {
 			continue
 		}
-		var pnPart string
-		if pn == "" {
-			pnPart = ""
-		} else {
-			pnPart = pn + "."
-		}
 		rr, err := dns.NewRR(fmt.Sprintf(
-			"%s SRV %d %d %d %s%s%s",
+			"%s SRV %d %d %d %s.%s%s",
 			q.Name,
 			srv.Priority,
 			srv.Weight,
 			srv.Port,
-			pnPart,
+			pn,
 			cnn,
 			suffix,
 		))
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		} else {
-			util.S.Errorf("handleQuery debug: parts: %#v srvs: %#v error: %s", parts, srvs, err)
+			util.S.Errorf("handleQuery debug: parts: %#v srvs: %#v error: %s", parts, spps, err)
 		}
 	}
 	return dns.RcodeSuccess
