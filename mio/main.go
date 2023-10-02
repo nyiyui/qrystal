@@ -126,8 +126,6 @@ func (sm *Mio) Ping(q string, r *string) error {
 	return nil
 }
 
-// TODO: allow removing devices
-
 func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	sm.ensureTokenOk(q.Token)
 

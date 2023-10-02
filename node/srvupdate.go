@@ -51,7 +51,11 @@ func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
 	util.S.Infof("srv: loaded srv list: %#v", sl)
 	srvs := make([]api.SRV, 0)
 	for cnn, srvs2 := range sl.Networks {
-		cn := n.cc.Networks[cnn]
+		cn, ok := n.cc.Networks[cnn]
+		if !ok {
+			util.S.Warnf("srv list: network nonexistent: %s", cnn)
+			continue
+		}
 		me := cn.Peers[cn.Me]
 		me.SRVs = central.UpdateSRVs(me.SRVs, srvs2)
 		for _, srv2 := range srvs2 {
