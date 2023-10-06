@@ -1,0 +1,13 @@
+name: Check for Vulnerabilities
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: govulncheck
+        uses: golang/govulncheck-action@v1
