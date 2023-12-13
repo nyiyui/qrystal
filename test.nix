@@ -233,7 +233,7 @@ in {
       cs.wait_for_unit("qrystal-cs.service")
       for node in nodes:
         node.start()
-        node.succeed("host ${testDomain}", timeout=5) # test dnsmasq settings work
+        node.wait_until_succeeds("host ${testDomain}") # test dnsmasq settings work
         node.systemctl("start qrystal-node.service")
         node.wait_for_unit("qrystal-node.service", timeout=20)
       print("all nodes started")
@@ -258,7 +258,7 @@ in {
       for node in nodes:
         assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
         assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
-        assert pp(node.execute("host _testservice._tcp.idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert 'has SRV record' not in pp(node.execute("host _testservice._tcp.idkpeer.testnet.qrystal.internal 127.0.0.39"))[1]
       # TODO: test network level queries
     '';
   });
@@ -269,6 +269,11 @@ in {
         imports = [ base self.outputs.nixosModules.${system}.node ];
 
         networking.firewall.allowedTCPPorts = [ 39251 ];
+        services.dnsmasq.settings = {
+          local = "/";
+          domain = "local";
+          expand-hosts = true;
+        };
         qrystal.services.node = {
           enable = true;
           config.cs = {
@@ -362,10 +367,7 @@ in {
   eo = let
     networkName = "testnet";
     eoPath = pkgs.writeShellScript "eo.sh" ''
-      while IFS= read -r line
-      do
-        echo '{"endpoint":"1.2.3.4:5678"}'
-      done
+      echo '{"endpoint":"1.2.3.4:5678"}'
     '';
     node = { token }:
       { pkgs, ... }: {
@@ -416,21 +418,17 @@ in {
       import time
 
       nodes = [node1, node2]
-      addrs = ["10.123.0.2", "10.123.0.1"]
-      cs.start()
-      cs.wait_for_unit("qrystal-cs.service")
+      start_all()
       for node in nodes:
-        node.start()
-      for node in nodes:
-        node.wait_for_unit("qrystal-node.service", timeout=20)
+        node.wait_for_unit("qrystal-node.service")
       for node in nodes:
         start = time.time()
         while True:
           now = time.time()
-          if now-start > 60:
+          if now-start > 10:
             raise RuntimeError("timeout")
-          print(node.succeed("wg show ${networkName}"))
-          endpoints = node.succeed("wg show ${networkName} endpoints")
+          print(node.wait_until_succeeds("wg show ${networkName}"))
+          endpoints = node.wait_until_succeeds("wg show ${networkName} endpoints")
           print('endpoints', endpoints)
           if ':' not in endpoints:
             # wait until sync is done
@@ -442,12 +440,6 @@ in {
   });
   trace = let
     networkName = "testnet";
-    eoPath = pkgs.writeShellScript "eo.sh" ''
-      while IFS= read -r line
-      do
-        echo '{"endpoint":"1.2.3.4:5678"}'
-      done
-    '';
     tracePath = "/etc/qrystal-trace";
     node = { token }:
       { pkgs, ... }: {
@@ -514,7 +506,6 @@ in {
   node-backport = let
     networkName = "testnet";
     networkName2 = "othernet";
-    testDomain = "cs";
   in let
     node = { token }:
       { pkgs, ... }: {

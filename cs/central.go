@@ -5,12 +5,11 @@ import (
 	"github.com/nyiyui/qrystal/util"
 )
 
-func (s *CentralSource) copyCC(tokenNetworks map[string]string) (*central.Config, error) {
+func (s *CentralSource) copyCC(tokenNetworks map[string]string) *central.Config {
 	s.ccLock.RLock()
 	defer s.ccLock.RUnlock()
 	cc := s.cc
 	networks := map[string]*central.Network{}
-	util.S.Warnf("debug: tokenNetworks: %#v", tokenNetworks)
 	for cnn, cn := range cc.Networks {
 		me, ok := tokenNetworks[cnn]
 		if !ok {
@@ -37,5 +36,5 @@ func (s *CentralSource) copyCC(tokenNetworks map[string]string) (*central.Config
 	}
 	return &central.Config{
 		Networks: networks,
-	}, nil
+	}
 }

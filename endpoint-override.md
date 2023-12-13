@@ -1,11 +1,11 @@
 # Endpoint Override
 
-Nodes can individually override endpoints for proxying WireGuard UDP packets.
+Nodes can individually override endpoints to proxy WireGuard connections.
 
 This is achieved by speicyfing an executable path in `endpointOverride` setting in Node config.
 
-The endpoint override executable (EOE) is executed an unspecified amount of times (usually once) during the lifetime of the Node.
-EOE reads a single line (please use LF not CRLF) of JSON and returns a single line of JSON as a response.
+The endpoint override executable (EOE) is executed an each time an endpoint is needed.
+EOE reads a single line (use LF not CRLF) of JSON and returns a single line of JSON as a response, and must return 0 as the exit code.
 
 The request JSON (sent to EOE) is of the following format:
 ```javascript
@@ -19,7 +19,7 @@ The request JSON (sent to EOE) is of the following format:
 The response JSON (sent from EOE) is of the following format:
 ```javascript
 {
-  "endpoint": "127.0.0.1:51821" // e.g. this could be a proxy that bypasses a UDP firewall
+  "endpoint": "127.0.0.1:51821" // this could be e.g. a proxy that bypasses a UDP firewall
 }
 ```
 

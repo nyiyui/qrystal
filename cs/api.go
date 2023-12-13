@@ -1,13 +1,14 @@
 package cs
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/cenkalti/rpc2"
 	"github.com/nyiyui/qrystal/api"
 	"github.com/nyiyui/qrystal/util"
+	"golang.org/x/exp/slices"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -58,21 +59,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 		}
 	}
 
-	newCC, err := c.copyCC(ti.Networks)
-	if err != nil {
-		util.S.Errorf("copyCC: %s", err)
-		return errors.New("copyCC failed")
-	}
-
-	// NOTE: race condition around here - network can change between after push call (here) and newNotifyCh
-	// call newNotifyCh before push call so we don't have race conditon where:
-	// - node1 pulls
-	// - node1 pulls
-	// - node2 push starts and node1 push ends (new PubKeys notified)
-	// - node2 push ends
-	//   - ※ here, node2 has not called newNotifyCh yet, so doesn't reload
-	chI, ch := c.newNotifyCh()
-	defer c.removeNotifyCh(chI)
+	newCC := c.copyCC(ti.Networks) // also does RLock/RUnlock
 
 	var s2 api.PushS
 	err = cl.Call("push", &api.PushQ{CC: *newCC}, &s2)
@@ -83,8 +70,8 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	util.S.Debugf("push %s result %s", ti.Name, s2)
 	{
 		changed := map[string][]string{}
-		sendNotify := false
 		func() {
+			sendNotify := false
 			c.ccLock.Lock()
 			defer c.ccLock.Unlock()
 			for cnn, key := range s2.PubKeys {
@@ -100,39 +87,31 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 				}
 				util.S.Debugf("l80 %s %s key %s net %s peer %s", cnn, pn, key, cn, peer)
 			}
+			if sendNotify {
+				c.notify(change{Reason: fmt.Sprintf("token %s", ti.Name), Changed: changed})
+			}
 		}()
-		if sendNotify {
-			c.notify(change{Reason: fmt.Sprintf("token %s", ti.Name), Changed: changed})
-		}
+	}
+
+	data, _ := json.Marshal(c.cc)
+	util.S.Infof("token %s listening for notifs... %s", ti.Name, data)
+	chI, ch := c.newNotifyCh(fmt.Sprintf("token %s", ti.Name))
+	defer c.removeNotifyCh(chI)
+
+	// make sure we catch somehow-not-caught desync as well
+	desynced := c.resetSynced(ti)
+	if desynced {
+		util.S.Infof("token %s resync after pull", ti.Name)
+		return nil // see below
 	}
 
 	for chg := range ch {
-		newCC2, err := c.copyCC(ti.Networks)
-		if err != nil {
-			util.S.Errorf("newCC2: %s", err)
-			return errors.New("newCC2 failed")
-		}
-		util.S.Debugf("newCC2: %s", newCC2)
-		affectsYou := func(chg change) bool {
-			c.ccLock.RLock()
-			defer c.ccLock.RUnlock()
-			for cnn := range ti.Networks {
-				chgPeers := chg.Changed[cnn]
-				cn, ok := newCC2.Networks[cnn]
-				if !ok {
-					continue
-				}
-				for _, pn2 := range chgPeers {
-					if _, ok := cn.Peers[pn2]; ok {
-						return true
-					}
-				}
-			}
-			return false
-		}(chg)
-		if affectsYou {
+		desynced := c.resetSynced(ti)
+		if desynced {
 			util.S.Infof("token %s resync due to change %s", ti.Name, chg)
 			break // see below
+		} else {
+			util.S.Infof("token %s up-to-date including %s; change ignored", chg)
 		}
 	}
 
@@ -141,37 +120,84 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	return nil
 }
 
-type change struct {
-	Reason  string
-	Changed map[string][]string
+func (c *CentralSource) resetSynced(ti TokenInfo) (wasDesynced bool) {
+	myCC := c.copyCC(ti.Networks)
+	desynced := false
+	func() {
+		c.ccLock.RLock()
+		defer c.ccLock.RUnlock()
+		for cnn, myCN := range myCC.Networks {
+			me := myCN.Me
+			for pn, peer := range myCN.Peers {
+				util.S.Infof("resetSynced token %s: looking in net %s peer %s: %#v", ti.Name, cnn, pn, peer.SyncedPeers)
+				if !slices.Contains(peer.SyncedPeers, me) {
+					desynced = true
+					peer.SyncedPeers = append(peer.SyncedPeers, me)
+				}
+			}
+		}
+	}()
+	return desynced
 }
 
-func (c *CentralSource) newNotifyCh() (i int, ch chan change) {
+type change struct {
+	// Reason is only for debugging, and the reason for the change is stored here.
+	// For example: "token token_name changed peer_name"
+	Reason string
+	// Changed is a map with key = CN name and value = list of peers in the CN that changed.
+	Changed map[string][]string
+}
+type notifyCh struct {
+	Ch      chan change
+	Comment string
+}
+
+func (c *CentralSource) newNotifyCh(comment string) (i int, ch chan change) {
 	ch = make(chan change)
 	c.notifyChsLock.Lock()
 	defer c.notifyChsLock.Unlock()
 	i = len(c.notifyChs)
-	c.notifyChs = append(c.notifyChs, ch)
+	c.notifyChs = append(c.notifyChs, notifyCh{
+		ch, comment,
+	})
 	return
 }
 
 func (c *CentralSource) removeNotifyCh(i int) {
 	c.notifyChsLock.Lock()
 	defer c.notifyChsLock.Unlock()
+	close(c.notifyChs[i].Ch)
 	// TODO: memory leak (chan leak) due to chans not being cleaned up
-	c.notifyChs[i] = nil
+	c.notifyChs[i] = notifyCh{}
 }
 
 func (c *CentralSource) notify(chg change) {
+	// NOTE: c.ccLock must be taken!
 	c.notifyChsLock.Lock()
 	defer c.notifyChsLock.Unlock()
-	util.S.Infof("notify: %s", chg)
-	for _, ch := range c.notifyChs {
-		t := time.NewTimer(1 * time.Second)
-		select {
-		case ch <- chg:
-		case <-t.C:
+	for cnn, pns := range chg.Changed {
+		cn, ok := c.cc.Networks[cnn]
+		if !ok {
+			panic("CentralSource.notify: change contains nonexistent CN - was CC changed after change{} was made and CentralSource.notify was called?")
+		}
+		for _, pn := range pns {
+			util.S.Infof("notify: resetting SyncedPeers for net %s peer %s", cnn, pn)
+			cn.Peers[pn].SyncedPeers = nil
 		}
 	}
 	c.backportSilent()
+	util.S.Infof("sending notify: %s", chg)
+	for _, nch := range c.notifyChs {
+		if nch == (notifyCh{}) {
+			// skip deleted ones
+			continue
+		}
+		t := time.NewTimer(1 * time.Second)
+		select {
+		case nch.Ch <- chg:
+			util.S.Warnf("notify sent on %s: %s", nch.Comment, chg)
+		case <-t.C:
+			util.S.Warnf("notify timeout on %s: %s", nch.Comment, chg)
+		}
+	}
 }

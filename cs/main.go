@@ -20,7 +20,7 @@ type CentralSource struct {
 	backportPath  string
 	handler       *rpc2.Server
 	notifyChsLock sync.Mutex
-	notifyChs     []chan change
+	notifyChs     []notifyCh
 }
 
 func New(cc central.Config, backportPath string, db *buntdb.DB) (*CentralSource, error) {

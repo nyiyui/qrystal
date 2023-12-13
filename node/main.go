@@ -82,8 +82,6 @@ type Node struct {
 	hokutoDNSAddr net.UDPAddr
 
 	endpointOverridePath string
-	eoState              *eoState
-	eoStateLock          sync.Mutex
 
 	backportPath string
 	srvListPath  string
