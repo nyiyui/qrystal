@@ -48,7 +48,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 			util.S.Errorf("UpdateToken %s: %s", ti.key, err)
 		}
 	}()
-	util.S.Infof("%sからプル。ネットワーク：%s", ti.Name, ti.Networks)
+	util.S.Infof("token %s: pull for nets: %s", ti.Name, ti.Networks)
 
 	{
 		var q, s bool
@@ -94,24 +94,24 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	}
 
 	data, _ := json.Marshal(c.cc)
-	util.S.Infof("token %s listening for notifs... %s", ti.Name, data)
+	util.S.Infof("token %s: listening for notifs... %s", ti.Name, data)
 	chI, ch := c.newNotifyCh(fmt.Sprintf("token %s", ti.Name))
 	defer c.removeNotifyCh(chI)
 
 	// make sure we catch somehow-not-caught desync as well
 	desynced := c.resetSynced(ti)
 	if desynced {
-		util.S.Infof("token %s resync after pull", ti.Name)
+		util.S.Infof("token %s: resync after pull.", ti.Name)
 		return nil // see below
 	}
 
 	for chg := range ch {
 		desynced := c.resetSynced(ti)
 		if desynced {
-			util.S.Infof("token %s resync due to change %s", ti.Name, chg)
+			util.S.Infof("token %s: resync due to change %s.", ti.Name, chg)
 			break // see below
 		} else {
-			util.S.Infof("token %s up-to-date including %s; change ignored", chg)
+			util.S.Infof("token %s: up-to-date including %s; change ignored", chg)
 		}
 	}
 
@@ -129,7 +129,6 @@ func (c *CentralSource) resetSynced(ti TokenInfo) (wasDesynced bool) {
 		for cnn, myCN := range myCC.Networks {
 			me := myCN.Me
 			for pn, peer := range myCN.Peers {
-				util.S.Infof("resetSynced token %s: looking in net %s peer %s: %#v", ti.Name, cnn, pn, peer.SyncedPeers)
 				if !slices.Contains(peer.SyncedPeers, me) {
 					desynced = true
 					peer.SyncedPeers = append(peer.SyncedPeers, me)
@@ -181,7 +180,6 @@ func (c *CentralSource) notify(chg change) {
 			panic("CentralSource.notify: change contains nonexistent CN - was CC changed after change{} was made and CentralSource.notify was called?")
 		}
 		for _, pn := range pns {
-			util.S.Infof("notify: resetting SyncedPeers for net %s peer %s", cnn, pn)
 			cn.Peers[pn].SyncedPeers = nil
 		}
 	}
@@ -195,7 +193,6 @@ func (c *CentralSource) notify(chg change) {
 		t := time.NewTimer(1 * time.Second)
 		select {
 		case nch.Ch <- chg:
-			util.S.Warnf("notify sent on %s: %s", nch.Comment, chg)
 		case <-t.C:
 			util.S.Warnf("notify timeout on %s: %s", nch.Comment, chg)
 		}
