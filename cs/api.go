@@ -126,9 +126,9 @@ func (c *CentralSource) resetSynced(ti TokenInfo) (wasDesynced bool) {
 	func() {
 		c.ccLock.RLock()
 		defer c.ccLock.RUnlock()
-		for cnn, myCN := range myCC.Networks {
+		for _, myCN := range myCC.Networks {
 			me := myCN.Me
-			for pn, peer := range myCN.Peers {
+			for _, peer := range myCN.Peers {
 				if !slices.Contains(peer.SyncedPeers, me) {
 					desynced = true
 					peer.SyncedPeers = append(peer.SyncedPeers, me)

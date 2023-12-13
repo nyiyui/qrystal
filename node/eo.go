@@ -48,7 +48,6 @@ func (n *Node) getEO(q eoQ) (overriddenEndpoint string, err error) {
 // getEOLog returns the overriden endpoint for a peer.
 func (n *Node) getEOLog(q eoQ) (overriddenEndpoint string) {
 	if n.endpointOverridePath == "" {
-		panic("eo not exist")
 		return q.Endpoint
 	}
 	oe, err := n.getEO(q)
