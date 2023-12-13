@@ -30,20 +30,16 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
               default = false;
             };
             canSee = mkOption {
-              type = nullOr (oneOf [
-                (submodule {
-                  options = {
-                    only = mkOption {
-                      type = listOf str;
-                      description = "peer can only see these peers";
-                    };
+              type = nullOr (submodule {
+                options = {
+                  only = mkOption {
+                    type = listOf str;
+                    description = "peer can only see these peers";
                   };
-                })
-                (enum [
-                  "any"
-                ]) # TODO: any option is not yet supported in cs config
+                };
               ]);
               default = null;
+              description = "Peers inside the network that are visible to this peer. Null means all peers in the network are visible.";
             };
             allowedSRVs = mkOption {
               type = nullOr (listOf (submodule {
@@ -57,6 +53,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                 };
               }));
               default = null;
+              description = "List of allowed SRV records constraints for this peer.";
             };
           };
       });

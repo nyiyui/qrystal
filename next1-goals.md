@@ -2,10 +2,11 @@
 
 ## Current Issues (Things to Fix)
 
-- unwieldy config (access control)
-- duplicate data structures in code
-- forwarding doesn't work (well)
-- no proper e2e and unit testing
-- canSee any doesn't work
-- doesn't work on non-NixOS
+- [x] unwieldy config (access control)
+- [ ] remove duplicate data structures in code
+- [ ] forwarding
+- [x] proper e2e testing
+- [ ] proper unit testing
+- [x] canSee "any" doesn't work
+- [ ] doesn't work on non-NixOS
 
