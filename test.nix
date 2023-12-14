@@ -603,4 +603,159 @@ in {
         node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
     '';
   });
+  eo-udptunnel = let
+    networkName = "testnet";
+    networkName2 = "othernet";
+    testDomain = "cs";
+  in let
+    node = { token }:
+      { pkgs, ... }: {
+        imports = [
+          base
+          self.outputs.nixosModules.${system}.node
+          {
+            qrystal.services.node.udptunnel = {
+              enable = true;
+              server = "tunserver:1234";
+              extraOptions = "--syslog";
+            };
+            qrystal.services.node.config.srvList = pkgs.writeText "srvlist.json" (builtins.toJSON {
+              ${networkName} = [{
+                Service = "_testservice";
+                Protocol = "_tcp";
+                Priority = "10";
+                Weight = "10";
+                Port = "123";
+              }];
+            });
+          }
+        ];
+
+        networking.firewall.allowedTCPPorts = [ 39251 ];
+        qrystal.services.node = csConfig [ networkName networkName2 ] token;
+        systemd.services.qrystal-node.wantedBy = [ ];
+      };
+  in lib.runTest ({
+    name = "all";
+    hostPkgs = pkgs;
+    nodes = {
+      tunserver = { pkgs, ... }: {
+        # TODO: udptunnel server
+      };
+      node1 = node { token = node1Token; };
+      node2 = node { token = node2Token; };
+      cs = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.cs ];
+
+        networking.firewall.allowedTCPPorts = [ 39252 ];
+        qrystal.services.cs = {
+          enable = true;
+          config = {
+            tls = csTls;
+            tokens = [
+              (nodeToken "node1" node1Hash [ networkName networkName2 ])
+              (nodeToken "node2" node2Hash [ networkName networkName2 ])
+            ];
+            central.networks.${networkName} = networkBase // {
+              peers.node1 = {
+                host = "node1:58120";
+                allowedIPs = [ "10.123.0.1/32" ];
+                canSee.only = [ "node2" ];
+              };
+              peers.node2 = {
+                host = "node2:58120";
+                allowedIPs = [ "10.123.0.2/32" ];
+                canSee.only = [ "node1" ];
+              };
+            };
+            central.networks.${networkName2} = networkBase // {
+              keepalive = "10s";
+              listenPort = 58121;
+              ips = [ "10.45.0.1/16" ];
+              peers.node1 = {
+                host = "node1:58121";
+                allowedIPs = [ "10.45.0.1/32" ];
+                canSee.only = [ "node2" ];
+              };
+              peers.node2 = {
+                host = "node2:58121";
+                allowedIPs = [ "10.45.0.2/32" ];
+                canSee.only = [ "node1" ];
+              };
+            };
+          };
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      nodes = [node1, node2]
+      addrs = ["10.123.0.2", "10.123.0.1"]
+      cs.start()
+      cs.wait_for_unit("qrystal-cs.service")
+      for node in nodes:
+        node.start()
+        node.wait_until_succeeds("host ${testDomain}") # test dnsmasq settings work
+        node.systemctl("start qrystal-node.service")
+        node.wait_for_unit("qrystal-node.service", timeout=20)
+      print("all nodes started")
+      # NOTE: there is a race condition where the peers' pubkeys could not be
+      # set yet when pinged (so that's why we're using wait_until_*
+      for i, node in enumerate(nodes):
+        print(node.wait_until_succeeds("wg show"))
+        print(node.wait_until_succeeds("wg show ${networkName}"))
+        print(node.wait_until_succeeds("wg show ${networkName2}"))
+        print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
+        print(node.execute("ip route show")[1])
+        for addr in addrs:
+          print(node.execute(f"ip route get {addr}")[1])
+      for i, node in enumerate(nodes):
+        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
+        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+      def pp(value):
+        print("pp", value)
+        return value
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
+      for node in nodes:
+        assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert 'has SRV record' not in pp(node.execute("host _testservice._tcp.idkpeer.testnet.qrystal.internal 127.0.0.39"))[1]
+      # TODO: test network level queries
+    '';
+  });
+  udptunnel = lib.runTest ({
+    name = "udptunnel";
+    hostPkgs = pkgs;
+    nodes = {
+      client = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.udptunnel-client ];
+        qrystal.services.udptunnel-client = {
+          enable = true;
+          portal = "127.0.0.1:12345";
+          server = "server:443";
+        };
+      };
+      server = { pkgs, ... }: {
+        imports = [ base self.outputs.nixosModules.${system}.udptunnel-server ];
+        qrystal.services.udptunnel-server = {
+          enable = true;
+          listen = "0.0.0.0:443";
+          destination = "127.0.0.1:12345";
+        };
+        systemd.services.udp-echo = {
+          script = ''
+            ${pkgs.nmap}/bin/ncat -e /bin/cat -k -u -l 12345
+          '';
+          wantedBy = [ "multi-user.target" ];
+        };
+      };
+    };
+    testScript = { nodes, ... }: ''
+      server.start()
+      client.start()
+      server.wait_for_unit("udp-echo.service")
+      res = client.execute("echo -n 'hello' /dev/udp/localhost/12345")
+      assert "hello" in res[1]
+    '';
+  });
 }

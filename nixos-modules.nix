@@ -37,7 +37,7 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                     description = "peer can only see these peers";
                   };
                 };
-              ]);
+              });
               default = null;
               description = "Peers inside the network that are visible to this peer. Null means all peers in the network are visible.";
             };
@@ -58,11 +58,149 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
           };
       });
   in {
+    udptunnel-server = { config, lib, pkgs, ... }: with lib; with strings; with types; let
+      cfg = config.qrystal.services.udptunnel-server;
+      arguments = concatStringsSep " " [
+        (optionalString (cfg.timeout != null) "--timeout ${cfg.timeout}")
+        (optionalString cfg.syslog "--syslog")
+        (optionalString cfg.verbose "--verbose")
+      ];
+    in {
+        options.qrystal.services.udptunnel-server = {
+          enable = mkEnableOption "udptunnel server";
+          timeout = mkOption {
+            type = nullOr int;
+            default = null;
+          };
+          syslog = mkOption {
+            type = bool;
+            default = false;
+          };
+          verbose = mkOption {
+            type = bool;
+            default = false;
+          };
+          listen = mkOption {
+            type = str;
+          };
+          destination = mkOption {
+            type = str;
+          };
+        };
+        config = mkIf cfg.enable {
+          systemd.sockets.udptunnel-server = {
+            description = "udptunnel server socket";
+            documentation = [ "man:udptunnel(1)" ];
+            socketConfig = {
+              ListenStream = cfg.listen;
+            };
+            wantedBy = [ "sockets.target" ];
+          };
+          systemd.services.udptunnel-server = {
+            description = "udptunnel server";
+            documentation = [ "man:udptunnel(1)" ];
+            requires = [ "udptunnel-server.socket" ];
+            serviceConfig = {
+              Type = "notify";
+              Restart = "on-failure";
+              ExecStart = "${pkgs.udptunnel}/bin/udptunnel --server ${arguments} ${cfg.destination}";
+              StandardOutput = "journal";
+              StandardError = "journal";
+              DynamicUser = "yes";
+              NoNewPrivileges = "yes";
+              PrivateTmp = "yes";
+              PrivateDevices = "yes";
+              ProtectSystem = "strict";
+              ProtectHome = "yes";
+              ProtectKernelTunables = "yes";
+              ProtectKernelModules = "yes";
+              ProtectControlGroups = "yes";
+              RestrictAddressFamilies = "AF_UNIX AF_INET AF_INET6";
+              RestrictNamespaces = "yes";
+              LockPersonality = "yes";
+              MemoryDenyWriteExecute = "yes";
+              RestrictRealtime = "yes";
+              RemoveIPC = "yes";
+              SystemCallArchitectures = "native";
+            };
+          };
+        };
+    };
+    udptunnel-client = { config, lib, pkgs, ... }: with lib; with strings; with types; let
+      cfg = config.qrystal.services.udptunnel-client;
+      arguments = concatStringsSep " " [
+        (optionalString (cfg.timeout != null) "--timeout ${cfg.timeout}")
+        (optionalString cfg.syslog "--syslog")
+        (optionalString cfg.verbose "--verbose")
+      ];
+    in {
+        options.qrystal.services.udptunnel-client = {
+          enable = mkEnableOption "udptunnel server";
+          timeout = mkOption {
+            type = nullOr int;
+            default = null;
+          };
+          syslog = mkOption {
+            type = bool;
+            default = false;
+          };
+          verbose = mkOption {
+            type = bool;
+            default = false;
+          };
+          portal = mkOption {
+            type = str;
+            description = "The local socket where udp packets go in.";
+          };
+          server = mkOption {
+            type = str;
+            description = "The server to send the tunneled packets to.";
+          };
+        };
+        config = mkIf cfg.enable {
+          systemd.sockets.udptunnel-client = {
+            description = "udptunnel server socket";
+            documentation = [ "man:udptunnel(1)" ];
+            socketConfig = {
+              ListenStream = cfg.portal;
+            };
+            wantedBy = [ "sockets.target" ];
+          };
+          systemd.services.udptunnel-client = {
+            description = "udptunnel server";
+            documentation = [ "man:udptunnel(1)" ];
+            requires = [ "udptunnel-client.socket" ];
+            serviceConfig = {
+              Type = "notify";
+              Restart = "on-failure";
+              RestartSec = 30;
+              ExecStart = "${pkgs.udptunnel}/bin/udptunnel --client ${arguments} ${cfg.server}";
+              StandardOutput = "journal";
+              StandardError = "journal";
+              DynamicUser = "yes";
+              NoNewPrivileges = "yes";
+              PrivateTmp = "yes";
+              PrivateDevices = "yes";
+              ProtectSystem = "strict";
+              ProtectHome = "yes";
+              ProtectKernelTunables = "yes";
+              ProtectKernelModules = "yes";
+              ProtectControlGroups = "yes";
+              RestrictAddressFamilies = "AF_UNIX AF_INET AF_INET6";
+              RestrictNamespaces = "yes";
+              LockPersonality = "yes";
+              MemoryDenyWriteExecute = "yes";
+              RestrictRealtime = "yes";
+              RemoveIPC = "yes";
+              SystemCallArchitectures = "native";
+            };
+          };
+        };
+    };
     node = { config, lib, pkgs, ... }:
       with lib;
       with types;
       let
-      in let
         cfg = config.qrystal.services.node;
         mkConfigFile = cfg:
           pkgs.writeText "node-config.json" (builtins.toJSON cfg.config);
