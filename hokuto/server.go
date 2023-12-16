@@ -36,7 +36,7 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 		return errors.New("cc is nil")
 	}
 	tmpSC := simple.ConvertFromCC(q.CC)
-	util.S.Infof("UpdateCC: %s", sc)
+	util.S.Infof("UpdateCC: %s from %#v", tmpSC, q.CC)
 	scLock.Lock()
 	defer scLock.Lock()
 	sc = &tmpSC
