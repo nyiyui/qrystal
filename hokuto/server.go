@@ -11,6 +11,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/hokuto/simple"
 	"github.com/nyiyui/qrystal/mio"
 	"github.com/nyiyui/qrystal/util"
 )
@@ -34,10 +35,11 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 	if q.CC == nil {
 		return errors.New("cc is nil")
 	}
-	ccLock.Lock()
-	defer ccLock.Unlock()
-	cc = q.CC
-	util.S.Infof("UpdateCC: %s", cc)
+	tmpSC := simple.ConvertFromCC(q.CC)
+	util.S.Infof("UpdateCC: %s", sc)
+	scLock.Lock()
+	defer scLock.Lock()
+	sc = &tmpSC
 	return nil
 }
 

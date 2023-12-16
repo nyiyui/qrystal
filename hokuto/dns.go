@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/miekg/dns"
-	"github.com/nyiyui/qrystal/central"
+	"github.com/nyiyui/qrystal/hokuto/simple"
 	"github.com/nyiyui/qrystal/util"
 )
 
@@ -16,20 +16,20 @@ import (
 
 var extraParents []ExtraParent
 
-var cc *central.Config
-var ccLock sync.Mutex
+var sc *simple.Config
+var scLock sync.RWMutex
 
 var mask32 = net.CIDRMask(32, 32)
 
 var suffix string
 
-func returnPeer(m *dns.Msg, q dns.Question, peer *central.Peer) {
-	for _, in := range peer.AllowedIPs {
-		if !bytes.Equal(net.IPNet(in).Mask, mask32) {
+func returnPeer(m *dns.Msg, q dns.Question, ipNets []net.IPNet) {
+	for _, ipNet := range ipNets {
+		if !bytes.Equal(ipNet.Mask, mask32) {
 			// non-/32s seem very *fun* to deal with...
 			continue
 		}
-		rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, in.IP.String()))
+		rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, ipNet.IP.String()))
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		}
@@ -72,9 +72,9 @@ func handleQuery(m *dns.Msg) (rcode int) {
 }
 
 func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) {
-	ccLock.Lock()
-	defer ccLock.Unlock()
-	if cc == nil {
+	scLock.RLock()
+	defer scLock.RUnlock()
+	if sc == nil {
 		util.S.Errorf("cc nil (not updated?)")
 		return dns.RcodeServerFailure
 	}
@@ -88,7 +88,7 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 		cnn = parts[0]
 		parts = parts[1:]
 	}
-	cn, ok := cc.Networks[cnn]
+	cn, ok := sc.Networks[cnn]
 	if !ok {
 		util.S.Debugf("handleQuery nx net %s", cnn)
 		return dns.RcodeNameError
@@ -96,31 +96,34 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 	switch len(parts) {
 	case 0:
 		util.S.Debugf("handleQuery net %s", cnn)
-		for _, peer := range cn.Peers {
-			returnPeer(m, q, peer)
+		for _, peerIP := range cn.PeerIPs {
+			returnPeer(m, q, peerIP)
 		}
 	case 1:
 		pn := parts[0]
-		peer := cn.Peers[pn]
-		if peer == nil {
+		peerIP, ok := cn.PeerIPs[pn]
+		if !ok {
 			util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
 			return dns.RcodeNameError
 		}
-		returnPeer(m, q, peer)
+		returnPeer(m, q, peerIP)
 	}
 	return dns.RcodeSuccess
 }
 
 func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
-	ccLock.Lock()
-	defer ccLock.Unlock()
-	if cc == nil {
+	scLock.RLock()
+	defer scLock.RUnlock()
+	if sc == nil {
 		util.S.Errorf("cc nil (not updated?)")
 		return dns.RcodeServerFailure
 	}
 	parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
 	reverse(parts)
 	var cnn, pn, protocol, service string
+	// Domains:
+	// - _service._protocol.peer.network.qrystal.internal
+	// - _service._protocol.network.qrystal.internal
 	switch len(parts) {
 	case 3:
 		cnn = parts[0]
@@ -135,60 +138,30 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 		util.S.Debugf("handleQuery nx no parts")
 		return dns.RcodeNameError
 	}
-	cn, ok := cc.Networks[cnn]
+	cn, ok := sc.Networks[cnn]
 	if !ok {
 		util.S.Debugf("handleQuery nx net %s", cnn)
 		return dns.RcodeNameError
 	}
-	type srvPeerPair struct {
-		PeerName string
-		SRV      central.SRV
-	}
-	var spps []srvPeerPair
-	if pn == "" {
-		spps = make([]srvPeerPair, 0)
-		for pn, peer := range cn.Peers {
-			for _, srv := range peer.SRVs {
-				spps = append(spps, srvPeerPair{
-					PeerName: pn,
-					SRV:      srv,
-				})
-			}
-		}
-	} else {
-		peer := cn.Peers[pn]
-		if peer == nil {
-			util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
-			return dns.RcodeNameError
-		}
-		spps = make([]srvPeerPair, 0)
-		for _, srv := range peer.SRVs {
-			spps = append(spps, srvPeerPair{
-				PeerName: pn,
-				SRV:      srv,
-			})
-		}
-	}
-	util.S.Debugf("handleQuery: parts: %#v srvs: %#v", parts, spps)
-	for _, spp := range spps {
-		srv := spp.SRV
-		if srv.Service != service || srv.Protocol != protocol {
+	util.S.Debugf("handleQuery: parts: %#v", parts)
+	for _, record := range cn.SRVs[simple.ServiceProtocol{service, protocol}] {
+		if pn != "" && record.PeerName != pn {
 			continue
 		}
 		rr, err := dns.NewRR(fmt.Sprintf(
 			"%s SRV %d %d %d %s.%s%s",
 			q.Name,
-			srv.Priority,
-			srv.Weight,
-			srv.Port,
-			spp.PeerName,
+			record.Priority,
+			record.Weight,
+			record.Port,
+			record.PeerName,
 			cnn,
 			suffix,
 		))
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		} else {
-			util.S.Debugf("handleQuery: parts: %#v srvs: %#v error: %s", parts, spps, err)
+			util.S.Debugf("handleQuery: parts: %#v error: %s", parts, err)
 		}
 	}
 	return dns.RcodeSuccess
