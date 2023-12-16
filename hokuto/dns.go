@@ -169,7 +169,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 			})
 		}
 	}
-	util.S.Infof("handleQuery debug: parts: %#v srvs: %#v", parts, spps)
+	util.S.Debugf("handleQuery: parts: %#v srvs: %#v", parts, spps)
 	for _, spp := range spps {
 		srv := spp.SRV
 		if srv.Service != service || srv.Protocol != protocol {
@@ -188,7 +188,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		} else {
-			util.S.Errorf("handleQuery debug: parts: %#v srvs: %#v error: %s", parts, spps, err)
+			util.S.Debugf("handleQuery: parts: %#v srvs: %#v error: %s", parts, spps, err)
 		}
 	}
 	return dns.RcodeSuccess

@@ -62,9 +62,9 @@
 
             tags = [ "nix" "sdnotify" ];
 
-            #vendorSha256 = pkgs.lib.fakeSha256;
-            vendorSha256 =
-              "2f8ac98cfcc7d7a6388b8bb286c63b6e627f6d4619d87e6821b59d46b8a58bb7";
+            #vendorHash = pkgs.lib.fakeSha256;
+            vendorHash =
+              "sha256-L4rJjPzH16Y4i4uyhsY7bmJ/bUYZ2H5oIbWdRrili7c=";
           };
         in {
           runner = pkgs.buildGoModule (common // {
