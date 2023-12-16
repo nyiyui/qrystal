@@ -80,7 +80,7 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 	}
 	parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
 	if len(parts) == 0 {
-		util.S.Debugf("handleQuery nx no parts")
+		util.S.Debugf("handleInternal nx no parts")
 		return dns.RcodeNameError
 	}
 	reverse(parts)
@@ -90,12 +90,12 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 	}
 	cn, ok := sc.Networks[cnn]
 	if !ok {
-		util.S.Debugf("handleQuery nx net %s", cnn)
+		util.S.Debugf("handleInternal nx net %s", cnn)
 		return dns.RcodeNameError
 	}
 	switch len(parts) {
 	case 0:
-		util.S.Debugf("handleQuery net %s", cnn)
+		util.S.Debugf("handleInternal net %s", cnn)
 		for _, peerIP := range cn.PeerIPs {
 			returnPeer(m, q, peerIP)
 		}
@@ -103,7 +103,7 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 		pn := parts[0]
 		peerIP, ok := cn.PeerIPs[pn]
 		if !ok {
-			util.S.Debugf("handleQuery nx net %s peer %s", cnn, pn)
+			util.S.Debugf("handleInternal nx net %s peer %s", cnn, pn)
 			return dns.RcodeNameError
 		}
 		returnPeer(m, q, peerIP)
@@ -135,15 +135,15 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 		protocol = parts[2]
 		service = parts[3]
 	default:
-		util.S.Debugf("handleQuery nx no parts")
+		util.S.Debugf("handleInternalSRV nx no parts")
 		return dns.RcodeNameError
 	}
 	cn, ok := sc.Networks[cnn]
 	if !ok {
-		util.S.Debugf("handleQuery nx net %s", cnn)
+		util.S.Debugf("handleInternalSRV nx net %s", cnn)
 		return dns.RcodeNameError
 	}
-	util.S.Debugf("handleQuery: parts: %#v", parts)
+	util.S.Debugf("handleInternalSRV: parts: %#v", parts)
 	for _, record := range cn.SRVs[simple.ServiceProtocol{service, protocol}] {
 		if pn != "" && record.PeerName != pn {
 			continue
@@ -161,7 +161,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		} else {
-			util.S.Debugf("handleQuery: parts: %#v error: %s", parts, err)
+			util.S.Debugf("handleInternalSRV: parts: %#v error: %s", parts, err)
 		}
 	}
 	return dns.RcodeSuccess

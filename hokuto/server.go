@@ -40,6 +40,7 @@ func (_ Hokuto) UpdateCC(q *UpdateCCQ, _ *bool) error {
 	scLock.Lock()
 	defer scLock.Lock()
 	sc = &tmpSC
+	util.S.Infof("UpdateCC: done", tmpSC, q.CC)
 	return nil
 }
 
