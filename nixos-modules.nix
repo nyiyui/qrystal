@@ -242,9 +242,11 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                         type = attrsOf (attrsOf str);
                         description = "udptunnel per-node server host and port. Note that only one server is supported yet.";
                         example = ''{ examplenet.server0 = "udptunnel.example.org:1234"; }'';
+                        default = {};
                       };
                     };
                   };
+                  default = { enable = false; };
                 };
                 srvList = mkOption {
                   type = nullOr path;
