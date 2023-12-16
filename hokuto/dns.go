@@ -49,7 +49,7 @@ func handleQuery(m *dns.Msg) (rcode int) {
 					return
 				}
 			case dns.TypeSRV:
-				rcode2 := handleInternalSRV(m, q, suffix)
+				rcode2 := handleInternalSRV(m, q, suffix, "")
 				if rcode2 != dns.RcodeSuccess {
 					rcode = rcode2
 					return
@@ -59,10 +59,19 @@ func handleQuery(m *dns.Msg) (rcode int) {
 			// TODO: SRV support for extraParents
 			for _, extra := range extraParents {
 				if strings.HasSuffix(q.Name, extra.Domain) {
-					rcode2 := handleInternal(m, q, extra.Domain, extra.Network)
-					if rcode2 != dns.RcodeSuccess {
-						rcode = rcode2
-						return
+					switch q.Qtype {
+					case dns.TypeA:
+						rcode2 := handleInternal(m, q, extra.Domain, extra.Network)
+						if rcode2 != dns.RcodeSuccess {
+							rcode = rcode2
+							return
+						}
+					case dns.TypeSRV:
+						rcode2 := handleInternalSRV(m, q, extra.Domain, extra.Network)
+						if rcode2 != dns.RcodeSuccess {
+							rcode = rcode2
+							return
+						}
 					}
 				}
 			}
@@ -111,7 +120,7 @@ func handleInternal(m *dns.Msg, q dns.Question, suffix, cnn string) (rcode int) 
 	return dns.RcodeSuccess
 }
 
-func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
+func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, presetCNN string) (rcode int) {
 	scLock.RLock()
 	defer scLock.RUnlock()
 	if sc == nil {
@@ -121,23 +130,43 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix string) (rcode int) {
 	parts := strings.Split(strings.TrimSuffix(q.Name, suffix), ".")
 	reverse(parts)
 	var cnn, pn, protocol, service string
-	// Domains:
-	// - _service._protocol.peer.network.qrystal.internal
-	// - _service._protocol.network.qrystal.internal
-	switch len(parts) {
-	case 3:
-		cnn = parts[0]
-		protocol = parts[1]
-		service = parts[2]
-	case 4:
-		cnn = parts[0]
-		pn = parts[1]
-		protocol = parts[2]
-		service = parts[3]
-	default:
-		util.S.Debugf("handleInternalSRV nx no parts")
-		return dns.RcodeNameError
+	if presetCNN != "" {
+		cnn = presetCNN
+		// Domains:
+		// - _service._protocol.PARENT
+		// - _service._protocol.peer.PARENT
+		switch len(parts) {
+		case 2:
+			protocol = parts[0]
+			service = parts[1]
+		case 3:
+			pn = parts[0]
+			protocol = parts[1]
+			service = parts[2]
+		default:
+			util.S.Debugf("handleInternalSRV nx no parts")
+			return dns.RcodeNameError
+		}
+	} else {
+		// Domains:
+		// - _service._protocol.network.PARENT
+		// - _service._protocol.peer.network.PARENT
+		switch len(parts) {
+		case 3:
+			cnn = parts[0]
+			protocol = parts[1]
+			service = parts[2]
+		case 4:
+			cnn = parts[0]
+			pn = parts[1]
+			protocol = parts[2]
+			service = parts[3]
+		default:
+			util.S.Debugf("handleInternalSRV nx no parts")
+			return dns.RcodeNameError
+		}
 	}
+
 	cn, ok := sc.Networks[cnn]
 	if !ok {
 		util.S.Debugf("handleInternalSRV nx net %s", cnn)
