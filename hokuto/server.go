@@ -67,6 +67,8 @@ func (_ Hokuto) Init(q *InitQ, _ *bool) (err error) {
 		q.Parent = ".qrystal.internal"
 	}
 	suffix = q.Parent + "."
+	extraParents = q.ExtraParents
+
 	dns.HandleFunc(".", handle)
 	server := &dns.Server{Addr: q.Addr, Net: "udp"}
 	util.S.Infof("listening on %s", server.Addr)

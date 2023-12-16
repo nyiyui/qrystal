@@ -58,7 +58,7 @@ func handleQuery(m *dns.Msg) (rcode int) {
 		} else {
 			// TODO: SRV support for extraParents
 			for _, extra := range extraParents {
-				if strings.HasSuffix(q.Name, extra.Domain) {
+				if strings.HasSuffix(q.Name, extra.Domain+".") {
 					switch q.Qtype {
 					case dns.TypeA:
 						rcode2 := handleInternal(m, q, extra.Domain, extra.Network)
