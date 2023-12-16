@@ -605,8 +605,8 @@ in {
   });
   eo-udptunnel = let
     networkName = "testnet";
-    networkName2 = "othernet";
     testDomain = "cs";
+    tunserverPort = 12345;
   in let
     node = { token }:
       { pkgs, ... }: {
@@ -614,33 +614,31 @@ in {
           base
           self.outputs.nixosModules.${system}.node
           {
-            qrystal.services.node.udptunnel = {
+            qrystal.services.node.config.udptunnel = {
               enable = true;
-              server = "tunserver:1234";
-              extraOptions = "--syslog";
+              servers = {
+                "${networkName}"."node1" = "tunserver:${toString tunserverPort}";
+              };
             };
-            qrystal.services.node.config.srvList = pkgs.writeText "srvlist.json" (builtins.toJSON {
-              ${networkName} = [{
-                Service = "_testservice";
-                Protocol = "_tcp";
-                Priority = "10";
-                Weight = "10";
-                Port = "123";
-              }];
-            });
           }
         ];
 
         networking.firewall.allowedTCPPorts = [ 39251 ];
-        qrystal.services.node = csConfig [ networkName networkName2 ] token;
-        systemd.services.qrystal-node.wantedBy = [ ];
+        qrystal.services.node = csConfig [ networkName ] token;
       };
   in lib.runTest ({
-    name = "all";
+    name = "eo-udptunnel";
     hostPkgs = pkgs;
     nodes = {
       tunserver = { pkgs, ... }: {
-        # TODO: udptunnel server
+        imports = [ base self.outputs.nixosModules.${system}.udptunnel-server ];
+
+        networking.firewall.allowedUDPPorts = [ tunserverPort ];
+        qrystal.services.udptunnel-server = {
+          enable = true;
+          listen = "0.0.0.0:${toString tunserverPort}";
+          destination = "node1:58120";
+        };
       };
       node1 = node { token = node1Token; };
       node2 = node { token = node2Token; };
@@ -653,8 +651,8 @@ in {
           config = {
             tls = csTls;
             tokens = [
-              (nodeToken "node1" node1Hash [ networkName networkName2 ])
-              (nodeToken "node2" node2Hash [ networkName networkName2 ])
+              (nodeToken "node1" node1Hash [ networkName ])
+              (nodeToken "node2" node2Hash [ networkName ])
             ];
             central.networks.${networkName} = networkBase // {
               peers.node1 = {
@@ -668,34 +666,21 @@ in {
                 canSee.only = [ "node1" ];
               };
             };
-            central.networks.${networkName2} = networkBase // {
-              keepalive = "10s";
-              listenPort = 58121;
-              ips = [ "10.45.0.1/16" ];
-              peers.node1 = {
-                host = "node1:58121";
-                allowedIPs = [ "10.45.0.1/32" ];
-                canSee.only = [ "node2" ];
-              };
-              peers.node2 = {
-                host = "node2:58121";
-                allowedIPs = [ "10.45.0.2/32" ];
-                canSee.only = [ "node1" ];
-              };
-            };
           };
         };
       };
     };
     testScript = { nodes, ... }: ''
+      def pp(value):
+        print("pp", value)
+        return value
+
       nodes = [node1, node2]
       addrs = ["10.123.0.2", "10.123.0.1"]
-      cs.start()
+      start_all()
       cs.wait_for_unit("qrystal-cs.service")
       for node in nodes:
-        node.start()
-        node.wait_until_succeeds("host ${testDomain}") # test dnsmasq settings work
-        node.systemctl("start qrystal-node.service")
+        node.wait_until_succeeds("host ${testDomain}")
         node.wait_for_unit("qrystal-node.service", timeout=20)
       print("all nodes started")
       # NOTE: there is a race condition where the peers' pubkeys could not be
@@ -703,24 +688,15 @@ in {
       for i, node in enumerate(nodes):
         print(node.wait_until_succeeds("wg show"))
         print(node.wait_until_succeeds("wg show ${networkName}"))
-        print(node.wait_until_succeeds("wg show ${networkName2}"))
         print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
         print(node.execute("ip route show")[1])
         for addr in addrs:
           print(node.execute(f"ip route get {addr}")[1])
+      assert ":${toString tunserverPort}" in pp(node2.succeed("wg show ${networkName}"))
       for i, node in enumerate(nodes):
-        print(node.execute(f"ping -c 1 {addrs[i]}")[1])
-        node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
-      def pp(value):
-        print("pp", value)
-        return value
-      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
-      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
-      for node in nodes:
-        assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
-        assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
-        assert 'has SRV record' not in pp(node.execute("host _testservice._tcp.idkpeer.testnet.qrystal.internal 127.0.0.39"))[1]
-      # TODO: test network level queries
+        for j in range(len(nodes)):
+          print(f'pinging {j} from {i}')
+          node.wait_until_succeeds(f"ping -c 1 {addrs[j]}")
     '';
   });
   udptunnel = lib.runTest ({
@@ -735,14 +711,18 @@ in {
           enable = true;
           portal = "${portal.host}:${portal.port}";
           server = "server:443";
+          verbose = true;
         };
         systemd.services.udp-send = let
           pythonScript = pkgs.writeText "udp-send.py" ''
-            import itertools, socket
+            print('starting...')
+            import itertools, socket, time
 
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             for i in itertools.count():
+                print(f'sending {i}...')
                 s.sendto(f"ping {i}".encode("ascii"), ("${portal.host}", ${portal.port}))
+                time.sleep(1)
           '';
         in {
           script = ''
@@ -758,22 +738,25 @@ in {
           enable = true;
           listen = "0.0.0.0:443";
           destination = "${destination.host}:${destination.port}";
+          verbose = true;
         };
         systemd.services.udp-receive = let
           pythonScript = pkgs.writeText "udp-receive.py" ''
+            print('starting...')
             import itertools, socket, sys
 
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.bind(("${destination.host}", ${destination.port}))
             while 1:
                 data, source = s.recvfrom(1024)
-                print(f'received: {data} from {source}', file=sys.stderr)
+                print(f'received: {data} from {source}')
                 if source != "${destination.host}": continue
                 if "ping" not in data: continue
                 print('correct message received')
                 break
           '';
         in {
+          serviceConfig.Type = "oneshot";
           script = ''
             ${pkgs.python3}/bin/python3 -Wd ${pythonScript}
           '';

@@ -205,6 +205,8 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
         mkConfigFile = cfg:
           pkgs.writeText "node-config.json" (builtins.toJSON cfg.config);
       in {
+        imports = [ self.outputs.nixosModules.${system}.udptunnel-client ];
+
         options.qrystal.services.node = {
           enable = mkEnableOption "Enables the Qrystal Node service";
           config = mkOption {
@@ -231,6 +233,18 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                   type = nullOr path;
                   description = "Path to executable for endpoint override.";
                   default = null;
+                };
+                udptunnel = mkOption {
+                  type = submodule {
+                    options = {
+                      enable = mkEnableOption "udptunnel with endpoint override to proxy WireGuard connections.";
+                      servers = mkOption {
+                        type = attrsOf (attrsOf str);
+                        description = "udptunnel per-node server host and port. Note that only one server is supported yet.";
+                        example = ''{ examplenet.server0 = "udptunnel.example.org:1234"; }'';
+                      };
+                    };
+                  };
                 };
                 srvList = mkOption {
                   type = nullOr path;
@@ -339,7 +353,36 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
             };
           };
         };
-        config = mkIf cfg.enable {
+        config = let
+          udptunnelPortal = "127.0.0.1:12345";
+          udptunnelPythonScript = pkgs.writeText "qrystal-node-endpoint-override-inner.py" ''
+            import json, sys
+
+            servers_raw = """
+            ${builtins.toJSON cfg.config.udptunnel.servers}
+            """
+            servers = json.loads(servers_raw)
+            req = json.load(sys.stdin)
+
+            def get_res(servers, req):
+                endpoint = servers.get(req['cnn'], {}).get(req['pn'])
+                if endpoint:
+                    return dict(endpoint="${udptunnelPortal}")
+                else:
+                    return dict(endpoint=req.endpoint)
+
+            res = get_res(servers, req)
+
+            json.dump(res, sys.stdout)
+          '';
+        in mkIf cfg.enable {
+          qrystal.services.node.config.endpointOverride = mkIf cfg.config.udptunnel.enable
+            ((pkgs.writeShellScriptBin "qrystal-node-endpoint-override.sh" "${pkgs.python3}/bin/python3 -Wd ${udptunnelPythonScript}") + "/bin/qrystal-node-endpoint-override.sh");
+          qrystal.services.udptunnel-client = mkIf cfg.config.udptunnel.enable {
+            enable = true;
+            portal = udptunnelPortal;
+            server = head (attrValues (head (attrValues cfg.config.udptunnel.servers)));
+          };
           services.dnsmasq = mkIf (cfg.config.hokuto.configureDnsmasq
             && cfg.config.hokuto.addr != "") {
               enable = true;
