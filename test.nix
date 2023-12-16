@@ -727,35 +727,68 @@ in {
     name = "udptunnel";
     hostPkgs = pkgs;
     nodes = {
-      client = { pkgs, ... }: {
+      client = { pkgs, ... }: let
+        portal = { host = "127.0.0.1"; port = "12345"; };
+      in {
         imports = [ base self.outputs.nixosModules.${system}.udptunnel-client ];
         qrystal.services.udptunnel-client = {
           enable = true;
-          portal = "127.0.0.1:12345";
+          portal = "${portal.host}:${portal.port}";
           server = "server:443";
         };
+        systemd.services.udp-send = let
+          pythonScript = pkgs.writeText "udp-send.py" ''
+            import itertools, socket
+
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            for i in itertools.count():
+                s.sendto(f"ping {i}".encode("ascii"), ("${portal.host}", ${portal.port}))
+          '';
+        in {
+          script = ''
+            ${pkgs.python3}/bin/python3 -Wd ${pythonScript}
+          '';
+        };
       };
-      server = { pkgs, ... }: {
+      server = { pkgs, ... }: let
+        destination = { host = "127.0.0.1"; port = "12345"; };
+      in {
         imports = [ base self.outputs.nixosModules.${system}.udptunnel-server ];
         qrystal.services.udptunnel-server = {
           enable = true;
           listen = "0.0.0.0:443";
-          destination = "127.0.0.1:12345";
+          destination = "${destination.host}:${destination.port}";
         };
-        systemd.services.udp-echo = {
-          script = ''
-            ${pkgs.nmap}/bin/ncat -e /bin/cat -k -u -l 12345
+        systemd.services.udp-receive = let
+          pythonScript = pkgs.writeText "udp-receive.py" ''
+            import itertools, socket, sys
+
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.bind(("${destination.host}", ${destination.port}))
+            while 1:
+                data, source = s.recvfrom(1024)
+                print(f'received: {data} from {source}', file=sys.stderr)
+                if source != "${destination.host}": continue
+                if "ping" not in data: continue
+                print('correct message received')
+                break
           '';
-          wantedBy = [ "multi-user.target" ];
+        in {
+          script = ''
+            ${pkgs.python3}/bin/python3 -Wd ${pythonScript}
+          '';
         };
       };
     };
     testScript = { nodes, ... }: ''
       server.start()
       client.start()
-      server.wait_for_unit("udp-echo.service")
-      res = client.execute("echo -n 'hello' /dev/udp/localhost/12345")
-      assert "hello" in res[1]
+
+      client.systemctl("start udp-send.service")
+      client.wait_for_unit("udp-send.service")
+
+      server.systemctl("start udp-receive.service")
+      server.wait_for_unit("udp-receive.service")
     '';
   });
 }
