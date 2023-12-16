@@ -293,7 +293,6 @@ args@{ self, system, nixpkgsFor, libFor, nixosLibFor, ldflags, packages, ...
                               type = str;
                               description = "Parent domain.";
                               example = ".internal.example.org";
-                              default = null;
                             };
                           };
                         });

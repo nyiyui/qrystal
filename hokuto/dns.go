@@ -56,7 +56,7 @@ func handleQuery(m *dns.Msg) (rcode int) {
 				}
 			}
 		} else {
-			// TODO: SRV support for extraParents
+			// TODO: support for extraParents
 			for _, extra := range extraParents {
 				if strings.HasSuffix(q.Name, extra.Domain+".") {
 					switch q.Qtype {
