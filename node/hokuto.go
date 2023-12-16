@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/nyiyui/qrystal/hokuto"
-	"github.com/nyiyui/qrystal/util"
 )
 
 // updateHokutoCC updates hokuto's copy of CC.
@@ -15,9 +14,7 @@ func (n *Node) updateHokutoCC() error {
 		Token: n.hokuto.token,
 		CC:    &n.cc,
 	}
-	util.S.Debugf("call start")
 	err := n.hokuto.client.Call("Hokuto.UpdateCC", q, &dummy)
-	util.S.Debugf("call done")
 	if err != nil {
 		return fmt.Errorf("call: %w", err)
 	}

@@ -97,7 +97,6 @@ func (n *Node) update() error {
 	}
 	util.Notify(fmt.Sprintf("STATUS=Updating DNS for new CC (%d CNs)...", len(n.cc.Networks)))
 	err = n.updateHokutoCC()
-	util.S.Debugf("updateHokutoCC: %s", err)
 	if err != nil {
 		return fmt.Errorf("updateHokutoCC: %w", err)
 	}
