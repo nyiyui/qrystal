@@ -1,6 +1,7 @@
 package util
 
 import (
+	"os"
 	"sync"
 
 	"go.uber.org/zap"
@@ -13,6 +14,11 @@ var setupLock sync.Mutex
 func SetupLog() {
 	setupLock.Lock()
 	defer setupLock.Unlock()
-	L, _ = zap.NewDevelopment()
+	switch os.Getenv("QRYSTAL_LOGGING_CONFIG") {
+	case "development":
+		L, _ = zap.NewDevelopment()
+	default:
+		L, _ = zap.NewProduction()
+	}
 	S = L.Sugar()
 }
