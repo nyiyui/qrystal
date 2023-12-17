@@ -1,4 +1,5 @@
 src=.
+flags = -race
 tags = sdnotiy
 ldflags-mio = -X github.com/nyiyui/qrystal/mio.CommandBash=${shell which bash}
 ldflags-mio += -X github.com/nyiyui/qrystal/mio.CommandWg=${shell which wg}
@@ -10,40 +11,59 @@ ldflags-runner = -X github.com/nyiyui/qrystal/runner.NodeUser=qrystal-node
 all: cs-admin cs gen-keys runner-hokuto runner-mio runner-node runner sd-notify-test
 
 cs-admin:
-	go build -race -tags "${tags}" -o cs-push ${src}/cmd/cs-admin
+	go build ${flags} -tags "${tags}" -o cs-push ${src}/cmd/cs-admin
 
 cs:
-	go build -race -tags "${tags}" -o cs ${src}/cmd/cs
+	go build ${flags} -tags "${tags}" -o cs ${src}/cmd/cs
 
 gen-keys:
-	go build -race -tags "${tags}" -o gen-keys ${src}/cmd/gen-keys
+	go build ${flags} -tags "${tags}" -o gen-keys ${src}/cmd/gen-keys
 
 runner-hokuto:
-	go build -race -tags "${tags}" -o runner-hokuto ${src}/cmd/runner-hokuto
+	go build ${flags} -tags "${tags}" -o runner-hokuto ${src}/cmd/runner-hokuto
 
 runner-mio:
-	go build -race -tags "${tags}" -ldflags "${ldflags-mio}" -o runner-mio ${src}/cmd/runner-mio
+	go build ${flags} -tags "${tags}" -ldflags "${ldflags-mio}" -o runner-mio ${src}/cmd/runner-mio
 
 runner-node:
-	go build -race -tags "${tags}" -ldflags "${ldflags-node}" -o runner-node ${src}/cmd/runner-node
+	go build ${flags} -tags "${tags}" -ldflags "${ldflags-node}" -o runner-node ${src}/cmd/runner-node
 
 runner:
-	go build -race -tags "${tags}" -ldflags "${ldflags-runner}" -o runner ${src}/cmd/runner
+	go build ${flags} -tags "${tags}" -ldflags "${ldflags-runner}" -o runner ${src}/cmd/runner
 
 sd-notify-test:
-	go build -race -tags "${tags}" -o sd-notify-test ${src}/cmd/sd-notify-test
+	go build ${flags} -tags "${tags}" -o sd-notify-test ${src}/cmd/sd-notify-test
 
 install-cs-push: cs-push
-	install -m 755 -o root -g root $< ${pkdir}/usr/bin/qrystal-cs-push
+	install -m 755 -o root -g root $< ${pkgdir}/usr/bin/qrystal-cs-push
 
 uninstall-cs-push:
 	rm -f ${pkgdir}/usr/bin/qrystal-cs-push
 
-install-cs: cs
-	systemctl stop qrystal-cs
+install-node: runner runner-hokuto runner-mio runner-node
+	mkdir -p "${pkgdir}/opt/qrystal-node"
+	install -m 755 -o root -g root runner ${pkgdir}/opt/qrystal-node/runner
+	install -m 755 -o root -g root runner-hokuto ${pkgdir}/opt/qrystal-node/runner-hokuto
+	install -m 755 -o root -g root runner-mio ${pkgdir}/opt/qrystal-node/runner-mio
+	install -m 755 -o root -g root runner-node ${pkgdir}/opt/qrystal-node/runner-node
+	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
+	install -m 644 '${src}/config/sysusers-node.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal-node.conf"
+	systemctl restart systemd-sysusers
 	#
+	mkdir -p "${pkgdir}/etc/qrystal-node"
+	chown root:qrystal-node "${pkgdir}/etc/qrystal-node"
+	chmod 755 "${pkgdir}/etc/qrystal-node"
+	install '${src}/config/node-config.yml' "${pkgdir}/etc/qrystal-node/"
+	chown root:qrystal-node "${pkgdir}/etc/qrystal-node/node-config.yml"
+	chmod 640 "${pkgdir}/etc/qrystal-node/node-config.yml"
+	#
+	mkdir -p "${pkgdir}/usr/lib/systemd/system"
+	install '${src}/config/node.service' "${pkgdir}/usr/lib/systemd/system/qrystal-node.service"
+	systemctl daemon-reload
+
+install-cs: cs
 	mkdir -p "${pkgdir}/opt/qrystal"
-	install -m 755 -o root -g root $< ${pkdir}/opt/qrystal/qrystal-cs
+	install -m 755 -o root -g root $< ${pkgdir}/opt/qrystal/qrystal-cs
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	install -m 644 '${src}/config/sysusers-cs.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal-cs.conf"
 	systemctl restart systemd-sysusers
