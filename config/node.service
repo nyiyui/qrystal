@@ -18,3 +18,4 @@ Restart=on-failure
 StateDirectory=qrystal-node
 StateDirectoryMode=0700
 Type=notify
+WorkingDirectory=/opt/qrystal-node
