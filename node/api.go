@@ -63,7 +63,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 			}
 			s.PubKeys[cnn] = cn.MyPrivKey.PublicKey()
 		}
-		return n.update()
+		return n.update(updateModeSynced)
 	})
 	go cl.Run()
 }
@@ -89,13 +89,29 @@ func (n *Node) newClient() (*rpc2.Client, *tls.Conn, error) {
 	return cl, conn, nil
 }
 
-func (n *Node) update() error {
-	util.Notify(fmt.Sprintf("STATUS=Reifying new CC (%d CNs)...", len(n.cc.Networks)))
+type updateMode int
+
+const (
+	updateModeSynced updateMode = iota + 1
+	updateModeBackport
+)
+
+func (u updateMode) String() string {
+	switch u {
+	case updateModeSynced:
+		return "synced"
+	case updateModeBackport:
+		return "backported"
+	}
+}
+
+func (n *Node) update(mode updateMode) error {
+	util.Notify(fmt.Sprintf("STATUS=Reifying %s CC (%d CNs)...", mode, len(n.cc.Networks)))
 	err := n.reify()
 	if err != nil {
 		return fmt.Errorf("reify: %w", err)
 	}
-	util.Notify(fmt.Sprintf("STATUS=Updating DNS for new CC (%d CNs)...", len(n.cc.Networks)))
+	util.Notify(fmt.Sprintf("STATUS=Updating DNS for %s CC (%d CNs)...", mode, len(n.cc.Networks)))
 	err = n.updateHokutoCC()
 	if err != nil {
 		return fmt.Errorf("updateHokutoCC: %w", err)
@@ -104,7 +120,7 @@ func (n *Node) update() error {
 	for cnn := range n.cc.Networks {
 		fmt.Fprintf(cns, " %s", cnn)
 	}
-	util.Notify(fmt.Sprintf("STATUS=Synced. CNs:%s", cns))
+	util.Notify(fmt.Sprintf("STATUS=OK: %s CC CNs:%s", mode, cns))
 	util.Notify("READY=1")
 	err = n.saveBackport()
 	if err != nil {
