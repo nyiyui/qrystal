@@ -102,6 +102,8 @@ func (u updateMode) String() string {
 		return "synced"
 	case updateModeBackport:
 		return "backported"
+	default:
+		return fmt.Sprintf("updateMode unknown %d", u)
 	}
 }
 
