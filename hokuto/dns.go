@@ -29,7 +29,7 @@ func returnPeer(m *dns.Msg, q dns.Question, ipNets []net.IPNet) {
 			// non-/32s seem very *fun* to deal with...
 			continue
 		}
-		rr, err := dns.NewRR(fmt.Sprintf("%s A %s", q.Name, ipNet.IP.String()))
+		rr, err := dns.NewRR(fmt.Sprintf("%s 0 A %s", q.Name, ipNet.IP.String()))
 		if err == nil {
 			m.Answer = append(m.Answer, rr)
 		}
@@ -178,7 +178,7 @@ func handleInternalSRV(m *dns.Msg, q dns.Question, suffix, presetCNN string) (rc
 			continue
 		}
 		rr, err := dns.NewRR(fmt.Sprintf(
-			"%s SRV %d %d %d %s.%s%s",
+			"%s 0 SRV %d %d %d %s.%s%s",
 			q.Name,
 			record.Priority,
 			record.Weight,
