@@ -152,19 +152,21 @@ func (s SRV) AllowedBy(a2 SRVAllowance) error {
 	return nil
 }
 
-func UpdateSRVs(target, updater []SRV) (target_ []SRV) {
+func UpdateSRVs(target, updater []SRV) (target_ []SRV, updated bool) {
 	for _, srv := range updater {
 		i := slices.IndexFunc(target, func(s SRV) bool { return s.Service == srv.Service })
 		if srv.Service == "" && i != -1 {
 			target = append(target[:i], target[i+1:]...)
+			updated = true
 		} else if i == -1 {
 			i = len(target)
 			target = append(target, srv)
+			updated = true
 		} else {
 			target[i] = srv
 		}
 	}
-	return target
+	return target, updated
 }
 
 // Duration is a encoding-friendly time.Duration.

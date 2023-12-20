@@ -63,12 +63,13 @@ func (c *CentralSource) srvUpdate(cl *rpc2.Client, q *api.SRVUpdateQ, s *api.SRV
 		for srvI, srv := range q.SRVs {
 			srvs[srvI] = srv.SRV
 		}
-		peer.SRVs = central.UpdateSRVs(peer.SRVs, srvs)
+		peer.SRVs, updated = central.UpdateSRVs(peer.SRVs, srvs)
 		if changed[srv.NetworkName] == nil {
 			changed[srv.NetworkName] = make([]string, 0, 1)
 		}
-		changed[srv.NetworkName] = append(changed[srv.NetworkName], srv.PeerName)
-		// TODO: append to changed[] only when the SRV is different from before (not just in the update request)
+		if updated {
+			changed[srv.NetworkName] = append(changed[srv.NetworkName], srv.PeerName)
+		}
 	}
 	c.notify(change{Reason: fmt.Sprintf("srvUpdate %s", ti.Name), Changed: changed})
 	return nil

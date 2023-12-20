@@ -166,7 +166,6 @@ func (c *CentralSource) removeNotifyCh(i int) {
 	c.notifyChsLock.Lock()
 	defer c.notifyChsLock.Unlock()
 	close(c.notifyChs[i].Ch)
-	// TODO: memory leak (chan leak) due to chans not being cleaned up
 	c.notifyChs[i] = notifyCh{}
 }
 
