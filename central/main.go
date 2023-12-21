@@ -58,7 +58,6 @@ type Peer struct {
 	AllowedIPs  []IPNet `yaml:"allowedIPs" json:"allowedIPs"`
 	CanForward  bool    `yaml:"canForward" json:"canForward"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
-	// TODO: when CanSee.Only is blank, this is interpreted as nil → no way to distinguish between seeing nothing and everything
 	CanSee      *CanSee        `yaml:"canSee" json:"canSee"`
 	AllowedSRVs []SRVAllowance `yaml:"allowedSRVs" json:"allowedSRVs"`
 

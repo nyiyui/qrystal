@@ -23,7 +23,7 @@ func (c *CentralSource) HandleRyo(addr string, tlsCfg TLS) error {
 		return nil
 	}
 	mux := http.NewServeMux()
-	// TODO: only POST
+	// TODO: only POST - wait for Go 1.22
 	mux.Handle("/push", c.ryoToken(http.HandlerFunc(c.ryoPush)))
 	mux.Handle("/add-token", c.ryoToken(http.HandlerFunc(c.ryoAddToken)))
 	mux.Handle("/remove-token", c.ryoToken(http.HandlerFunc(c.ryoRemoveToken)))
