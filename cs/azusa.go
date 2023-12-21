@@ -18,9 +18,11 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	if !ok {
 		return newTokenAuthError(q.CentralToken)
 	}
+	c.ccLock.RLock()
+	defer c.ccLock.RUnlock()
 	var desc strings.Builder
 	for cnn, peer := range q.Networks {
-		err = checkPeer(ti, cnn, peer)
+		err = checkPeer(ti, cnn, c.cc, peer)
 		if err != nil {
 			return err
 		}

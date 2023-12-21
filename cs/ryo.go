@@ -83,7 +83,9 @@ func (c *CentralSource) ryoPush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q.Peer.Name = q.PeerName
-	err = checkPeer(ti, q.CNN, q.Peer)
+	c.ccLock.RLock()
+	defer c.ccLock.RUnlock()
+	err = checkPeer(ti, q.CNN, c.cc, q.Peer)
 	if err != nil {
 		switch err := err.(type) {
 		case httpError:

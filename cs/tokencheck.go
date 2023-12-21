@@ -3,6 +3,7 @@ package cs
 import (
 	"errors"
 	"fmt"
+	"net"
 
 	"github.com/nyiyui/qrystal/central"
 )
@@ -25,7 +26,8 @@ func (h httpError) Error() string {
 
 func (h httpError) Unwrap() error { return h.err }
 
-func checkPeer(ti TokenInfo, cnn string, peer central.Peer) error {
+func checkPeer(ti TokenInfo, cnn string, cc central.Config, peer central.Peer) error {
+	cn := cc.Networks[cnn]
 	if ti.CanPush == nil {
 		return newHttpError(403, errors.New("token: cannot push"))
 	}
@@ -37,6 +39,11 @@ func checkPeer(ti TokenInfo, cnn string, peer central.Peer) error {
 		}
 		if peer.Name != cpn.Name {
 			return newHttpErrorf(403, "%s as only peer %s is allowed", prelude, cpn.Name)
+		}
+		for _, in := range peer.AllowedIPs {
+			if !central.IPNetSubsetOfAny(net.IPNet(in), cn.IPs) {
+				return newHttpErrorf(403, "%s as peer specifies AllowedIPs not in network's IPs", prelude)
+			}
 		}
 		// TODO: check peer IP networks (make sure it fits inside the network's IPs)
 		if cpn.CanSeeElementAny == false {

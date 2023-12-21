@@ -302,3 +302,18 @@ func Same2(a map[string]*Peer, b map[string]*Peer) bool {
 	}
 	return true
 }
+
+func IPNetSubsetOfAny(subset net.IPNet, supersets []IPNet) bool {
+	for _, superset := range supersets {
+		if !IPNetSubsetOf(subset, net.IPNet(superset)) {
+			return false
+		}
+	}
+	return true
+}
+
+func IPNetSubsetOf(subset, superset net.IPNet) bool {
+	superMask, _ := superset.Mask.Size()
+	subMask, _ := subset.Mask.Size()
+	return superMask <= subMask && superset.Contains(subset.IP)
+}
