@@ -87,13 +87,13 @@ func (n *Node) listenCS() error {
 }
 
 func (n *Node) listenCSOnce() (resetBackoff bool, err error) {
-	util.S.Debug("handleSRVOnce: newClient…")
+	util.S.Debug("listenCSOnce: newClient…")
 	cl, _, err := n.newClient()
 	if err != nil {
 		return false, fmt.Errorf("newClient: %w", err)
 	}
 
-	util.S.Debug("handleSRVOnce: pullCS…")
+	util.S.Debug("listenCSOnce: pullCS…")
 	err = n.pullCS(cl)
 	if err != nil {
 		return false, fmt.Errorf("pullCS: %w", err)
