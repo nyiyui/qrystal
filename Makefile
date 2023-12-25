@@ -46,8 +46,8 @@ install-node: runner runner-hokuto runner-mio runner-node
 	install -m 755 -o root -g root runner-hokuto ${pkgdir}/opt/qrystal-node/runner-hokuto
 	install -m 755 -o root -g root runner-mio ${pkgdir}/opt/qrystal-node/runner-mio
 	install -m 755 -o root -g root runner-node ${pkgdir}/opt/qrystal-node/runner-node
-	install -m 755 -o root -g root dev-add.sh ${pkgdir}/opt/qrystal-node/dev-add.sh
-	install -m 755 -o root -g root dev-remove.sh ${pkgdir}/opt/qrystal-node/dev-remove.sh
+	install -m 755 -o root -g root ${src}/mio/dev-add.sh ${pkgdir}/opt/qrystal-node/dev-add.sh
+	install -m 755 -o root -g root ${src}/mio/dev-remove.sh ${pkgdir}/opt/qrystal-node/dev-remove.sh
 	mkdir -p "${pkgdir}/usr/lib/sysusers.d"
 	install -m 644 '${src}/config/sysusers-node.conf' "${pkgdir}/usr/lib/sysusers.d/qrystal-node.conf"
 	systemctl restart systemd-sysusers

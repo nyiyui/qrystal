@@ -13,6 +13,14 @@ wg="$8"
 wg_quick="$9"
 persist="${10}"
 
+if [ -z "$wg" ]; then
+  wg="$(which wg)"
+fi
+
+if [ -z "$wg_quick" ]; then
+  wg_quick="$(which wg-quick)"
+fi
+
 umask 077
 mkdir -p /etc/wireguard
 config_path="/etc/wireguard/$name.conf"

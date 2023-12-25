@@ -50,12 +50,13 @@ func (n *Node) handleSRV() error {
 }
 
 func (n *Node) handleSRVOnce() (resetBackoff bool, err error) {
-	util.S.Debug("newClient…")
+	util.S.Debug("handleSRVOnce: newClient…")
 	cl, _, err := n.newClient()
 	if err != nil {
 		return false, fmt.Errorf("newClient: %w", err)
 	}
 
+	util.S.Debug("handleSRVOnce: initial")
 	err = n.loadSRVList(cl)
 	if err != nil {
 		err = fmt.Errorf("srv (initial): %w", err)
@@ -63,6 +64,7 @@ func (n *Node) handleSRVOnce() (resetBackoff bool, err error) {
 	}
 
 	for range n.reupdateSRV {
+		util.S.Debug("handleSRVOnce: reupdate")
 		err = n.loadSRVList(cl)
 		if err != nil {
 			err = fmt.Errorf("srv (signal): %w", err)
@@ -85,13 +87,13 @@ func (n *Node) listenCS() error {
 }
 
 func (n *Node) listenCSOnce() (resetBackoff bool, err error) {
-	util.S.Debug("newClient…")
+	util.S.Debug("handleSRVOnce: newClient…")
 	cl, _, err := n.newClient()
 	if err != nil {
 		return false, fmt.Errorf("newClient: %w", err)
 	}
 
-	util.S.Debug("pullCS…")
+	util.S.Debug("handleSRVOnce: pullCS…")
 	err = n.pullCS(cl)
 	if err != nil {
 		return false, fmt.Errorf("pullCS: %w", err)
