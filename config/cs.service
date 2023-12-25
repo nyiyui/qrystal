@@ -14,7 +14,7 @@ StateDirectoryMode=0700
 LogsDirectory=qrystal-cs
 LogsDirectoryMode=0700
 PrivateTmp=yes
-ProectHome=yes
+ProtectHome=yes
 
 [Install]
 WantedBy=multi-user.target
