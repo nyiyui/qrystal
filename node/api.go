@@ -122,7 +122,7 @@ func (n *Node) update(mode updateMode) error {
 	for cnn := range n.cc.Networks {
 		fmt.Fprintf(cns, " %s", cnn)
 	}
-	util.Notify(fmt.Sprintf("STATUS=OK: %s CC CNs:%s", mode, cns))
+	util.Notify(fmt.Sprintf("STATUS=OK: %s CNs:%s", mode, cns))
 	util.Notify("READY=1")
 	err = n.saveBackport()
 	if err != nil {

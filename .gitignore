@@ -8,3 +8,4 @@
 /build.tar.zst
 /.direnv
 result
+.nixos-test-history
