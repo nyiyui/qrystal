@@ -45,7 +45,6 @@ func checkPeer(ti TokenInfo, cnn string, cc central.Config, peer central.Peer) e
 				return newHttpErrorf(403, "%s as peer specifies AllowedIPs not in network's IPs", prelude)
 			}
 		}
-		// TODO: check peer IP networks (make sure it fits inside the network's IPs)
 		if cpn.CanSeeElementAny == false {
 			if peer.CanSee == nil {
 				return newHttpErrorf(403, "%s as peer specifies CanSee any but CanSeeElement does not allow any", prelude)

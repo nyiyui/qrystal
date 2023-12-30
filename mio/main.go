@@ -130,7 +130,8 @@ func (sm *Mio) ConfigureDevice(q ConfigureDeviceQ, r *string) error {
 	sm.ensureTokenOk(q.Token)
 
 	// These errors shouldn't happen but this way, but this is easier to debug.
-	// TODO: consider returning an error (instead of setting *r) for these types of errors.
+	// error = don't retry with the same settings
+	// *r returns error = something wrong with the environment, the same settings might work layer
 	if q.Name == "" {
 		return errors.New("q.Name blank")
 	}
