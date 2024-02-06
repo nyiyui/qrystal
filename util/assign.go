@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/big"
 	"net"
-	"sort"
 )
 
 func ParseCIDR(s string) (net.IPNet, error) {
@@ -21,7 +20,6 @@ var ErrAddressOverflow = errors.New("overflowed network")
 func AssignAddress(ipNet *net.IPNet, usedIPs []net.IPNet) (ip net.IP, err error) {
 	// TODO: performance improvements?
 	cand := ipNet.IP
-	sort.Slice(usedIPs)
 NextIP:
 	for {
 		if !ipNet.Contains(cand) {
