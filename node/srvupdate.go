@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,7 +17,9 @@ func (n *Node) srvUpdate(cl *rpc2.Client, srvs []api.SRV) (err error) {
 		srvs[i].PeerName = n.cc.Networks[srv.NetworkName].Me
 	}
 	var s api.SRVUpdateS
-	err = cl.Call("srvUpdate", &api.SRVUpdateQ{SRVs: srvs, CentralToken: n.cs.Token}, &s)
+	ctx, cancel := context.WithTimeout(context.Background(), util.OnceTimeout)
+	defer cancel()
+	err = cl.CallWithContext(ctx, "srvUpdate", &api.SRVUpdateQ{SRVs: srvs, CentralToken: n.cs.Token}, &s)
 	if err != nil {
 		err = fmt.Errorf("call: %w", err)
 		return
@@ -69,8 +72,14 @@ func (n *Node) loadSRVList(cl *rpc2.Client) (err error) {
 		}
 	}
 	if updated {
-		return n.srvUpdate(cl, srvs)
+		util.S.Infof("srv: updating...")
+		err := n.srvUpdate(cl, srvs)
+		if err != nil {
+			return err
+		}
+		util.S.Infof("srv: updated.")
 	} else {
-		return nil
+		util.S.Infof("srv: no need to update.")
 	}
+	return nil
 }

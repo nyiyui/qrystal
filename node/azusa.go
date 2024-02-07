@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cenkalti/rpc2"
@@ -8,9 +9,9 @@ import (
 	"github.com/nyiyui/qrystal/central"
 )
 
-func (n *Node) azusa(networks map[string]central.Peer, cl *rpc2.Client) (err error) {
+func (n *Node) azusa(ctx context.Context, networks map[string]central.Peer, cl *rpc2.Client) (err error) {
 	var s api.AzusaS
-	err = cl.Call("azusa", &api.AzusaQ{Networks: networks, CentralToken: n.cs.Token}, &s)
+	err = cl.CallWithContext(ctx, "azusa", &api.AzusaQ{Networks: networks, CentralToken: n.cs.Token}, &s)
 	if err != nil {
 		err = fmt.Errorf("call: %w", err)
 		return

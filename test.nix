@@ -262,53 +262,45 @@ in {
       # TODO: test network level queries
     '';
   });
-  azusa = let networkName = "testnet";
-  in let
-    node = ({ name, token, allowedIPs, canSee }:
+  azusa = let
+    networkName = "testnet";
+    testDomain = "cs";
+    node = { token, name, allowedIPs, canSee }:
       { pkgs, ... }: {
-        imports = [ base self.outputs.nixosModules.${system}.node ];
+        imports = [
+          base
+          self.outputs.nixosModules.${system}.node
+          {
+            qrystal.services.node.config.srvList = pkgs.writeText "srvlist.json" (builtins.toJSON {
+              ${networkName} = [{
+                Service = "_testservice";
+                Protocol = "_tcp";
+                Priority = "10";
+                Weight = "10";
+                Port = "123";
+              }];
+            });
+          }
+          {
+            qrystal.services.node.config.cs.azusa.networks.${networkName} = {
+              inherit name;
+              host = "${name}:58120";
+              inherit allowedIPs;
+              inherit canSee;
+            };
+          }
+        ];
 
         networking.firewall.allowedTCPPorts = [ 39251 ];
-        services.dnsmasq.settings = {
-          local = "/";
-          domain = "local";
-          expand-hosts = true;
-        };
-        qrystal.services.node = {
-          enable = true;
-          config.cs = {
-            comment = "cs";
-            endpoint = "cs:39252";
-            tls.certPath = builtins.toFile "testing-insecure-node-cert.pem"
-              (rootCert + "\n" + csCert);
-            networks = [ networkName ];
-            tokenPath = builtins.toFile "token" token;
-            azusa.networks.${networkName} = {
-              inherit name;
-              host = "${name}:39251}";
-              inherit allowedIPs;
-              canSee.only = canSee;
-            };
-          };
-        };
+        qrystal.services.node = csConfig [ networkName ] token;
         systemd.services.qrystal-node.wantedBy = [ ];
-      });
+      };
   in lib.runTest ({
     name = "azusa";
     hostPkgs = pkgs;
     nodes = {
-      node1 = node {
-        name = "node1";
-        token = node1Token;
-        allowedIPs = [ "10.123.0.1/32" ];
-        canSee = [ "node2" ];
-      };
-      node2 = node {
-        name = "node2";
-        token = node2Token;
-        allowedIPs = [ "10.123.0.2/32" ];
-        canSee = [ "node2" ];
-      };
+      node1 = node { token = node1Token; name = "node1"; allowedIPs = [ "10.123.0.1/32" ]; canSee.only = [ "node2" ]; };
+      node2 = node { token = node2Token; name = "node2"; allowedIPs = [ "10.123.0.2/32" ]; canSee.only = [ "node1" ]; };
       cs = { pkgs, ... }: {
         imports = [ base self.outputs.nixosModules.${system}.cs ];
 
@@ -329,7 +321,7 @@ in {
               ((nodeToken "node2" node2Hash [ networkName ]) // {
                 canPush.networks.${networkName} = {
                   name = "node2";
-                  canSeeElement = [ "node2" ];
+                  canSeeElement = [ "node1" ];
                 };
                 canPull = true;
                 networks.${networkName} = "node2";
@@ -347,13 +339,14 @@ in {
       cs.wait_for_unit("qrystal-cs.service")
       for node in nodes:
         node.start()
+        node.wait_until_succeeds("host ${testDomain}") # test dnsmasq settings work
         node.systemctl("start qrystal-node.service")
-      for node in nodes:
         node.wait_for_unit("qrystal-node.service", timeout=20)
       print("all nodes started")
       # NOTE: there is a race condition where the peers' pubkeys could not be
       # set yet when pinged (so that's why we're using wait_until_*
       for i, node in enumerate(nodes):
+        print(node.wait_until_succeeds("wg show"))
         print(node.wait_until_succeeds("wg show ${networkName}"))
         print(node.execute("cat /etc/wireguard/${networkName}.conf")[1])
         print(node.execute("ip route show")[1])
@@ -362,6 +355,16 @@ in {
       for i, node in enumerate(nodes):
         print(node.execute(f"ping -c 1 {addrs[i]}")[1])
         node.wait_until_succeeds(f"ping -c 1 {addrs[i]}")
+      def pp(value):
+        print("pp", value)
+        return value
+      assert "node2.testnet.qrystal.internal has address 10.123.0.2" in pp(node1.succeed("host node2.testnet.qrystal.internal"))
+      assert "node1.testnet.qrystal.internal has address 10.123.0.1" in pp(node2.succeed("host node1.testnet.qrystal.internal"))
+      for node in nodes:
+        assert pp(node.execute("host idkpeer.testnet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert pp(node.execute("host node1.idknet.qrystal.internal 127.0.0.39"))[0] == 1
+        assert 'has SRV record' not in pp(node.execute("host _testservice._tcp.idkpeer.testnet.qrystal.internal 127.0.0.39"))[1]
+      # TODO: test network level queries
     '';
   });
   eo = let

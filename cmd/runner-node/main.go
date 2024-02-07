@@ -151,6 +151,5 @@ func main() {
 	} else {
 		util.S.Info("loaded from backport.")
 	}
-	util.S.Info("connecting to CS...")
 	n.ListenCS()
 }

@@ -1,8 +1,10 @@
 package cs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/cenkalti/rpc2"
@@ -26,6 +28,7 @@ func (c *CentralSource) ping(cl *rpc2.Client, q *bool, s *bool) error {
 }
 
 func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error {
+	log.Printf("=== sync1 %v", q)
 	ti, ok, err := c.Tokens.getToken(&q.CentralToken)
 	if err != nil {
 		return fmt.Errorf("get token: %w", err)
@@ -48,11 +51,15 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 			util.S.Errorf("UpdateToken %s: %s", ti.key, err)
 		}
 	}()
+	log.Printf("=== sync2 %v", q)
 	util.S.Infof("token %s: pull for nets: %s", ti.Name, ti.Networks)
+
+	ctx, cancel := context.WithTimeout(context.Background(), util.OnceTimeout)
+	defer cancel()
 
 	{
 		var q, s bool
-		err = cl.Call("ping", &q, &s)
+		err = cl.CallWithContext(ctx, "ping", &q, &s)
 		if err != nil {
 			util.S.Errorf("ping token %s: %s", ti.Name, err)
 			return fmt.Errorf("ping failed: %w", err)
@@ -62,7 +69,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 	newCC := c.copyCC(ti.Networks) // also does RLock/RUnlock
 
 	var s2 api.PushS
-	err = cl.Call("push", &api.PushQ{CC: *newCC}, &s2)
+	err = cl.CallWithContext(ctx, "push", &api.PushQ{CC: *newCC}, &s2)
 	if err != nil {
 		util.S.Errorf("push %s nets %s: %s", ti.Name, ti.Networks, err)
 		return fmt.Errorf("push failed: %w", err)

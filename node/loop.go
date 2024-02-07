@@ -3,6 +3,7 @@ package node
 // TODO: check if all AllowedIPs are in IPs
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -34,6 +35,7 @@ func (n *Node) ListenCS() {
 		panic(fmt.Sprintf("srv error: %s", err))
 	}()
 	util.S.Debug("listening…")
+	util.Notify("STATUS=connecting to CS")
 	err := n.listenCS()
 	util.S.Errorf("cs listen error: %s", err)
 }
@@ -51,7 +53,9 @@ func (n *Node) handleSRV() error {
 
 func (n *Node) handleSRVOnce() (resetBackoff bool, err error) {
 	util.S.Debug("handleSRVOnce: newClient…")
-	cl, _, err := n.newClient()
+	ctx, cancel := context.WithTimeout(context.Background(), util.OnceTimeout)
+	defer cancel()
+	cl, _, err := n.newClient(ctx)
 	if err != nil {
 		return false, fmt.Errorf("newClient: %w", err)
 	}
@@ -88,22 +92,29 @@ func (n *Node) listenCS() error {
 
 func (n *Node) listenCSOnce() (resetBackoff bool, err error) {
 	util.S.Debug("listenCSOnce: newClient…")
-	cl, _, err := n.newClient()
+	ctx, cancel := context.WithTimeout(context.Background(), util.OnceTimeout)
+	defer cancel()
+	cl, _, err := n.newClient(ctx)
 	if err != nil {
 		return false, fmt.Errorf("newClient: %w", err)
 	}
 
+	err = cl.CallWithContext(ctx, "ping", new(bool), new(bool))
+	if err != nil {
+		return false, fmt.Errorf("ping: %w", err)
+	}
+
 	util.S.Debug("listenCSOnce: pullCS…")
-	err = n.pullCS(cl)
+	err = n.pullCS(ctx, cl)
 	if err != nil {
 		return false, fmt.Errorf("pullCS: %w", err)
 	}
 	return true, nil
 }
 
-func (n *Node) pullCS(cl *rpc2.Client) (err error) {
+func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 	if len(n.cs.Azusa) != 0 {
-		err = n.azusa(n.cs.Azusa, cl)
+		err = n.azusa(ctx, n.cs.Azusa, cl)
 		if err != nil {
 			err = fmt.Errorf("azusa: %w", err)
 			return
@@ -112,7 +123,7 @@ func (n *Node) pullCS(cl *rpc2.Client) (err error) {
 	}
 	for {
 		var s api.SyncS
-		err = cl.Call("sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
+		err = cl.CallWithContext(ctx, "sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
 		if err != nil {
 			err = fmt.Errorf("sync: %w", err)
 			return

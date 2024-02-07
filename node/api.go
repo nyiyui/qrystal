@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"strings"
@@ -68,12 +69,12 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 	go cl.Run()
 }
 
-func (n *Node) newClient() (*rpc2.Client, *tls.Conn, error) {
+func (n *Node) newClient(ctx context.Context) (*rpc2.Client, *tls.Conn, error) {
 	var tlsCfg *tls.Config
 	if n.cs.TLSConfig != nil {
 		tlsCfg = n.cs.TLSConfig.Clone()
 	}
-	conn, err := tls.Dial("tcp", n.cs.Host, tlsCfg)
+	conn, err := (&tls.Dialer{Config: tlsCfg}).DialContext(ctx, "tcp", n.cs.Host)
 	if err != nil {
 		err = fmt.Errorf("dial: %w", err)
 		return nil, nil, err
@@ -81,12 +82,12 @@ func (n *Node) newClient() (*rpc2.Client, *tls.Conn, error) {
 	cl := rpc2.NewClient(conn)
 	n.setupClient(cl)
 	var b bool
-	err = cl.Call("ping", true, &b)
+	err = cl.CallWithContext(ctx, "ping", true, &b)
 	if err != nil {
 		err = fmt.Errorf("ping: %w", err)
-		return cl, conn, fmt.Errorf("ping: %s", err)
+		return cl, conn.(*tls.Conn), fmt.Errorf("ping: %s", err)
 	}
-	return cl, conn, nil
+	return cl, conn.(*tls.Conn), nil
 }
 
 type updateMode int

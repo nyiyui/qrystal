@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// OnceTimeout is the general timeout used for network requests (the request inside a backoff once function).
+const OnceTimeout = 10 * time.Second
+
 const backoffMax = 5 * time.Minute
 
 var ErrEndBackoff = errors.New("internal: end backoff")

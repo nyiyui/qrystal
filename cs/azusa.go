@@ -18,8 +18,8 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 	if !ok {
 		return newTokenAuthError(q.CentralToken)
 	}
-	c.ccLock.RLock()
-	defer c.ccLock.RUnlock()
+	c.ccLock.Lock()
+	defer c.ccLock.Unlock()
 	var desc strings.Builder
 	for cnn, peer := range q.Networks {
 		err = checkPeer(ti, cnn, c.cc, peer)
@@ -53,8 +53,6 @@ func (c *CentralSource) azusa(cl *rpc2.Client, q *api.AzusaQ, s *api.AzusaS) err
 			util.S.Errorf("UpdateToken %s: %s", ti.key, err)
 		}
 	}()
-	c.ccLock.Lock()
-	defer c.ccLock.Unlock()
 	changed := map[string][]string{}
 	for cnn, peer := range q.Networks {
 		cn := c.cc.Networks[cnn]
