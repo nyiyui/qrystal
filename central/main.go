@@ -52,11 +52,12 @@ type Peer struct {
 	Desynced int
 	// SyncedPeers is for internal use by the cs package.
 	// In the cs package, it's used to track which peers have been synced with changes.
-	SyncedPeers []string
-	Name        string  `yaml:"name" json:"name"`
-	Host        string  `yaml:"host" json:"host"`
-	AllowedIPs  []IPNet `yaml:"allowedIPs" json:"allowedIPs"`
-	CanForward  bool    `yaml:"canForward" json:"canForward"`
+	SyncedPeers      []string
+	Name             string   `yaml:"name" json:"name"`
+	Host             string   `yaml:"host" json:"host"`
+	AlternativeHosts []string `yaml:"hosts" json:"hosts"`
+	AllowedIPs       []IPNet  `yaml:"allowedIPs" json:"allowedIPs"`
+	CanForward       bool     `yaml:"canForward" json:"canForward"`
 	// CanSee determines whether this Peer can see anything (nil) or specfic peers only (non-nil).
 	CanSee      *CanSee        `yaml:"canSee" json:"canSee"`
 	AllowedSRVs []SRVAllowance `yaml:"allowedSRVs" json:"allowedSRVs"`
@@ -72,7 +73,7 @@ func (p *Peer) String() string {
 }
 
 func (p *Peer) Same(p2 *Peer) bool {
-	return p.Name == p2.Name && p.Host == p2.Host && Same(p.AllowedIPs, p2.AllowedIPs) && Same3(p.ForwardingPeers, p2.ForwardingPeers) && p.CanForward == p2.CanForward && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
+	return p.Name == p2.Name && p.Host == p2.Host && slices.Equal(p.AlternativeHosts, p2.AlternativeHosts) && Same(p.AllowedIPs, p2.AllowedIPs) && slices.Equal(p.ForwardingPeers, p2.ForwardingPeers) && p.CanForward == p2.CanForward && p.CanSee.Same(p2.CanSee) && p.PubKey == p2.PubKey
 }
 
 type CanSee struct {
@@ -90,7 +91,7 @@ func (c *CanSee) Same(c2 *CanSee) bool {
 	if c2 == nil {
 		return false
 	}
-	return Same3(c.Only, c2.Only)
+	return slices.Equal(c.Only, c2.Only)
 }
 
 type SRVAllowable interface {
@@ -270,19 +271,6 @@ func Same(a []IPNet, b []IPNet) bool {
 	for i, a2 := range a {
 		b2 := b[i]
 		if (*net.IPNet)(&a2).String() == (*net.IPNet)(&b2).String() {
-			return false
-		}
-	}
-	return true
-}
-
-func Same3(a []string, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, a2 := range a {
-		b2 := b[i]
-		if a2 == b2 {
 			return false
 		}
 	}

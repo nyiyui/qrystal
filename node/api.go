@@ -1,8 +1,10 @@
 package node
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,12 +13,23 @@ import (
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/cs"
 	"github.com/nyiyui/qrystal/util"
+	"golang.org/x/exp/slices"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func (n *Node) setupClient(cl *rpc2.Client) {
 	cl.Handle("ping", func(cl *rpc2.Client, q *bool, s *bool) error {
 		*s = true
+		return nil
+	})
+	cl.Handle("keepalive", func(cl *rpc2.Client, q *[]byte, s *struct{}) error {
+		n.keepaliveEntriesLock.Lock()
+		defer n.keepaliveEntriesLock.Unlock()
+		i := slices.IndexFunc(n.keepaliveEntries, func(ke keepaliveEntry) bool { return bytes.Equal(ke.Secret, *q) })
+		if i == -1 {
+			return errors.New("keepalive entry not found")
+		}
+		n.keepaliveEntries[i].Notify <- struct{}{}
 		return nil
 	})
 	cl.Handle("push", func(cl *rpc2.Client, q *api.PushQ, s *api.PushS) error {

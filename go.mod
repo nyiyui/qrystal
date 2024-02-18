@@ -1,6 +1,6 @@
 module github.com/nyiyui/qrystal
 
-go 1.19
+go 1.21
 
 require (
 	github.com/cenkalti/rpc2 v0.0.0-20210604223624-c1acbc6ec984

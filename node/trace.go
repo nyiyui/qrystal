@@ -41,6 +41,7 @@ func TraceInit() {
 	util.S.Info("trace: ready.")
 }
 
+// traceCheck stops tracing if the conditions are met to do so.
 func (n *Node) traceCheck() {
 	if traceUntil == nil {
 		// trace not enabled

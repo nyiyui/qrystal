@@ -41,7 +41,7 @@
           default = pkgs.mkShell {
             buildInputs = with pkgs; [
               bash
-              go_1_19
+              go
               git
               protobuf
               protoc-gen-go

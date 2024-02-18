@@ -1,6 +1,8 @@
 package node
 
 import (
+	"bytes"
+	"crypto/rand"
 	"fmt"
 	"net"
 	"sync"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/nyiyui/qrystal/central"
 	"github.com/nyiyui/qrystal/hokuto"
+	"golang.org/x/exp/slices"
 )
 
 type NodeConfig struct {
@@ -87,4 +90,41 @@ type Node struct {
 	srvListPath  string
 
 	reupdateSRV chan string
+
+	keepaliveEntriesLock sync.Mutex
+	keepaliveEntries     []keepaliveEntry // TODO: switch from slice to container/list?
+}
+
+type keepaliveEntry struct {
+	Secret []byte
+	Notify chan<- struct{}
+}
+
+func (n *Node) addKeepaliveEntry() (secret []byte, notify <-chan struct{}) {
+	n.keepaliveEntriesLock.Lock()
+	defer n.keepaliveEntriesLock.Unlock()
+	secret = make([]byte, 32) // eh whatever, 32 bytes is probably overkill but who cares if it's a bit slow :)
+	_, err := rand.Read(secret)
+	if err != nil {
+		panic(err)
+	}
+	notify2 := make(chan struct{}, 1)
+	ke := keepaliveEntry{
+		Secret: secret,
+		Notify: notify2,
+	}
+	n.keepaliveEntries = append(n.keepaliveEntries, ke)
+	return secret, notify2
+}
+
+// removeKeepaliveEntry removes the corresponding keepaliveEntry, if it exists. If the corresponding entry does not exist, this function does nothing.
+func (n *Node) removeKeepaliveEntry(secret []byte) {
+	n.keepaliveEntriesLock.Lock()
+	defer n.keepaliveEntriesLock.Unlock()
+	i := slices.IndexFunc(n.keepaliveEntries, func(ke keepaliveEntry) bool { return bytes.Equal(ke.Secret, secret) })
+	if i == -1 {
+		return
+	}
+	n.keepaliveEntries[i] = keepaliveEntry{} // zero to garbage collect now-unnecessary entry
+	slices.Delete(n.keepaliveEntries, i, i+1)
 }

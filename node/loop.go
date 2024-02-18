@@ -4,6 +4,7 @@ package node
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -122,12 +123,29 @@ func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 		n.reupdateSRV <- "azusa"
 	}
 	for {
-		var s api.SyncS
-		err = cl.CallWithContext(ctx, "sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
-		if err != nil {
-			err = fmt.Errorf("sync: %w", err)
-			return
-		}
+		func() {
+			ctx2, cancel := context.WithCancelCause(context.Background())
+			defer cancel(errors.New("cleanup"))
+			secret, notify := n.addKeepaliveEntry()
+			t := time.NewTimer(util.OnceTimeout)
+			go func() {
+				select {
+				case <-t.C:
+					cancel(errors.New("timeout"))
+					n.removeKeepaliveEntry(secret)
+				case <-notify:
+					if !t.Stop() {
+						<-t.C
+					}
+				}
+			}()
+			var s api.SyncS
+			err = cl.CallWithContext(ctx, "sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
+			if err != nil {
+				err = fmt.Errorf("sync: %w", err)
+				return
+			}
+		}()
 	}
 }
 
