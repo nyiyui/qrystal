@@ -140,7 +140,7 @@ func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 				}
 			}()
 			var s api.SyncS
-			err = cl.CallWithContext(ctx, "sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
+			err = cl.CallWithContext(ctx2, "sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
 			if err != nil {
 				err = fmt.Errorf("sync: %w", err)
 				return
