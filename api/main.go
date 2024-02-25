@@ -7,7 +7,8 @@ import (
 )
 
 type SyncQ struct {
-	CentralToken util.Token
+	CentralToken    util.Token
+	KeepaliveSecret []byte
 }
 
 type SyncS struct{}
@@ -48,3 +49,7 @@ type AzusaQ struct {
 }
 
 type AzusaS struct{}
+
+type KeepaliveQ []byte
+
+type KeepaliveS struct{}

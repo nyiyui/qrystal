@@ -65,6 +65,15 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 			return fmt.Errorf("ping failed: %w", err)
 		}
 	}
+	{
+		var q2 api.KeepaliveQ = q.KeepaliveSecret
+		var s2 api.KeepaliveS
+		err = cl.CallWithContext(ctx, "keepalive", &q2, &s2)
+		if err != nil {
+			util.S.Errorf("keepalive token %s: %s", ti.Name, err)
+			return fmt.Errorf("keepalive failed: %w", err)
+		}
+	}
 
 	newCC := c.copyCC(ti.Networks) // also does RLock/RUnlock
 
@@ -124,7 +133,6 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 
 	// Nodes will retry pulling when sync is done (if err == nil then with a
 	// zeroed backoff), so return when we want the Nodes to resync.
-	util.S.Infof("token %s: resync (marker)", ti.Name)
 	return nil
 }
 

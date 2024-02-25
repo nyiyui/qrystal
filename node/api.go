@@ -22,7 +22,7 @@ func (n *Node) setupClient(cl *rpc2.Client) {
 		*s = true
 		return nil
 	})
-	cl.Handle("keepalive", func(cl *rpc2.Client, q *[]byte, s *struct{}) error {
+	cl.Handle("keepalive", func(cl *rpc2.Client, q *api.KeepaliveQ, s *api.KeepaliveS) error {
 		n.keepaliveEntriesLock.Lock()
 		defer n.keepaliveEntriesLock.Unlock()
 		i := slices.IndexFunc(n.keepaliveEntries, func(ke keepaliveEntry) bool { return bytes.Equal(ke.Secret, *q) })

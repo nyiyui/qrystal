@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -128,11 +129,17 @@ func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 			defer cancel(errors.New("cleanup"))
 			secret, notify := n.addKeepaliveEntry()
 			t := time.NewTimer(util.OnceTimeout)
+			timedOut := false
+			var timedOutLock sync.Mutex
 			go func() {
 				select {
 				case <-t.C:
 					cancel(errors.New("timeout"))
 					n.removeKeepaliveEntry(secret)
+					util.S.Infof("sync: timed out waiting for action from CS server. Retrying…")
+					timedOutLock.Lock()
+					defer timedOutLock.Unlock()
+					timedOut = true
 				case <-notify:
 					if !t.Stop() {
 						<-t.C
@@ -140,10 +147,15 @@ func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 				}
 			}()
 			var s api.SyncS
-			err = cl.CallWithContext(ctx2, "sync", &api.SyncQ{CentralToken: n.cs.Token}, &s)
+			err = cl.CallWithContext(ctx2, "sync", &api.SyncQ{CentralToken: n.cs.Token, KeepaliveSecret: secret}, &s)
 			if err != nil {
 				err = fmt.Errorf("sync: %w", err)
 				return
+			}
+			timedOutLock.Lock()
+			defer timedOutLock.Unlock()
+			if timedOut {
+				return errors.New("timed out waiting for action from CS server")
 			}
 		}()
 	}
