@@ -124,7 +124,7 @@ func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 		n.reupdateSRV <- "azusa"
 	}
 	for {
-		func() {
+		err = func() (err error) {
 			ctx2, cancel := context.WithCancelCause(context.Background())
 			defer cancel(errors.New("cleanup"))
 			secret, notify := n.addKeepaliveEntry()
@@ -155,9 +155,14 @@ func (n *Node) pullCS(ctx context.Context, cl *rpc2.Client) (err error) {
 			timedOutLock.Lock()
 			defer timedOutLock.Unlock()
 			if timedOut {
-				return errors.New("timed out waiting for action from CS server")
+				err = errors.New("timed out waiting for action from CS server")
+				return
 			}
+			return nil
 		}()
+		if err != nil {
+			return
+		}
 	}
 }
 
