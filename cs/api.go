@@ -124,6 +124,7 @@ func (c *CentralSource) sync(cl *rpc2.Client, q *api.SyncQ, s *api.SyncS) error 
 
 	// Nodes will retry pulling when sync is done (if err == nil then with a
 	// zeroed backoff), so return when we want the Nodes to resync.
+	util.S.Infof("token %s: resync (marker)", ti.Name)
 	return nil
 }
 
